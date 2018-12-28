@@ -30,6 +30,8 @@
       <h3>Choose technologies, costs and other assumptions</h3>
       <input type="text" name="country" value="FR"> European country (2-letter code)<br />
       <br />
+      <input type="number" name="year"> Weather year (from 1985 to 2015 inclusive)<br />
+      <br />
       <input type="checkbox" name="wind" checked> Wind turbine<br />
       <input type="number" name="wind_cost"> Wind capital cost (overnight) [EUR/kW]<br />
       <input type="checkbox" name="solar" checked> Solar photovoltaic cell<br />
@@ -50,8 +52,9 @@
       <div id="solve">
 	<button id="solve-button">Solve</button>
 	<p>Status: <span id="status">Waiting for job</span></p>
-	<p>Objective: <span id="objective"></span></p>
-	<p>Solar capacity: <span id="solar_capacity"></span></p>
+	<p>Average system cost [EUR/MWh]: <span id="objective"></span></p>
+	<p>Solar capacity [MW]: <span id="solar_capacity"></span></p>
+	<p>Wind capacity [MW]: <span id="wind_capacity"></span></p>
       </div>
 
     </div>

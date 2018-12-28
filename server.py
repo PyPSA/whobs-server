@@ -37,7 +37,11 @@ def jobs_api():
 
 @app.route('/jobs/<jobid>')
 def jobid_api(jobid):
-    job = Job.fetch(jobid, connection=conn)
+    try:
+        job = Job.fetch(jobid, connection=conn)
+    except:
+        return {"status" : "Error", "error" : "Failed to find job!"}
+
     try:
         status = job.meta['status']
     except:
@@ -45,7 +49,9 @@ def jobid_api(jobid):
 
     result = {"status" : status}
 
-    if job.is_finished:
+    if "status" == "Error":
+        result.update(job.result)
+    elif job.is_finished:
         result.update(job.result)
 
     print(result)

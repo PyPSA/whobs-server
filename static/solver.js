@@ -60,6 +60,7 @@ mymap.on('click', onMapClick);
 
 
 let assumptions = {"country" : "DE",
+		   "year" : 2013,
 		   "wind" : true,
 		   "wind_cost" : 1200,
 		   "solar" : true,
@@ -105,7 +106,7 @@ var jobid = "";
 var timer;
 
 // time between status polling in milliseconds
-var poll_interval = 5000;
+var poll_interval = 2000;
 
 solveButton.on("click", function() {
     var button = d3.select(this);
@@ -145,14 +146,22 @@ function poll_result() {
 	status = results["status"];
 	document.getElementById("status").innerHTML=status;
 	console.log("status is",status);
-	//if finished, then get result
+
+	if(status == "Error"){
+	    clearInterval(timer);
+	    console.log("results:",results);
+	    document.getElementById("status").innerHTML=status + ": " + results["error"];
+	    solveButton.text("Solve");
+	    solving = false;
+	};
 	if(status == "Finished"){
 	    clearInterval(timer);
 	    console.log("results:",results);
 	    solving = false;
 	    solveButton.text("Solve");
 	    document.getElementById("objective").innerHTML=results["objective"];
-	    document.getElementById("solar_capacity").innerHTML=results["solar_cap"];
+	    document.getElementById("solar_capacity").innerHTML=results["solar_capacity"];
+	    document.getElementById("wind_capacity").innerHTML=results["wind_capacity"];
 	};
     };
     poll.send();

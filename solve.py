@@ -1,15 +1,19 @@
 
 import pypsa
-from six import iteritems
+
 import pandas as pd
 from pyomo.environ import Constraint
 from rq import get_current_job
 
-
-
 idx = pd.IndexSlice
 
+
+#read in renewables.ninja solar time series
 solar_pu = pd.read_csv('ninja_pv_europe_v1.1_sarah.csv',
+                       index_col=0,parse_dates=True)
+
+#read in renewables.ninja wind time series
+wind_pu = pd.read_csv('ninja_wind_europe_v1.1_current_on-offshore.csv',
                        index_col=0,parse_dates=True)
 
 
@@ -19,155 +23,256 @@ def annuity(lifetime,rate):
     else:
         return rate/(1. - 1. / (1. + rate)**lifetime)
 
-countries = ["DE"]
 
-load_shedding = True
+load = 1. #MW
 
-add_hydrogen = True
+frequency = 3
 
-electrolysis_override = 1e6 #None  #None or e.g. 1e6 EUR/MWh
+assumptions_df = pd.DataFrame(columns=["FOM","fixed","discount rate","lifetime","investment","efficiency"],
+                              index=["wind","solar","hydrogen_electrolyser","hydrogen_turbine","hydrogen_energy",
+                                     "battery_power","battery_energy"],
+                              dtype=float)
 
-voll = 1e4  # EUR/MWh
+assumptions_df["lifetime"] = 25.
+assumptions_df["discount rate"] = 0.07
+assumptions_df["FOM"] = 3.
+assumptions_df["efficiency"] = 1.
+assumptions_df.at["battery_power","efficiency"] = 0.9
 
-load = 1 #MW
+booleans = ["wind","solar","battery","hydrogen"]
 
-year_start = 2011
-year_end = 2011
-
-frequency = "43H"
-
-#set all asset costs and other parameters
-costs = pd.read_csv("costs.csv",index_col=list(range(3))).sort_index()
-
-#correct units to MW and EUR
-costs.loc[costs.unit.str.contains("/kW"),"value"]*=1e3
-costs.loc[costs.unit.str.contains("USD"),"value"]*=0.7532
-
-cost_year = 2030
-
-costs = costs.loc[idx[:,cost_year,:],"value"].unstack(level=2).groupby(level="technology").sum(min_count=1)
-
-costs = costs.fillna({"CO2 intensity" : 0,
-                          "FOM" : 0,
-                          "VOM" : 0,
-                          "discount rate" : 0.07,
-                          "efficiency" : 1,
-                          "fuel" : 0,
-                          "investment" : 0,
-                          "lifetime" : 25
-    })
-
-Nyears = year_end - year_start + 1
-
-if electrolysis_override is not None:
-    costs.at["electrolysis","investment"] = electrolysis_override
-
-costs["discount rate"] = 0.
-
-costs["fixed"] = [(annuity(v["lifetime"],v["discount rate"])+v["FOM"]/100.)*v["investment"]*Nyears for i,v in costs.iterrows()]
-
-
+floats = ["wind_cost","solar_cost","battery_energy_cost",
+          "battery_power_cost","hydrogen_electrolyser_cost",
+          "hydrogen_energy_cost",
+          "hydrogen_electrolyser_efficiency",
+          "hydrogen_turbine_cost",
+          "hydrogen_turbine_efficiency",
+          "discount_rate"]
 
 def solve(assumptions):
-    print(assumptions)
-    ct = assumptions['country']
-    wind_cost = float(assumptions['wind_cost'])
+
     job = get_current_job()
     job.meta['status'] = "Reading in data"
     job.save_meta()
 
-    print('Starting task for {} with wind cost {}'.format(ct,wind_cost))
+
+    for key in booleans:
+        try:
+            assumptions[key] = bool(assumptions[key])
+        except:
+            job.meta['status'] = "Error"
+            job.save_meta()
+            return {"error" : "{} could not be converted to boolean".format(key)}
+
+    for key in floats:
+        try:
+            assumptions[key] = float(assumptions[key])
+        except:
+            job.meta['status'] = "Error"
+            job.save_meta()
+            return {"error" : "{} could not be converted to float".format(key)}
+
+    print(assumptions)
+    ct = assumptions['country']
+    if ct not in solar_pu.columns:
+        job.meta['status'] = "Error"
+        job.save_meta()
+        return {"error" : "Country {} not found among valid countries".format(ct)}
+
+    year = int(assumptions['year'])
+    if year < 1985 or year > 2015:
+        job.meta['status'] = "Error"
+        job.save_meta()
+        return {"error" : "Year {} not in valid range".format(year)}
+
+    year_start = year
+    year_end = year
+
+    Nyears = year_end - year_start + 1
+
+    assumptions_df["discount rate"] = assumptions["discount_rate"]/100.
+
+    for item in ["wind","solar","battery_energy","battery_power","hydrogen_electrolyser","hydrogen_energy","hydrogen_turbine"]:
+        assumptions_df.at[item,"investment"] = assumptions[item + "_cost"]
+
+    for item in ["hydrogen_electrolyser","hydrogen_turbine"]:
+        assumptions_df.at[item,"efficiency"] = assumptions[item + "_efficiency"]/100.
+
+
+    #convert costs from per kW to per MW
+    assumptions_df["investment"] *= 1000.
+    assumptions_df["fixed"] = [(annuity(v["lifetime"],v["discount rate"])+v["FOM"]/100.)*v["investment"]*Nyears for i,v in assumptions_df.iterrows()]
+
+    print('Starting task for {} with assumptions {}'.format(ct,assumptions_df))
 
     network = pypsa.Network()
 
-    snapshots = pd.date_range("{}-01-01".format(year_start),"{}-12-31 23:00".format(year_start),freq=frequency)
+    snapshots = pd.date_range("{}-01-01".format(year_start),"{}-12-31 23:00".format(year_end),
+                              freq=str(frequency)+"H")
 
     network.set_snapshots(snapshots)
+
+    network.snapshot_weightings = pd.Series(float(frequency),index=network.snapshots)
 
     network.add("Bus",ct)
     network.add("Load",ct,
                 bus=ct,
                 p_set=load)
 
-    network.add("Generator",ct+" solar",
-                bus=ct,
-                p_max_pu = solar_pu[ct],
-                p_nom_extendable = True,
-                capital_cost = costs.at['solar-rooftop','fixed'])
+    if assumptions["solar"]:
+        network.add("Generator",ct+" solar",
+                    bus=ct,
+                    p_max_pu = solar_pu[ct],
+                    p_nom_extendable = True,
+                    marginal_cost = 0.01, #Small cost to prefer curtailment to destroying energy in storage, solar curtails before wind
+                    capital_cost = assumptions_df.at['solar','fixed'])
 
-    network.add("Bus",ct + " battery")
+    if assumptions["wind"]:
+        network.add("Generator",ct+" wind",
+                    bus=ct,
+                    p_max_pu = wind_pu[ct+"_ON"],
+                    p_nom_extendable = True,
+                    marginal_cost = 0.02, #Small cost to prefer curtailment to destroying energy in storage, solar curtails before wind
+                    capital_cost = assumptions_df.at['wind','fixed'])
 
-    network.add("Store",ct + " battery",
-                bus = ct + " battery",
-                e_nom_extendable = True,
-                e_cyclic=True,
-                capital_cost=costs.at['battery storage','fixed'])
 
-    network.add("Link",ct + " battery charge",
-                bus0 = ct,
-                bus1 = ct + " battery",
-                efficiency = costs.at['battery inverter','efficiency']**0.5,
-                p_nom_extendable = True,
-                capital_cost=costs.at['battery inverter','fixed'])
+    if assumptions["battery"]:
 
-    network.add("Link",ct + " battery discharge",
-                bus0 = ct + " battery",
-                bus1 = ct,
-                p_nom_extendable = True,
-                efficiency = costs.at['battery inverter','efficiency']**0.5)
+        network.add("Bus",ct + " battery")
 
-    def extra_functionality(network,snapshots):
-        def battery(model):
-            return model.link_p_nom[ct + " battery charge"] == model.link_p_nom[ct + " battery discharge"]*network.links.at[ct + " battery charge","efficiency"]
+        network.add("Store",ct + " battery_energy",
+                    bus = ct + " battery",
+                    e_nom_extendable = True,
+                    e_cyclic=True,
+                    capital_cost=assumptions_df.at['battery_energy','fixed'])
 
-        network.model.battery = Constraint(rule=battery)
+        network.add("Link",ct + " battery_power",
+                    bus0 = ct,
+                    bus1 = ct + " battery",
+                    efficiency = assumptions_df.at['battery_power','efficiency'],
+                    p_nom_extendable = True,
+                    capital_cost=assumptions_df.at['battery_power','fixed'])
 
-    if add_hydrogen:
+        network.add("Link",ct + " battery_discharge",
+                    bus0 = ct + " battery",
+                    bus1 = ct,
+                    p_nom_extendable = True,
+                    efficiency = assumptions_df.at['battery_power','efficiency'])
+
+        def extra_functionality(network,snapshots):
+            def battery(model):
+                return model.link_p_nom[ct + " battery_power"] == model.link_p_nom[ct + " battery_discharge"]*network.links.at[ct + " battery_power","efficiency"]
+
+            network.model.battery = Constraint(rule=battery)
+    else:
+        def extra_functionality(network,snapshots):
+            pass
+
+    if assumptions["hydrogen"]:
 
         network.add("Bus",
-                     ct + " H2",
-                     carrier="H2")
+                     ct + " hydrogen",
+                     carrier="hydrogen")
 
         network.add("Link",
-                    ct + " H2 Electrolysis",
-                    bus1=ct + " H2",
+                    ct + " hydrogen_electrolyser",
+                    bus1=ct + " hydrogen",
                     bus0=ct,
                     p_nom_extendable=True,
-                    efficiency=costs.at["electrolysis","efficiency"],
-                    capital_cost=costs.at["electrolysis","fixed"])
+                    efficiency=assumptions_df.at["hydrogen_electrolyser","efficiency"],
+                    capital_cost=assumptions_df.at["hydrogen_electrolyser","fixed"])
 
         network.add("Link",
-                     ct + " H2 Fuel Cell",
-                     bus0=ct + " H2",
+                     ct + " hydrogen_turbine",
+                     bus0=ct + " hydrogen",
                      bus1=ct,
                      p_nom_extendable=True,
-                     efficiency=costs.at["fuel cell","efficiency"],
-                     capital_cost=costs.at["fuel cell","fixed"]*costs.at["fuel cell","efficiency"])  #NB: fixed cost is per MWel
+                     efficiency=assumptions_df.at["hydrogen_turbine","efficiency"],
+                     capital_cost=assumptions_df.at["hydrogen_turbine","fixed"]*assumptions_df.at["hydrogen_turbine","efficiency"])  #NB: fixed cost is per MWel
 
         network.add("Store",
-                     ct + " H2 Store",
-                     bus=ct + " H2",
+                     ct + " hydrogen_energy",
+                     bus=ct + " hydrogen",
                      e_nom_extendable=True,
                      e_cyclic=True,
-                     capital_cost=costs.at["hydrogen storage","fixed"])
+                     capital_cost=assumptions_df.at["hydrogen_energy","fixed"])
+
+    network.consistency_check()
 
     job.meta['status'] = "Solving optimisation problem"
     job.save_meta()
 
-    network.lopf(solver_name="gurobi",
-                 extra_functionality=extra_functionality)
+    solver_name = "cbc"
+    status, termination_condition = network.lopf(solver_name=solver_name,
+                                                 extra_functionality=extra_functionality)
+
+    print(status,termination_condition)
+
+    if status != "ok":
+        job.meta['status'] = "Error"
+        job.save_meta()
+        return {"error" : "Job failed to optimise correctly"}
+
+    if termination_condition == "infeasible":
+        job.meta['status'] = "Error"
+        job.save_meta()
+        return {"error" : "Problem was infeasible"}
+
+    job.meta['status'] = "Finished"
+    job.save_meta()
 
     print(network.generators.p_nom_opt)
 
     print(network.links.p_nom_opt)
     print(network.stores.e_nom_opt)
 
-    job.meta['status'] = "Finished"
-    job.save_meta()
+    results = {"objective" : network.objective/8760,
+               "average_price" : network.buses_t.marginal_price.mean()[ct]}
 
-    return {"objective" : network.objective/8760,
-            "solar_cap" : network.generators.at[ct+" solar","p_nom_opt"]}
+    year_weight = network.snapshot_weightings.sum()
 
+    available = network.generators_t.p_max_pu.multiply(network.generators.p_nom_opt).sum()
+    used = network.generators_t.p.sum()
+    curtailment = (available-used)/available
+    total_load = network.loads_t.p.sum().sum()
+    supply = available/total_load
 
-if __name__ == '__main__':
-    print(solve("FR",1000))
+    for g in ["wind","solar"]:
+        if assumptions[g]:
+            results[g+"_capacity"] = network.generators.p_nom_opt[ct + " " + g]
+            results[g+"_cost"] = (network.generators.p_nom_opt*network.generators.capital_cost)[ct + " " + g]/year_weight
+            results[g+"_curtailment"] = curtailment[ct + " " + g]
+            results[g+"_supply"] = supply[ct + " " + g]
+        else:
+            results[g+"_capacity"] = 0.
+            results[g+"_cost"] = 0.
+            results[g+"_curtailment"] = 0.
+            results[g+"_supply"] = 0.
+
+    if assumptions["battery"]:
+        results["battery_power_capacity"] = network.links.at[ct + " battery_power","p_nom_opt"]
+        results["battery_power_cost"] = network.links.at[ct + " battery_power","p_nom_opt"]*network.links.at[ct + " battery_power","capital_cost"]/year_weight
+        results["battery_energy_capacity"] = network.stores.at[ct + " battery_energy","e_nom_opt"]
+        results["battery_energy_cost"] = network.stores.at[ct + " battery_energy","e_nom_opt"]*network.stores.at[ct + " battery_energy","capital_cost"]/year_weight
+    else:
+        results["battery_power_capacity"] = 0.
+        results["battery_power_cost"] = 0.
+        results["battery_energy_capacity"] = 0.
+        results["battery_energy_cost"] = 0.
+
+    if assumptions["hydrogen"]:
+        results["hydrogen_electrolyser_capacity"] = network.links.at[ct + " hydrogen_electrolyser","p_nom_opt"]
+        results["hydrogen_electrolyser_cost"] = network.links.at[ct + " hydrogen_electrolyser","p_nom_opt"]*network.links.at[ct + " hydrogen_electrolyser","capital_cost"]/year_weight
+        results["hydrogen_turbine_capacity"] = network.links.at[ct + " hydrogen_turbine","p_nom_opt"]
+        results["hydrogen_turbine_cost"] = network.links.at[ct + " hydrogen_turbine","p_nom_opt"]*network.links.at[ct + " hydrogen_turbine","capital_cost"]/year_weight
+        results["hydrogen_energy_capacity"] = network.stores.at[ct + " hydrogen_energy","e_nom_opt"]
+        results["hydrogen_energy_cost"] = network.stores.at[ct + " hydrogen_energy","e_nom_opt"]*network.stores.at[ct + " hydrogen_energy","capital_cost"]/year_weight
+    else:
+        results["hydrogen_electrolyser_capacity"] = 0.
+        results["hydrogen_electrolyser_cost"] = 0.
+        results["hydrogen_turbine_capacity"] = 0.
+        results["hydrogen_turbine_cost"] = 0.
+        results["hydrogen_energy_capacity"] = 0.
+        results["hydrogen_energy_cost"] = 0.
+
+    return results
