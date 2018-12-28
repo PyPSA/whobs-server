@@ -23,40 +23,41 @@
     <h1>Solve WHOBS system</h1>
 
 
-	  <p>Some text.</p>
+    <p>Some text.</p>
 
 
-	  	  <div id="scenario">
-		    <h3>Choose technologies</h3>
-		    <div id="tech_checkboxes">
-		      </div>
-		    <div id="tech_costs">
-		      </div>
+    <div id="assumptions">
+      <h3>Choose technologies, costs and other assumptions</h3>
+      <input type="text" name="country" value="FR"> European country (2-letter code)<br />
+      <br />
+      <input type="checkbox" name="wind" checked> Wind turbine<br />
+      <input type="number" name="wind_cost"> Wind capital cost (overnight) [EUR/kW]<br />
+      <input type="checkbox" name="solar" checked> Solar photovoltaic cell<br />
+      <input type="number" name="solar_cost"> Solar capital cost (overnight) [EUR/kW]<br />
+      <input type="checkbox" name="battery" checked> Battery storage<br />
+      <input type="number" name="battery_energy_cost"> Battery energy capital cost (overnight) [EUR/kWh]<br />
+      <input type="number" name="battery_power_cost"> Battery power capital cost (overnight) [EUR/kW]<br />
+      <input type="checkbox" name="hydrogen" checked> Hydrogen gas storage<br />
+      <input type="number" name="hydrogen_energy_cost"> Hydrogen energy capital cost (overnight) [EUR/kWh]<br />
+      <input type="number" name="hydrogen_electrolyser_cost"> Hydrogen electrolyser capital cost (overnight) [EUR/kW]<br />
+      <input type="number" name="hydrogen_electrolyser_efficiency"> Hydrogen electrolyser efficiency [percent, HHV]<br />
+      <input type="number" name="hydrogen_turbine_cost"> Hydrogen turbine capital cost (overnight) [EUR/kW]<br />
+      <input type="number" name="hydrogen_turbine_efficiency"> Hydrogen turbine efficiency [percent, HHV]<br />
+      <br />
+      <input type="number" name="discount_rate"> Cost of capital / interest rate [percent]<br />
+      <br />
 
-	      <input type="checkbox" id="wind" name="wind" checked><label for="wind">Wind</label>
+      <div id="solve">
+	<button id="solve-button">Solve</button>
+	<p>Status: <span id="status">Waiting for job</span></p>
+	<p>Objective: <span id="objective"></span></p>
+	<p>Solar capacity: <span id="solar_capacity"></span></p>
+      </div>
 
-	      <input id="wind-cost" type="number" name="wind-cost"><label for="wind-cost">Wind capital cost (overnight) [EUR/kW]</label>
+    </div>
 
-	      <input type="checkbox" id="solar" name="solar" checked><label for="solar">Solar</label>
-
-	      <input id="solar-cost" type="number" name="solar-cost"><label for="solar-cost">Solar PV capital cost (overnight) [EUR/kW]</label>
-
-
-	      <p><input id="country" type="text" name="country" value="FR"><label for="country">Country</label>
-	  </div>
-
-
-		  <div id="solve">
-		    <button id="solve-button">Solve</button>
-		    <p>Status: <span id="status">Waiting for job</span></p>
-		    <p>Objective: <span id="objective"></span></p>
-		    <p>Solar capacity: <span id="solar_capacity"></span></p>
-		  </div>
-
-
-
-		  <div id="mapid"></div>
-		  </div>
+    <div id="mapid"></div>
+  </div>
   <script src="{{ url_for('static', filename='solver.js') }}"></script>
 </body>
 </html>

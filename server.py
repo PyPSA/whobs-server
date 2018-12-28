@@ -19,51 +19,48 @@ app = Flask(__name__)
 api = Api(app)
 
 
-#For regular pages, use this pattern
 @app.route('/')
 def root():
     return render_template('index.html')
 
-
-#For restful API pages, use this pattern
-class Solve(Resource):
-    def get(self,country,wind_cost):
-        job = queue.enqueue("solve.solve",country,wind_cost)
+@app.route('/jobs', methods=['GET','POST'])
+def jobs_api():
+    if request.method == "POST":
+        print(request.headers['Content-Type'])
+        print(request.json)
+        job = queue.enqueue("solve.solve",request.json)
         result = {"jobid" : job.get_id()}
         return jsonify(result)
+    elif request.method == "GET":
+        #return number of active jobs
+        return "not implemented yet"
 
-class Poll(Resource):
-    def get(self,jobid):
-        job = Job.fetch(jobid, connection=conn)
-        try:
-            return job.meta['progress']
-        except:
-            return "Job not running"
+@app.route('/jobs/<jobid>')
+def jobid_api(jobid):
+    job = Job.fetch(jobid, connection=conn)
+    try:
+        status = job.meta['status']
+    except:
+        status = "Waiting for job to run"
 
-class Final(Resource):
-    def get(self,jobid):
-        job = Job.fetch(jobid, connection=conn)
-        if job.is_finished:
-            return jsonify(job.result)
-        else:
-            return "Nay!", 202
+    result = {"status" : status}
 
+    if job.is_finished:
+        result.update(job.result)
 
+    print(result)
 
-class Coordinates(Resource):
-    def get(self,lat,lng):
-        lat = float(lat)
-        lng = float(lng)
-        result = {"lat" : lat,
-                  "lng" : lng,
-                  "product" : lat*lng}
-        return jsonify(result)
+    return jsonify(result)
 
 
-api.add_resource(Solve, '/solve/<country>/<wind_cost>')
-api.add_resource(Poll, '/poll/<jobid>')
-api.add_resource(Final, '/final/<jobid>')
-api.add_resource(Coordinates, '/coordinates/<lat>/<lng>')
+@app.route('/coordinates/<lat>/<lng>')
+def coordinates_api(lat,lng):
+    lat = float(lat)
+    lng = float(lng)
+    result = {"lat" : lat,
+              "lng" : lng,
+              "product" : lat*lng}
+    return jsonify(result)
 
 
 if __name__ == '__main__':

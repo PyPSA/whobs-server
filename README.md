@@ -2,6 +2,13 @@
 # Server for optimising Wind-Hydrogen-Other-Battery-Solar (WHOBS) systems
 
 
+## Requirements
+
+Redis, Flask
+
+ninja files
+
+
 ## Run without server
 
 See the regular [WHOBS](https://github.com/PyPSA/WHOBS) repository.

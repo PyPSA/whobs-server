@@ -68,9 +68,12 @@ costs["fixed"] = [(annuity(v["lifetime"],v["discount rate"])+v["FOM"]/100.)*v["i
 
 
 
-def solve(ct,wind_cost):
+def solve(assumptions):
+    print(assumptions)
+    ct = assumptions['country']
+    wind_cost = float(assumptions['wind_cost'])
     job = get_current_job()
-    job.meta['progress'] = "Reading in data"
+    job.meta['status'] = "Reading in data"
     job.save_meta()
 
     print('Starting task for {} with wind cost {}'.format(ct,wind_cost))
@@ -148,7 +151,7 @@ def solve(ct,wind_cost):
                      e_cyclic=True,
                      capital_cost=costs.at["hydrogen storage","fixed"])
 
-    job.meta['progress'] = "Solving optimisation problem"
+    job.meta['status'] = "Solving optimisation problem"
     job.save_meta()
 
     network.lopf(solver_name="gurobi",
@@ -159,7 +162,7 @@ def solve(ct,wind_cost):
     print(network.links.p_nom_opt)
     print(network.stores.e_nom_opt)
 
-    job.meta['progress'] = "Finished"
+    job.meta['status'] = "Finished"
     job.save_meta()
 
     return {"objective" : network.objective/8760,
