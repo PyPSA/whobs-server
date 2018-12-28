@@ -1,0 +1,19 @@
+
+
+#mapid {
+    height: 400px;
+}
+
+
+#solve-button {
+    background: #f08080;
+    padding-right: 26px;
+    border-radius: 3px;
+    border: none;
+    color: white;
+    margin: 0;
+    padding: 0 12px;
+    width: 60px;
+    cursor: pointer;
+    height: 30px;
+}

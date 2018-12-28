@@ -1,0 +1,16 @@
+
+
+*__pycache__*
+
+flask-by-example
+
+*.csv
+
+*.ipynb
+
+*.org
+
+*.lp
+
+
+static/d3.v4.min.js

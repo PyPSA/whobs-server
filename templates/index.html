@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.3/dist/leaflet.css"
+      integrity="sha512-Rksm5RenBEKSKFjgI3a41vrjkw4EVPlJ3+OiI65vTjIdo9brlAacEuKOiQ5OFh7cOI1bkDwLqdLw3Zg0cRJAAQ=="
+      crossorigin=""/>
+
+<!-- Make sure you put this AFTER Leaflet's CSS -->
+<script src="https://unpkg.com/leaflet@1.3.3/dist/leaflet.js"
+	integrity="sha512-tAGcCfR4Sc5ZP5ZoVz0quoZDYX5aCtEm/eu1KhSLj2c9eFrylXZknQYmxUssFaVJKvvc0dJQixhGjG2yXWiV9Q=="
+	   crossorigin=""></script>
+
+<script src="{{ url_for('static', filename='d3.v4.min.js') }}" charset="utf-8"></script>
+
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='solver.css') }}">
+
+</head>
+<body>
+
+  <div id="container">
+    <h1>Solve WHOBS system</h1>
+
+
+	  <p>Some text.</p>
+
+
+	  	  <div id="scenario">
+		    <h3>Choose technologies</h3>
+		    <div id="tech_checkboxes">
+		      </div>
+		    <div id="tech_costs">
+		      </div>
+
+	      <input type="checkbox" id="wind" name="wind" checked><label for="wind">Wind</label>
+
+	      <input id="wind-cost" type="number" name="wind-cost"><label for="wind-cost">Wind capital cost (overnight) [EUR/kW]</label>
+
+	      <input type="checkbox" id="solar" name="solar" checked><label for="solar">Solar</label>
+
+	      <input id="solar-cost" type="number" name="solar-cost"><label for="solar-cost">Solar PV capital cost (overnight) [EUR/kW]</label>
+
+
+	      <p><input id="country" type="text" name="country" value="FR"><label for="country">Country</label>
+	  </div>
+
+
+		  <div id="solve">
+		    <button id="solve-button">Solve</button>
+		    <p>Status: <span id="status">Waiting for job</span></p>
+		    <p>Objective: <span id="objective"></span></p>
+		    <p>Solar capacity: <span id="solar_capacity"></span></p>
+		  </div>
+
+
+
+		  <div id="mapid"></div>
+		  </div>
+  <script src="{{ url_for('static', filename='solver.js') }}"></script>
+</body>
+</html>
