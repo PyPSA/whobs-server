@@ -233,7 +233,7 @@ def solve(assumptions):
 
     available = network.generators_t.p_max_pu.multiply(network.generators.p_nom_opt).sum()
     used = network.generators_t.p.sum()
-    curtailment = (available-used)/available
+    curtailment = ((available-used)/available).fillna(0.)
     total_load = network.loads_t.p.sum().sum()
     supply = available/total_load
 

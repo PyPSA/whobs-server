@@ -59,15 +59,5 @@ def jobid_api(jobid):
     return jsonify(result)
 
 
-@app.route('/coordinates/<lat>/<lng>')
-def coordinates_api(lat,lng):
-    lat = float(lat)
-    lng = float(lng)
-    result = {"lat" : lat,
-              "lng" : lng,
-              "product" : lat*lng}
-    return jsonify(result)
-
-
 if __name__ == '__main__':
     app.run(port='5002')

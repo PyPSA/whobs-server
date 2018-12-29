@@ -52,14 +52,25 @@
       <div id="solve">
 	<button id="solve-button">Solve</button>
 	<p>Status: <span id="status">Waiting for job</span></p>
-	<p>Average system cost [EUR/MWh]: <span id="objective"></span></p>
-	<p>Solar capacity [MW]: <span id="solar_capacity"></span></p>
-	<p>Wind capacity [MW]: <span id="wind_capacity"></span></p>
       </div>
 
     </div>
 
-    <div id="mapid"></div>
+    <div id="selectCountry">
+      <h3>Select European country</h3>
+      <div id="mapid">
+      </div>
+    </div>
+
+    <div id="results">
+      <h3>Results</h3>
+      	<p>Average system cost [EUR/MWh]: <span id="objective"></span></p>
+	<p>Solar capacity [MW]: <span id="solar_capacity"></span></p>
+	<p>Wind capacity [MW]: <span id="wind_capacity"></span></p>
+    </div>
+
+
+
   </div>
   <script src="{{ url_for('static', filename='solver.js') }}"></script>
 </body>

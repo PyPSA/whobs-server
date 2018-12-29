@@ -1,61 +1,3 @@
-var d = 10;
-var mymap = L.map('mapid').setView([51.505, -0.09], 13);
-
-L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
-    attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
-    maxZoom: 18,
-    id: 'mapbox.streets',
-    accessToken: 'pk.eyJ1IjoibndvcmJtb3QiLCJhIjoiY2prbWxibTUyMjZsMDNwcGp2bHR3OWZsaSJ9.MgSprgR6BEbBLXl5rPvXvQ'
-}).addTo(mymap);
-
-var marker = L.marker([51.5, -0.09]).addTo(mymap);
-
-var circle = L.circle([51.508, -0.11], {
-    color: 'red',
-    fillColor: '#f03',
-    fillOpacity: 0.5,
-    radius: 500
-}).addTo(mymap);
-
-var polygon = L.polygon([
-    [51.509, -0.08],
-    [51.503, -0.06],
-    [51.51, -0.047]
-]).addTo(mymap);
-
-marker.bindPopup("<b>Hello world!</b><br>I am a badass popup.").openPopup();
-circle.bindPopup("I am a circle.");
-polygon.bindPopup("I am a polygon.");
-
-var popup = L.popup();
-
-function process_coordinates(latlng){
-    console.log("lat",latlng["lat"]);
-    console.log("lng",latlng["lng"]);
-    var request = new XMLHttpRequest();
-    request.open('GET', '/coordinates/' + latlng['lat'] + '/' + latlng['lng'], true);
-    request.onload = function () {
-
-	// Begin accessing JSON data here
-	var data = JSON.parse(this.response);
-	console.log(data);
-
-    }
-
-    request.send();
-
-};
-
-function onMapClick(e) {
-    process_coordinates(e.latlng);
-    popup
-	.setLatLng(e.latlng)
-	.setContent("You clicked the map at " + e.latlng.toString())
-	.openOn(mymap);
-}
-
-mymap.on('click', onMapClick);
-
 
 
 
@@ -75,6 +17,100 @@ let assumptions = {"country" : "DE",
 		   "hydrogen_turbine_cost" : 800,
 		   "hydrogen_turbine_efficiency" : 60,
 		   "discount_rate" : 5};
+
+
+
+
+var d = 10;
+
+// Centered on Frankfurt
+var mymap = L.map('mapid').setView([50.11, 8.68], 3);
+
+L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
+    attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+    maxZoom: 18,
+    id: 'mapbox.streets',
+    accessToken: 'pk.eyJ1IjoibndvcmJtb3QiLCJhIjoiY2prbWxibTUyMjZsMDNwcGp2bHR3OWZsaSJ9.MgSprgR6BEbBLXl5rPvXvQ'
+}).addTo(mymap);
+
+
+
+
+
+// See https://oramind.com/country-border-highlighting-with-leaflet-js/
+d3.json("static/ne_50m_admin_0_countries_simplified_europe.json", function (json){
+    function style(feature) {
+	if(feature.properties.iso_a2 == assumptions["country"]){
+	return {
+	    fillColor: "red",
+	    weight: 1,
+	    opacity: 0.4,
+	    color: "red",
+	    fillOpacity: 0.3
+	};
+	} else {
+	return {
+	    fillColor: "blue",
+	    weight: 1,
+	    opacity: 0.4,
+	    color: "blue",
+	    fillOpacity: 0.3
+	};
+	};
+    };
+    geojson = L.geoJson(json, {
+	onEachFeature: onEachFeature,
+	style : style
+    }).addTo(mymap);
+
+    function onEachFeature(feature, layer){
+	layer.on({
+	    click : onCountryClick,
+	    mouseover : onCountryMouseOver,
+	    mouseout : onCountryMouseOut
+	});
+    }
+});
+
+
+
+function onCountryMouseOut(e){
+    geojson.resetStyle(e.target);
+}
+
+function onCountryClick(e){
+    console.log(e.target.feature.properties.name,e.target.feature.properties.iso_a2);
+
+    assumptions["country"] = e.target.feature.properties.iso_a2;
+    document.getElementsByName("country")[0].value = assumptions["country"];
+    console.log("country changed to",assumptions["country"]);
+
+    geojson.eachLayer(function(t,i){ geojson.resetStyle(t)});
+    //console.log(t.feature.properties.name)})
+}
+
+/**
+ * Callback for when a country is highlighted. Will take care of the ui aspects, and it will call
+ * other callbacks after done.
+ * @param e
+ */
+function onCountryMouseOver(e){
+
+    var layer = e.target;
+
+    layer.setStyle({
+	weight: 2,
+	color: '#666',
+	dashArray: '',
+	fillOpacity: 0.7
+    });
+
+    if (!L.Browser.ie && !L.Browser.opera) {
+	layer.bringToFront();
+    }
+}
+
+
 
 for (let i = 0; i < Object.keys(assumptions).length; i++){
     let key = Object.keys(assumptions)[i];
@@ -159,9 +195,9 @@ function poll_result() {
 	    console.log("results:",results);
 	    solving = false;
 	    solveButton.text("Solve");
-	    document.getElementById("objective").innerHTML=results["objective"];
-	    document.getElementById("solar_capacity").innerHTML=results["solar_capacity"];
-	    document.getElementById("wind_capacity").innerHTML=results["wind_capacity"];
+	    document.getElementById("objective").innerHTML=results["objective"].toFixed(2);
+	    document.getElementById("solar_capacity").innerHTML=results["solar_capacity"].toFixed(2);
+	    document.getElementById("wind_capacity").innerHTML=results["wind_capacity"].toFixed(2);
 	};
     };
     poll.send();

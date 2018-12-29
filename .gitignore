@@ -14,3 +14,5 @@ flask-by-example
 
 
 static/d3.v4.min.js
+
+static/ne_50*.json
