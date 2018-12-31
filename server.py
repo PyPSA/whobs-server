@@ -1,6 +1,5 @@
 
 from flask import Flask, request, jsonify, render_template
-from flask_restful import Resource, Api
 
 
 from redis import Redis
@@ -15,7 +14,6 @@ queue = Queue('whobs', connection=conn)
 
 
 app = Flask(__name__)
-api = Api(app)
 
 
 @app.route('/')

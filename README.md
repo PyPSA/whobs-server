@@ -4,9 +4,27 @@
 
 ## Requirements
 
-Redis, Flask
+Ubuntu packages:
 
-ninja files
+sudo apt install coinor-clp coinor-cbc python3-venv redis-server
+
+In addition for a server deployment:
+
+sudo apt install nginx
+
+Python:
+
+pip install ipython pandas numpy redis rq Flask
+
+pip install git+https://github.com/PyPSA/PyPSA.git
+
+In addition for a server deployment:
+
+pip install gunicorn
+
+
+
+renewables.ninja files
 
 
 ## Run without server

@@ -80,7 +80,8 @@ function onCountryMouseOut(e){
 }
 
 function onCountryClick(e){
-    console.log(e.target.feature.properties.name,e.target.feature.properties.iso_a2);
+
+    //console.log(e.target.feature.properties.name,e.target.feature.properties.iso_a2);
 
     assumptions["country"] = e.target.feature.properties.iso_a2;
     document.getElementsByName("country")[0].value = assumptions["country"];
@@ -154,7 +155,6 @@ solveButton.on("click", function() {
 	send_job.setRequestHeader("Content-Type", "application/json");
 	send_job.onload = function () {
 	    var data = JSON.parse(this.response);
-	    console.log(data);
 	    jobid = data["jobid"];
 	    timer = setInterval(poll_result, poll_interval);
 	    console.log("timer",timer,"polling every",poll_interval,"milliseconds");
@@ -165,7 +165,6 @@ solveButton.on("click", function() {
 	button.text("Solving");
 	document.getElementById("status").innerHTML="Sending job to solver";
     };
-    console.log("");
 });
 //api.add_resource(Poll, '/poll/<jobid>')
 //api.add_resource(Final, '/final/<jobid>')
@@ -174,7 +173,7 @@ solveButton.on("click", function() {
 
 function poll_result() {
 
-    console.log("gibbon",jobid);
+    console.log("Jobid",jobid);
     var poll = new XMLHttpRequest();
 
     poll.open('GET', '/jobs/' + jobid, true);
@@ -275,8 +274,6 @@ function draw_power_graph(results){
 	    }
 	data.push(item);
     }
-
-    console.log(data);
 
     ymin[name] = 0, ymax[name] = 0;
     for (var k = 0; k < results["snapshots"].length; k++){

@@ -213,7 +213,7 @@ def solve(assumptions):
     job.meta['status'] = "Solving optimisation problem"
     job.save_meta()
 
-    solver_name = "gurobi"
+    solver_name = "cbc"
     status, termination_condition = network.lopf(solver_name=solver_name,
                                                  extra_functionality=extra_functionality)
 
