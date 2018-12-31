@@ -1,5 +1,9 @@
 
 
+var parseDate = d3.timeParse("%Y-%m-%d %H:%M:00");
+
+var formatDate = d3.timeFormat("%b %d %H:%M");
+
 
 let assumptions = {"country" : "DE",
 		   "year" : 2013,
@@ -40,22 +44,19 @@ L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={
 // See https://oramind.com/country-border-highlighting-with-leaflet-js/
 d3.json("static/ne_50m_admin_0_countries_simplified_europe.json", function (json){
     function style(feature) {
-	if(feature.properties.iso_a2 == assumptions["country"]){
+	function getColor(f){
+	    if(feature.properties.iso_a2 == assumptions["country"]){
+		return "red";
+	    } else {
+		return "blue";
+	    };
+	};
 	return {
-	    fillColor: "red",
+	    fillColor: getColor(feature),
 	    weight: 1,
 	    opacity: 0.4,
-	    color: "red",
+	    color: getColor(feature),
 	    fillOpacity: 0.3
-	};
-	} else {
-	return {
-	    fillColor: "blue",
-	    weight: 1,
-	    opacity: 0.4,
-	    color: "blue",
-	    fillOpacity: 0.3
-	};
 	};
     };
     geojson = L.geoJson(json, {
@@ -147,6 +148,7 @@ var poll_interval = 2000;
 solveButton.on("click", function() {
     var button = d3.select(this);
     if (button.text() == "Solve") {
+	clear_results();
 	var send_job = new XMLHttpRequest();
 	send_job.open('POST', '/jobs', true);
 	send_job.setRequestHeader("Content-Type", "application/json");
@@ -195,10 +197,140 @@ function poll_result() {
 	    console.log("results:",results);
 	    solving = false;
 	    solveButton.text("Solve");
-	    document.getElementById("objective").innerHTML=results["objective"].toFixed(2);
-	    document.getElementById("solar_capacity").innerHTML=results["solar_capacity"].toFixed(2);
-	    document.getElementById("wind_capacity").innerHTML=results["wind_capacity"].toFixed(2);
+	    display_results(results);
 	};
     };
     poll.send();
 };
+
+
+function clear_results(){
+    document.getElementById("results_assumptions").innerHTML="";
+    document.getElementById("objective").innerHTML="";
+    document.getElementById("solar_capacity").innerHTML="";
+    document.getElementById("wind_capacity").innerHTML="";
+    d3.select("#power").selectAll("g").remove();
+};
+
+
+function display_results(results){
+    document.getElementById("results_assumptions").innerHTML="country " + results["assumptions"]["country"] + " in year " + results["assumptions"]["year"];
+    document.getElementById("objective").innerHTML=results["objective"].toFixed(2);
+    document.getElementById("solar_capacity").innerHTML=results["solar_capacity"].toFixed(2);
+    document.getElementById("wind_capacity").innerHTML=results["wind_capacity"].toFixed(2);
+
+
+    for(var j=0; j < results.snapshots.length; j++) {
+	results.snapshots[j] = parseDate(results.snapshots[j]);
+    };
+
+    draw_power_graph(results);
+};
+
+
+//graph parameters
+var x = {};
+var y = {};
+var ymin = {};
+var ymax = {};
+
+
+function draw_power_graph(results){
+
+    var name = "time";
+
+    // Inspired by https://bl.ocks.org/mbostock/3885211
+
+    var svgGraph = d3.select("#power"),
+	margin = {top: 20, right: 20, bottom: 30, left: 50},
+	width = svgGraph.attr("width") - margin.left - margin.right,
+	height = svgGraph.attr("height") - margin.top - margin.bottom;
+
+    // remove existing
+    svgGraph.selectAll("g").remove();
+    x[name] = d3.scaleTime().range([0, width]),
+	y[name] = d3.scaleLinear().range([height, 0]);
+
+    data = [];
+
+    // Custom version of d3.stack
+
+    var previous = new Array(results["snapshots"].length).fill(0);
+
+    for (var j = 0; j < results["positive"].columns.length; j++){
+	var item = [];
+	for (var k = 0; k < results["snapshots"].length; k++){
+	    item.push([previous[k], previous[k] + results["positive"]["data"][k][j]]);
+	    previous[k] = previous[k] + results["positive"]["data"][k][j];
+	    }
+	data.push(item);
+    }
+    var previous = new Array(results["snapshots"].length).fill(0);
+
+    for (var j = 0; j < results["negative"].columns.length; j++){
+	var item = [];
+	for (var k = 0; k < results["snapshots"].length; k++){
+	    item.push([-previous[k] - results["negative"]["data"][k][j],-previous[k]]);
+	    previous[k] = previous[k] + results["negative"]["data"][k][j];
+	    }
+	data.push(item);
+    }
+
+    console.log(data);
+
+    ymin[name] = 0, ymax[name] = 0;
+    for (var k = 0; k < results["snapshots"].length; k++){
+	if(data[results["positive"].columns.length-1][k][1] > ymax[name]){ ymax[name] = data[results["positive"].columns.length-1][k][1];};
+	if(data[results["positive"].columns.length+results["negative"].columns.length-1][k][0] < ymin[name]){ ymin[name] = data[results["positive"].columns.length+results["negative"].columns.length-1][k][0];};
+    };
+
+    var area = d3.area()
+        .x(function(d, i) { return x[name](results["snapshots"][i]); })
+        .y0(function(d) { return y[name](d[0]); })
+        .y1(function(d) { return y[name](d[1]); });
+
+
+    var g = svgGraph.append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+    x[name].domain(d3.extent(results["snapshots"]));
+    y[name].domain([ymin[name],ymax[name]]);
+
+    var layer = g.selectAll(".layer")
+        .data(data)
+        .enter().append("g")
+        .attr("class", "layer");
+
+    layer.append("path")
+        .attr("class", "area")
+        .style("fill", function(d, i) {if(i < results["positive"].color.length){ return results["positive"].color[i];} else{return results["negative"].color[i-results["positive"].color.length];} })
+        .attr("d", area);
+
+    g.append("g")
+        .attr("class", "axis axis--x")
+        .attr("transform", "translate(0," + height + ")")
+        .call(d3.axisBottom(x[name]));
+
+    g.append("g")
+        .attr("class", "axis axis--y")
+        .call(d3.axisLeft(y[name]));
+
+    var label = svgGraph.append("g").attr("class", "y-label");
+
+    // text label for the y axis
+    label.append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 0)
+        .attr("x",0 - (height / 2))
+        .attr("dy", "1em")
+        .style("text-anchor", "middle")
+        .text("Power [MW]");
+};
+
+
+
+// load initial results for DE
+d3.json("static/results-7339a28e-7be9-4b3a-91c4-7ec043076d01.json", function(results){
+    display_results(results);
+});

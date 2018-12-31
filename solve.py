@@ -5,7 +5,12 @@ import pandas as pd
 from pyomo.environ import Constraint
 from rq import get_current_job
 
+import json
+
+
+
 idx = pd.IndexSlice
+
 
 
 #read in renewables.ninja solar time series
@@ -16,6 +21,12 @@ solar_pu = pd.read_csv('ninja_pv_europe_v1.1_sarah.csv',
 wind_pu = pd.read_csv('ninja_wind_europe_v1.1_current_on-offshore.csv',
                        index_col=0,parse_dates=True)
 
+colors = {"wind":"#3B6182",
+          "solar" :"#FFFF00",
+          "battery" : "#999999",
+          "hydrogen_turbine" : "red",
+          "hydrogen_electrolyser" : "m",
+          }
 
 def annuity(lifetime,rate):
     if rate == 0.:
@@ -202,7 +213,7 @@ def solve(assumptions):
     job.meta['status'] = "Solving optimisation problem"
     job.save_meta()
 
-    solver_name = "cbc"
+    solver_name = "gurobi"
     status, termination_condition = network.lopf(solver_name=solver_name,
                                                  extra_functionality=extra_functionality)
 
@@ -237,28 +248,42 @@ def solve(assumptions):
     total_load = network.loads_t.p.sum().sum()
     supply = available/total_load
 
+    power = {}
+
+    vre = ["wind","solar"]
+
+    power["positive"] = pd.DataFrame(index=network.snapshots,columns=vre+["battery","hydrogen_turbine"])
+    power["negative"] = pd.DataFrame(index=network.snapshots,columns=["battery","hydrogen_electrolyser"])
+
+
     for g in ["wind","solar"]:
         if assumptions[g]:
             results[g+"_capacity"] = network.generators.p_nom_opt[ct + " " + g]
             results[g+"_cost"] = (network.generators.p_nom_opt*network.generators.capital_cost)[ct + " " + g]/year_weight
             results[g+"_curtailment"] = curtailment[ct + " " + g]
             results[g+"_supply"] = supply[ct + " " + g]
+            power["positive"][g] = network.generators_t.p[ct + " " + g]
         else:
             results[g+"_capacity"] = 0.
             results[g+"_cost"] = 0.
             results[g+"_curtailment"] = 0.
             results[g+"_supply"] = 0.
+            power["positive"][g] = 0.
 
     if assumptions["battery"]:
         results["battery_power_capacity"] = network.links.at[ct + " battery_power","p_nom_opt"]
         results["battery_power_cost"] = network.links.at[ct + " battery_power","p_nom_opt"]*network.links.at[ct + " battery_power","capital_cost"]/year_weight
         results["battery_energy_capacity"] = network.stores.at[ct + " battery_energy","e_nom_opt"]
         results["battery_energy_cost"] = network.stores.at[ct + " battery_energy","e_nom_opt"]*network.stores.at[ct + " battery_energy","capital_cost"]/year_weight
+        power["positive"]["battery"] = -network.links_t.p1[ct + " battery_discharge"]
+        power["negative"]["battery"] = network.links_t.p0[ct + " battery_power"]
     else:
         results["battery_power_capacity"] = 0.
         results["battery_power_cost"] = 0.
         results["battery_energy_capacity"] = 0.
         results["battery_energy_cost"] = 0.
+        power["positive"]["battery"] = 0.
+        power["negative"]["battery"] = 0.
 
     if assumptions["hydrogen"]:
         results["hydrogen_electrolyser_capacity"] = network.links.at[ct + " hydrogen_electrolyser","p_nom_opt"]
@@ -267,6 +292,8 @@ def solve(assumptions):
         results["hydrogen_turbine_cost"] = network.links.at[ct + " hydrogen_turbine","p_nom_opt"]*network.links.at[ct + " hydrogen_turbine","capital_cost"]/year_weight
         results["hydrogen_energy_capacity"] = network.stores.at[ct + " hydrogen_energy","e_nom_opt"]
         results["hydrogen_energy_cost"] = network.stores.at[ct + " hydrogen_energy","e_nom_opt"]*network.stores.at[ct + " hydrogen_energy","capital_cost"]/year_weight
+        power["positive"]["hydrogen_turbine"] = -network.links_t.p1[ct + " hydrogen_turbine"]
+        power["negative"]["hydrogen_electrolyser"] = network.links_t.p0[ct + " hydrogen_electrolyser"]
     else:
         results["hydrogen_electrolyser_capacity"] = 0.
         results["hydrogen_electrolyser_cost"] = 0.
@@ -274,5 +301,27 @@ def solve(assumptions):
         results["hydrogen_turbine_cost"] = 0.
         results["hydrogen_energy_capacity"] = 0.
         results["hydrogen_energy_cost"] = 0.
+        power["positive"]["hydrogen_turbine"] = 0.
+        power["negative"]["hydrogen_electrolyser"] = 0.
+
+    results["assumptions"] = assumptions
+
+    results["snapshots"] = [str(s) for s in network.snapshots]
+
+    for sign in ["negative","positive"]:
+        results[sign] = {}
+        results[sign]["columns"] = list(power[sign].columns)
+        results[sign]["data"] = power[sign].values.tolist()
+        results[sign]["color"] = [colors[c] for c in power[sign].columns]
+
+    print(power["positive"].head())
+    print(power["negative"].head())
+
+    balance = power["positive"].sum(axis=1) - power["negative"].sum(axis=1)
+
+    print(balance.describe())
+
+    with open('results-{}.json'.format(job.id), 'w') as fp:
+        json.dump(results,fp)
 
     return results

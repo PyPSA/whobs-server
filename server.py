@@ -9,7 +9,6 @@ import rq
 from rq.job import Job
 from rq import Queue
 
-
 conn = Redis.from_url('redis://')
 
 queue = Queue('whobs', connection=conn)
@@ -53,8 +52,6 @@ def jobid_api(jobid):
         result.update(job.result)
     elif job.is_finished:
         result.update(job.result)
-
-    print(result)
 
     return jsonify(result)
 

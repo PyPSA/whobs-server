@@ -28,7 +28,7 @@
 
     <div id="assumptions">
       <h3>Choose technologies, costs and other assumptions</h3>
-      <input type="text" name="country" value="FR"> European country (2-letter code)<br />
+      <input type="text" name="country" value="FR"> European country (2-letter ISO code)<br />
       <br />
       <input type="number" name="year"> Weather year (from 1985 to 2015 inclusive)<br />
       <br />
@@ -64,9 +64,11 @@
 
     <div id="results">
       <h3>Results</h3>
-      	<p>Average system cost [EUR/MWh]: <span id="objective"></span></p>
-	<p>Solar capacity [MW]: <span id="solar_capacity"></span></p>
-	<p>Wind capacity [MW]: <span id="wind_capacity"></span></p>
+      <p><b>Results for</b> <span id="results_assumptions"></span></p>
+      <p>Average system cost [EUR/MWh]: <span id="objective"></span></p>
+      <p>Solar capacity [MW]: <span id="solar_capacity"></span></p>
+      <p>Wind capacity [MW]: <span id="wind_capacity"></span></p>
+      <svg width="1000" height="400" id="power"></svg>
     </div>
 
 
