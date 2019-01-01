@@ -1,5 +1,22 @@
 
-# Server for optimising Wind-Hydrogen-Other-Battery-Solar (WHOBS) systems
+# Server for live optimisation Wind-Hydrogen-Other-Battery-Solar (WHOBS) systems
+
+This is the code for a live version of the
+[WHOBS](https://github.com/PyPSA/WHOBS) systems, where you can
+optimise a zero-direct-emission electricity system with wind, solar
+and storage (using batteries and electrolysed hydrogen gas) to provide
+a baseload electricity demand, using the cost and other assumptions of
+your choice. It uses only free software and open data, including
+[Python for Power System Analysis
+(PyPSA)](https://github.com/PyPSA/PyPSA) for the optimisation
+framework, [renewables.ninja](https://www.renewables.ninja/) for the
+open weather data, [Clp](https://projects.coin-or.org/Clp) for the
+solver, and free software for the server infrastructure.
+
+You can find a live version at:
+
+<https://whobs.org/>
+
 
 
 ## Requirements
@@ -51,14 +68,16 @@ where `whobs` is the name of the queue. No jobs will be solved until
 this is run. You can run multiple workers to process jobs in parallel.
 
 
-## Deploy on a server
+## Deploy on a publicly-accessible server
 
-gunicorn, etc.
+Use nginx, gunicorn for the Python server, rq, and manage with supervisor.
+
+See <./nginx-configuration.txt>
 
 
 ## License
 
-Copyright 2018 Tom Brown <https://nworbmot.org/>
+Copyright 2018-2019 Tom Brown <https://nworbmot.org/>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as

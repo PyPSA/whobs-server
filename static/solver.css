@@ -59,7 +59,9 @@
     height: 30px;
 }
 
-
+#status {
+    color: red;
+}
 
 #results {
     float: left;

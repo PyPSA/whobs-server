@@ -20,11 +20,52 @@
 <body>
 
   <div id="container">
-    <h1>Solve WHOBS system</h1>
+    <h1>Meet constant demand from wind+solar+storage with zero-direct-emissions using your own assumptions</h1>
 
+    <p>This online tool calculates what it would cost to meet a
+    constant "baseload" electricity demand profile from a combination
+    of wind power, solar power and storage (using batteries and
+    electrolysed hydrogen) for different European countries. It will
+    be extended worldwide shortly.</p>
 
-    <p>Some text.</p>
+    <p>You can change the assumptions yourself (e.g. which country,
+    which weather year, the selection of technologies, technological
+    parameters and costs) and re-solve the system to see how it
+    changes.</p>
 
+    <p>This tool is built only with free software and open data; the
+    code for it can be downloaded from the Github
+    repository <a href="https://github.com/PyPSA/whobs-server">whobs-server</a>
+    for more details. In particular, it uses
+    the <a href="https://github.com/PyPSA/PyPSA">Python for Power
+    System Analysis (PyPSA)</a> energy optimisation framework, open
+    weather data
+    from <a href="https://www.renewables.ninja/">renewables.ninja</a>,
+    the <a href="https://projects.coin-or.org/Clp">Clp</a> solver and
+    free software for the server infrastructure.</p>
+
+    <p>This is a <b>toy model</b> with a <b>strongly simplified</b> setup. Please read the <a href="https://github.com/PyPSA/WHOBS#warnings">warnings</a> before interpreting the results. In particular:</p>
+
+    <p>1) Electricity systems with zero direct CO2 emissions can be
+    built more cheaply by using additional technology options. The
+    examples here are simply a toy model to put an upper bound on the
+    costs for a very simple setup. Additional generation technologies
+    which may reduce costs include using existing hydroelectric
+    generators, biomass from sustainable resources (such as waste and
+    agricultural/forestry residues), offshore wind, concentrating
+    solar thermal, geothermal, ocean energy, nuclear and
+    fossil/biomass plants with CCS. Additional storage technologies
+      include redox flow batteries, compressed air energy storage, etc.</p>
+
+    <p>2) No import or export capacities with other countries are
+    assumed, so each country must meet the baseload profile by
+    itself. Existing and planned transmission grid connections between
+    countries can reduce costs by up to 20% by smoothing wind over a
+    larger area.</p>
+
+    <p>3) Costs here are for completely decarbonised electricity
+    systems. Reaching lower levels of decarbonisation is much cheaper
+    and doesn't necessarily require any storage at all.</p>
 
     <div id="assumptions">
       <h3>Choose technologies, costs and other assumptions</h3>
@@ -51,6 +92,9 @@
 
       <div id="solve">
 	<button id="solve-button">Solve</button>
+	<p> Warning: It takes about 40 seconds to solve and return a
+	result, please be patient! If there's a queue, it may take
+	longer. We're working on improving the performace.</p>
 	<p>Status: <span id="status">Waiting for job</span></p>
       </div>
 
