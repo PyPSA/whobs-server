@@ -35,7 +35,7 @@ def annuity(lifetime,rate):
         return rate/(1. - 1. / (1. + rate)**lifetime)
 
 
-load = 1. #MW
+load = 100. #MW
 
 frequency = 3
 
@@ -135,7 +135,7 @@ def solve(assumptions):
                     bus=ct,
                     p_max_pu = solar_pu[ct],
                     p_nom_extendable = True,
-                    marginal_cost = 0.01, #Small cost to prefer curtailment to destroying energy in storage, solar curtails before wind
+                    marginal_cost = 1., #Small cost to prefer curtailment to destroying energy in storage, solar curtails before wind
                     capital_cost = assumptions_df.at['solar','fixed'])
 
     if assumptions["wind"]:
@@ -143,7 +143,7 @@ def solve(assumptions):
                     bus=ct,
                     p_max_pu = wind_pu[ct+"_ON"],
                     p_nom_extendable = True,
-                    marginal_cost = 0.02, #Small cost to prefer curtailment to destroying energy in storage, solar curtails before wind
+                    marginal_cost = 2., #Small cost to prefer curtailment to destroying energy in storage, solar curtails before wind
                     capital_cost = assumptions_df.at['wind','fixed'])
 
 
@@ -288,7 +288,7 @@ def solve(assumptions):
     if assumptions["hydrogen"]:
         results["hydrogen_electrolyser_capacity"] = network.links.at[ct + " hydrogen_electrolyser","p_nom_opt"]
         results["hydrogen_electrolyser_cost"] = network.links.at[ct + " hydrogen_electrolyser","p_nom_opt"]*network.links.at[ct + " hydrogen_electrolyser","capital_cost"]/year_weight
-        results["hydrogen_turbine_capacity"] = network.links.at[ct + " hydrogen_turbine","p_nom_opt"]
+        results["hydrogen_turbine_capacity"] = network.links.at[ct + " hydrogen_turbine","p_nom_opt"]*network.links.at[ct + " hydrogen_turbine","efficiency"]
         results["hydrogen_turbine_cost"] = network.links.at[ct + " hydrogen_turbine","p_nom_opt"]*network.links.at[ct + " hydrogen_turbine","capital_cost"]/year_weight
         results["hydrogen_energy_capacity"] = network.stores.at[ct + " hydrogen_energy","e_nom_opt"]
         results["hydrogen_energy_cost"] = network.stores.at[ct + " hydrogen_energy","e_nom_opt"]*network.stores.at[ct + " hydrogen_energy","capital_cost"]/year_weight

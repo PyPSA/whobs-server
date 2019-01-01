@@ -1,8 +1,8 @@
 
-# Server for live optimisation Wind-Hydrogen-Other-Battery-Solar (WHOBS) systems
+# Online optimisation for Wind-Hydrogen-Other-Battery-Solar (WHOBS) systems
 
-This is the code for a live version of the
-[WHOBS](https://github.com/PyPSA/WHOBS) systems, where you can
+This is the code for the online optimisation of
+[WHOBS](https://github.com/PyPSA/WHOBS) systems. You can
 optimise a zero-direct-emission electricity system with wind, solar
 and storage (using batteries and electrolysed hydrogen gas) to provide
 a baseload electricity demand, using the cost and other assumptions of

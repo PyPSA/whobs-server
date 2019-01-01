@@ -5,7 +5,7 @@ var parseDate = d3.timeParse("%Y-%m-%d %H:%M:00");
 var formatDate = d3.timeFormat("%b %d %H:%M");
 
 
-let assumptions = {"country" : "DE",
+let assumptions = {"country" : "GB",
 		   "year" : 2013,
 		   "wind" : true,
 		   "wind_cost" : 1200,
@@ -203,21 +203,24 @@ function poll_result() {
 };
 
 
+results_list=["average_price","solar_capacity","wind_capacity","battery_power_capacity",
+	      "battery_energy_capacity","hydrogen_electrolyser_capacity",
+	      "hydrogen_turbine_capacity","hydrogen_energy_capacity"]
+
 function clear_results(){
     document.getElementById("results_assumptions").innerHTML="";
-    document.getElementById("objective").innerHTML="";
-    document.getElementById("solar_capacity").innerHTML="";
-    document.getElementById("wind_capacity").innerHTML="";
+    for (let i = 0; i < results_list.length; i++){
+	document.getElementById(results_list[i]).innerHTML="";
+    };
     d3.select("#power").selectAll("g").remove();
 };
 
 
 function display_results(results){
-    document.getElementById("results_assumptions").innerHTML="country " + results["assumptions"]["country"] + " in year " + results["assumptions"]["year"];
-    document.getElementById("objective").innerHTML=results["objective"].toFixed(2);
-    document.getElementById("solar_capacity").innerHTML=results["solar_capacity"].toFixed(2);
-    document.getElementById("wind_capacity").innerHTML=results["wind_capacity"].toFixed(2);
-
+    document.getElementById("results_assumptions").innerHTML=" for country " + results["assumptions"]["country"] + " in year " + results["assumptions"]["year"];
+    for (let i = 0; i < results_list.length; i++){
+	document.getElementById(results_list[i]).innerHTML=results[results_list[i]].toFixed(1);
+    };
 
     for(var j=0; j < results.snapshots.length; j++) {
 	results.snapshots[j] = parseDate(results.snapshots[j]);
@@ -327,7 +330,7 @@ function draw_power_graph(results){
 
 
 
-// load initial results for DE
-d3.json("static/results-7339a28e-7be9-4b3a-91c4-7ec043076d01.json", function(results){
+// load initial results for assumptions["country"]
+d3.json("static/results-65ffe113-7ce1-49a4-8b56-a396c7e35256.json", function(results){
     display_results(results);
 });
