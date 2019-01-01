@@ -1,20 +1,34 @@
 server {
+    if ($host = www.whobs.org) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+
+    if ($host = whobs.org) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+
     # listen on port 80 (http)
     listen 80;
-    server_name _;
+    server_name whobs.org www.whobs.org;
     location / {
         # redirect any requests to the same URL but on https
         return 301 https://$host$request_uri;
     }
+
+
+
+
 }
 server {
     # listen on port 443 (https)
     listen 443 ssl;
-    server_name _;
+    server_name whobs.org www.whobs.org;
 
     # location of the self-signed SSL certificate
-    ssl_certificate /home/ubuntu/certs/cert.pem;
-    ssl_certificate_key /home/ubuntu/certs/key.pem;
+    ssl_certificate /etc/letsencrypt/live/whobs.org/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/whobs.org/privkey.pem; # managed by Certbot
 
     # write access and error logs to /var/log
     access_log /var/log/microblog_access.log;
@@ -34,4 +48,6 @@ server {
         alias /home/ubuntu/whobs-server/static;
         expires 30d;
     }
+
+
 }
