@@ -27,8 +27,8 @@
 
 #selectCountry {
     float: left;
-    width: 450px;
-    height: 450px;
+    width: 500px;
+    height: 500px;
 }
 
 #mapid {
@@ -77,5 +77,17 @@
 
 #legend {
     float: left;
-    width: 200px;
+    width: 600px;
+}
+
+
+#graph {
+    float: left;
+    width: 1100px;
+}
+
+
+
+#jumpmenu {
+    width: 100px;
 }

@@ -32,10 +32,14 @@ let assumptions = {"country" : "GB",
 		   "hydrogen_turbine_efficiency" : 60,
 		   "discount_rate" : 5};
 
+//state variable for graph period
+let period = "year";
 
-
+let frequency = 3;
 
 var d = 10;
+
+var results = {};
 
 // Centered on Frankfurt
 var mymap = L.map('mapid').setView([50.11, 8.68], 3);
@@ -189,7 +193,7 @@ function poll_result() {
     poll.open('GET', '/jobs/' + jobid, true);
 
     poll.onload = function () {
-	let results = JSON.parse(this.response);
+	results = JSON.parse(this.response);
 	status = results["status"];
 	document.getElementById("status").innerHTML=status;
 	console.log("status is",status);
@@ -206,7 +210,7 @@ function poll_result() {
 	    console.log("results:",results);
 	    solving = false;
 	    solveButton.text("Solve");
-	    display_results(results);
+	    display_results();
 	};
     };
     poll.send();
@@ -228,7 +232,7 @@ function clear_results(){
 };
 
 
-function display_results(results){
+function display_results(){
     document.getElementById("results_assumptions").innerHTML=" for country " + results["assumptions"]["country"] + " in year " + results["assumptions"]["year"];
     document.getElementById("average_price").innerHTML=results["average_price"].toFixed(1);
 
@@ -240,7 +244,7 @@ function display_results(results){
 	results.snapshots[j] = parseDate(results.snapshots[j]);
     };
 
-    draw_power_graph(results);
+    draw_power_graph();
 };
 
 
@@ -251,9 +255,18 @@ var ymin = {};
 var ymax = {};
 
 
-function draw_power_graph(results){
+function draw_power_graph(){
 
     var name = "time";
+
+    let snapshots = results["snapshots"];
+    let selection = [...Array(results["snapshots"].length).keys()];
+
+    if(period != "year"){
+	let week = parseInt(period.slice(4));
+	selection = selection.slice((week-1)*7*24/frequency,week*7*24/frequency);
+	snapshots = snapshots.slice((week-1)*7*24/frequency,week*7*24/frequency);
+    };
 
     // Inspired by https://bl.ocks.org/mbostock/3885211
 
@@ -271,35 +284,35 @@ function draw_power_graph(results){
 
     // Custom version of d3.stack
 
-    var previous = new Array(results["snapshots"].length).fill(0);
+    var previous = new Array(selection.length).fill(0);
 
     for (var j = 0; j < results["positive"].columns.length; j++){
 	var item = [];
-	for (var k = 0; k < results["snapshots"].length; k++){
-	    item.push([previous[k], previous[k] + results["positive"]["data"][k][j]]);
-	    previous[k] = previous[k] + results["positive"]["data"][k][j];
+	for (var k = 0; k < selection.length; k++){
+	    item.push([previous[k], previous[k] + results["positive"]["data"][selection[k]][j]]);
+	    previous[k] = previous[k] + results["positive"]["data"][selection[k]][j];
 	    }
 	data.push(item);
     }
-    var previous = new Array(results["snapshots"].length).fill(0);
+    var previous = new Array(selection.length).fill(0);
 
     for (var j = 0; j < results["negative"].columns.length; j++){
 	var item = [];
-	for (var k = 0; k < results["snapshots"].length; k++){
-	    item.push([-previous[k] - results["negative"]["data"][k][j],-previous[k]]);
-	    previous[k] = previous[k] + results["negative"]["data"][k][j];
+	for (var k = 0; k < selection.length; k++){
+	    item.push([-previous[k] - results["negative"]["data"][selection[k]][j],-previous[k]]);
+	    previous[k] = previous[k] + results["negative"]["data"][selection[k]][j];
 	    }
 	data.push(item);
     }
 
     ymin[name] = 0, ymax[name] = 0;
-    for (var k = 0; k < results["snapshots"].length; k++){
+    for (var k = 0; k < selection.length; k++){
 	if(data[results["positive"].columns.length-1][k][1] > ymax[name]){ ymax[name] = data[results["positive"].columns.length-1][k][1];};
 	if(data[results["positive"].columns.length+results["negative"].columns.length-1][k][0] < ymin[name]){ ymin[name] = data[results["positive"].columns.length+results["negative"].columns.length-1][k][0];};
     };
 
     var area = d3.area()
-        .x(function(d, i) { return x[name](results["snapshots"][i]); })
+        .x(function(d, i) { return x[name](snapshots[i]); })
         .y0(function(d) { return y[name](d[0]); })
         .y1(function(d) { return y[name](d[1]); });
 
@@ -308,7 +321,7 @@ function draw_power_graph(results){
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 
-    x[name].domain(d3.extent(results["snapshots"]));
+    x[name].domain(d3.extent(snapshots));
     y[name].domain([ymin[name],ymax[name]]);
 
     var layer = g.selectAll(".layer")
@@ -370,7 +383,25 @@ legend.append("text")
 
 
 
+
+
+let selectPeriod = d3.select("#jumpmenu").selectAll("option")
+    .data([...Array(53).keys()])
+    .enter()
+    .append("option")
+    .attr("value", function (d, i) {  return "week"+d })
+    .text( function (d, i) {  return "week "+d });
+
+d3.select("#jumpmenu").on("change", function(){
+    period = this.value;
+    console.log("period change to ",period);
+    draw_power_graph();
+});
+
+
+
 // load initial results for assumptions["country"]
-d3.json("static/results-97077426-208d-4e02-9387-f615a6ffbfa3.json", function(results){
-    display_results(results);
+d3.json("static/results-97077426-208d-4e02-9387-f615a6ffbfa3.json", function(r){
+    results = r;
+    display_results();
 });
