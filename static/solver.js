@@ -5,6 +5,16 @@ var parseDate = d3.timeParse("%Y-%m-%d %H:%M:00");
 var formatDate = d3.timeFormat("%b %d %H:%M");
 
 
+var colors = {"wind":"#3B6182",
+              "solar" :"#FFFF00",
+              "battery" : "#999999",
+              "battery_power" : "#999999",
+              "battery_energy" : "#666666",
+              "hydrogen_turbine" : "red",
+              "hydrogen_electrolyser" : "cyan",
+              "hydrogen_energy" : "magenta",
+             };
+
 let assumptions = {"country" : "GB",
 		   "year" : 2013,
 		   "wind" : true,
@@ -203,23 +213,27 @@ function poll_result() {
 };
 
 
-results_list=["average_price","solar_capacity","wind_capacity","battery_power_capacity",
-	      "battery_energy_capacity","hydrogen_electrolyser_capacity",
-	      "hydrogen_turbine_capacity","hydrogen_energy_capacity"]
+assets = ["solar","wind","battery_power",
+	      "battery_energy","hydrogen_electrolyser",
+	      "hydrogen_turbine","hydrogen_energy"]
 
 function clear_results(){
     document.getElementById("results_assumptions").innerHTML="";
-    for (let i = 0; i < results_list.length; i++){
-	document.getElementById(results_list[i]).innerHTML="";
+    document.getElementById("average_price").innerHTML="";
+    for (let i = 0; i < assets.length; i++){
+	document.getElementById(assets[i] + "_capacity").innerHTML="";
     };
     d3.select("#power").selectAll("g").remove();
+
 };
 
 
 function display_results(results){
     document.getElementById("results_assumptions").innerHTML=" for country " + results["assumptions"]["country"] + " in year " + results["assumptions"]["year"];
-    for (let i = 0; i < results_list.length; i++){
-	document.getElementById(results_list[i]).innerHTML=results[results_list[i]].toFixed(1);
+    document.getElementById("average_price").innerHTML=results["average_price"].toFixed(1);
+
+    for (let i = 0; i < assets.length; i++){
+	document.getElementById(assets[i] + "_capacity").innerHTML=results[assets[i] + "_capacity"].toFixed(1);
     };
 
     for(var j=0; j < results.snapshots.length; j++) {
@@ -330,7 +344,33 @@ function draw_power_graph(results){
 
 
 
+//Legend
+let legendSVG = d3.select("#legend")
+    .append("svg")
+    .attr("width",180)
+    .attr("height",assets.length*20);
+
+let legend = legendSVG.selectAll("g")
+    .data(assets)
+    .enter()
+    .append("g")
+    .attr("transform", function (d, i) {  return "translate(0," + (5 + i * 20) + ")" });
+
+legend.append("rect")
+    .attr("x",0)
+    .attr("y",0)
+    .attr("width", 10)
+    .attr("height", 10)
+    .style("fill", function (d, i) { return colors[d] });
+
+legend.append("text")
+    .attr("x",20)
+    .attr("y",10)
+    .text(function (d) { return d.replace("_"," ")});
+
+
+
 // load initial results for assumptions["country"]
-d3.json("static/results-65ffe113-7ce1-49a4-8b56-a396c7e35256.json", function(results){
+d3.json("static/results-97077426-208d-4e02-9387-f615a6ffbfa3.json", function(results){
     display_results(results);
 });

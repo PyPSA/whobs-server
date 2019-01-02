@@ -107,6 +107,8 @@
     </div>
 
     <div id="results">
+      <div id="results_summary">
+
       <h3>Results<span id="results_assumptions"></span></h3>
 
       <p>Baseload demand [MW]: 100.0</p>
@@ -120,10 +122,17 @@
       <br />
       <p>Average system cost [EUR/MWh]: <span id="average_price"></span></p>
       <br />
-      <svg width="1000" height="400" id="power"></svg>
+    </div>
+    <div id="legend">
+      <h3>Legend</h3>
     </div>
 
 
+    <div id="graph">
+      <svg width="1000" height="400" id="power"></svg>
+    </div>
+
+    </div>
 
   </div>
   <script src="{{ url_for('static', filename='solver.js') }}"></script>

@@ -63,7 +63,19 @@
     color: red;
 }
 
+
 #results {
     float: left;
-    width: 800px;
+    width: 1100px;
+}
+
+
+#results_summary {
+    float: left;
+    width: 500px;
+}
+
+#legend {
+    float: left;
+    width: 200px;
 }

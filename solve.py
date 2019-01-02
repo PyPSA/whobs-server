@@ -24,9 +24,12 @@ wind_pu = pd.read_csv('ninja_wind_europe_v1.1_current_on-offshore.csv',
 colors = {"wind":"#3B6182",
           "solar" :"#FFFF00",
           "battery" : "#999999",
+          "battery_power" : "#999999",
+          "battery_energy" : "#666666",
           "hydrogen_turbine" : "red",
-          "hydrogen_electrolyser" : "m",
-          }
+          "hydrogen_electrolyser" : "cyan",
+          "hydrogen_energy" : "magenta",
+}
 
 def annuity(lifetime,rate):
     if rate == 0.:
