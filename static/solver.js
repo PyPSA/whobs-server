@@ -245,6 +245,7 @@ function display_results(){
     };
 
     draw_power_graph();
+    draw_cost_stack();
 };
 
 
@@ -357,6 +358,88 @@ function draw_power_graph(){
 
 
 
+
+
+
+function draw_cost_stack(){
+
+    // Inspired by https://bl.ocks.org/mbostock/3885211 and
+    // https://bl.ocks.org/mbostock/1134768
+
+    let data = [];
+    let color = [];
+
+    let totals = [0.];
+
+    for(let i=0; i < assets.length; i++){
+	data.push(results[assets[i]+"_cost"]/100.);
+	totals.push(totals[i] + data[i]);
+	color.push(colors[assets[i]]);
+    };
+
+    let svgGraph = d3.select("#average_cost_graph"),
+	margin = {top: 20, right: 20, bottom: 30, left: 50},
+	width = svgGraph.attr("width") - margin.left - margin.right,
+	height = svgGraph.attr("height") - margin.top - margin.bottom;
+
+    // remove existing
+    svgGraph.selectAll("g").remove();
+    let x = d3.scaleLinear().range([0, width]);
+    let y = d3.scaleLinear().range([height, 0]);
+
+    x.domain([0,1]);
+    y.domain([0,results["average_price"]]).nice();
+
+    var g = svgGraph.append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    var layer = g.selectAll("rect")
+        .data(data)
+        .enter().append("rect")
+	.attr("x", x(0.1))
+        .attr("y", function(d,i) { return y(totals[i+1]);})
+	.attr("height", function(d,i) { return y(totals[i]) - y(totals[i+1]); })
+    	.attr("width", x(0.8))
+        .style("fill", function(d, i) { return color[i];});
+
+    //g.append("g")
+    //    .attr("class", "axis axis--x")
+    //    .attr("transform", "translate(0," + height + ")")
+    //    .call(d3.axisBottom(x));
+
+    g.append("g")
+        .attr("class", "axis axis--y")
+        .call(d3.axisLeft(y));
+
+    var label = svgGraph.append("g").attr("class", "y-label");
+
+    // text label for the y axis
+    label.append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 0)
+        .attr("x",0 - (height / 2))
+        .attr("dy", "1em")
+        .style("text-anchor", "middle")
+        .text("Breakdown of average system cost [EUR/MWh]");
+
+    var label = svgGraph.append("g").attr("class", "column-total")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+    // text label for the y axis
+    label.append("text")
+        .attr("y", y(totals[totals.length-1])-20)
+        .attr("x",x(0.5))
+        .attr("dy", "1em")
+        .style("text-anchor", "middle")
+        .text(totals[totals.length-1].toFixed(1));
+
+
+
+};
+
+
+
 //Legend
 let legendSVG = d3.select("#legend")
     .append("svg")
@@ -401,7 +484,7 @@ d3.select("#jumpmenu").on("change", function(){
 
 
 // load initial results for assumptions["country"]
-d3.json("static/results-97077426-208d-4e02-9387-f615a6ffbfa3.json", function(r){
+d3.json("static/results-initial.json", function(r){
     results = r;
     display_results();
 });

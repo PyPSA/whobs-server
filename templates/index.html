@@ -35,14 +35,13 @@
 
     <p>This tool is built only with free software and open data; the
     code for it can be downloaded from the Github
-    repository <a href="https://github.com/PyPSA/whobs-server">whobs-server</a>
-    for more details. In particular, it uses
+    repository <a href="https://github.com/PyPSA/whobs-server">whobs-server</a>. In particular, it uses
     the <a href="https://github.com/PyPSA/PyPSA">Python for Power
     System Analysis (PyPSA)</a> energy optimisation framework, open
     weather data
     from <a href="https://www.renewables.ninja/">renewables.ninja</a>,
     the <a href="https://projects.coin-or.org/Clp">Clp</a> solver and
-    free software for the server infrastructure.</p>
+    free software for the server infrastructure (GNU/Linux, nginx, gunicorn, Redis).</p>
 
     <p>This is a <b>toy model</b> with a <b>strongly simplified</b> setup. Please read the <a href="https://github.com/PyPSA/WHOBS#warnings">warnings</a> before interpreting the results. In particular:</p>
 
@@ -55,7 +54,8 @@
     agricultural/forestry residues), offshore wind, concentrating
     solar thermal, geothermal, ocean energy, nuclear and
     fossil/biomass plants with CCS. Additional storage technologies
-      include redox flow batteries, compressed air energy storage, etc.</p>
+    include redox flow batteries, compressed air energy storage,
+    etc. Other options include demand-side management.</p>
 
     <p>2) No import or export capacities with other countries are
     assumed, so each country must meet the baseload profile by
@@ -94,7 +94,7 @@
 	<button id="solve-button">Solve</button>
 	<p> Warning: It takes about 40 seconds to solve and return a
 	result, please be patient! If there's a queue, it may take
-	longer. We're working on improving the performace.</p>
+	longer. We're working on improving the performance.</p>
 	<p>Status: <span id="status">Waiting for job</span></p>
       </div>
 
@@ -123,6 +123,16 @@
       <p>Average system cost [EUR/MWh]: <span id="average_price"></span></p>
       <br />
     </div>
+    <div id="average_cost">
+      <h3>Average cost breakdown</h3>
+      <svg width="150" height="400" id="average_cost_graph"></svg>
+    </div>
+    <div id="energy">
+      <h3>Energy breakdown</h3>
+    </div>
+    <div id="capacity">
+      <h3>Capacity breakdown</h3>
+    </div>
     <div id="legend">
       <h3>Legend</h3>
     </div>
@@ -141,6 +151,14 @@
       <svg width="1000" height="400" id="power"></svg>
     </div>
 
+    <br />
+    <br />
+    <div id="end">
+      <h3>Privacy statement</h3>
+      No personal information is stored on our server. There are no cookies.
+
+      Simulation assumptions for each run job are stored on the server for statistical purposes.
+    </div>
   </div>
   <script src="{{ url_for('static', filename='solver.js') }}"></script>
 </body>
