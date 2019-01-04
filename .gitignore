@@ -20,3 +20,5 @@ static/ne_50*.json
 *results-*.json
 
 *.nc
+
+*.soln

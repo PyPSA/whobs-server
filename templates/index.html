@@ -72,7 +72,9 @@
       <input type="text" name="country" value="FR"> European country (2-letter ISO code)<br />
       <br />
       <input type="number" name="year"> Weather year (from 1985 to 2015 inclusive)<br />
+      <input type="number" name="frequency"> Sampling frequency (n-hourly, n>2 - big n solves faster)<br />
       <br />
+      <input type="number" name="load"> Constant demand [MW]<br />
       <input type="checkbox" name="wind" checked> Wind turbine<br />
       <input type="number" name="wind_cost"> Wind capital cost (overnight) [EUR/kW]<br />
       <input type="checkbox" name="solar" checked> Solar photovoltaic cell<br />
@@ -111,27 +113,80 @@
 
       <h3>Results<span id="results_assumptions"></span></h3>
 
-      <p>Baseload demand [MW]: 100.0</p>
-      <p>Solar capacity [MW]: <span id="solar_capacity"></span></p>
-      <p>Wind capacity [MW]: <span id="wind_capacity"></span></p>
-      <p>Battery power capacity [MW]: <span id="battery_power_capacity"></span></p>
-      <p>Battery energy capacity [MWh]: <span id="battery_energy_capacity"></span></p>
-      <p>Hydrogen electrolyser capacity [MW]: <span id="hydrogen_electrolyser_capacity"></span></p>
-      <p>Hydrogen turbine capacity [MW]: <span id="hydrogen_turbine_capacity"></span></p>
-      <p>Hydrogen energy capacity [MWh]: <span id="hydrogen_energy_capacity"></span></p>
+      <p>Baseload demand [MW]: <span id="load"></span></p>
+      <table id="tab_results">
+	<tr>
+	  <th class="tab_asset" id="tabh_asset">Asset</th>
+	  <th class="tab_data" id="tabh_capacity">Capacity</th>
+	  <th class="tab_data" id="tabh_cf_available">Cap Ftr avail [%]</th>
+	  <th class="tab_data" id="tabh_cf_used">Cap Ftr used [%]</th>
+	  <th class="tab_data" id="tabh_curtailment">Curtailmt [%]</th>
+	</tr>
+	<tr>
+	  <td class="tab_asset">Solar</td>
+	  <td class="tab_data"><span id="solar_capacity"></span> MW</td>
+	  <td class="tab_data"><span id="solar_cf_available"></span></td>
+	  <td class="tab_data"><span id="solar_cf_used"></span></td>
+	  <td class="tab_data"><span id="solar_curtailment"></span></td>
+	</tr>
+	<tr>
+	  <td class="tab_asset">Wind</td>
+	  <td class="tab_data"><span id="wind_capacity"></span> MW</td>
+	  <td class="tab_data"><span id="wind_cf_available"></span></td>
+	  <td class="tab_data"><span id="wind_cf_used"></span></td>
+	  <td class="tab_data"><span id="wind_curtailment"></span></td>
+	</tr>
+	<tr>
+	  <td class="tab_asset">Battery power</td>
+	  <td class="tab_data"><span id="battery_power_capacity"></span> MW</td>
+	  <td class="tab_data"></td>
+	  <td class="tab_data"><span id="battery_power_cf_used"></span></td>
+	  <td class="tab_data"></td>
+	</tr>
+	<tr>
+	  <td class="tab_asset">Battery energy</td>
+	  <td class="tab_data"><span id="battery_energy_capacity"></span> MWh</td>
+	  <td class="tab_data"></td>
+	  <td class="tab_data"></td>
+	  <td class="tab_data"></td>
+	</tr>
+	<tr>
+	  <td class="tab_asset">Hydrogen electrolyser</td>
+	  <td class="tab_data"><span id="hydrogen_electrolyser_capacity"></span> MW</td>
+	  <td class="tab_data"></td>
+	  <td class="tab_data"><span id="hydrogen_electrolyser_cf_used"></span></td>
+	  <td class="tab_data"></td>
+	</tr>
+	<tr>
+	  <td class="tab_asset">Hydrogen turbine</td>
+	  <td class="tab_data"><span id="hydrogen_turbine_capacity"></span> MW</td>
+	  <td class="tab_data"></td>
+	  <td class="tab_data"><span id="hydrogen_turbine_cf_used"></span></td>
+	  <td class="tab_data"></td>
+	</tr>
+	<tr>
+	  <td class="tab_asset">Hydrogen energy</td>
+	  <td class="tab_data"><span id="hydrogen_energy_capacity"></span> MWh</td>
+	  <td class="tab_data"></td>
+	  <td class="tab_data"></td>
+	  <td class="tab_data"></td>
+	</tr>
+      </table>
       <br />
-      <p>Average system cost [EUR/MWh]: <span id="average_price"></span></p>
-      <br />
+      <p>Average system cost [EUR/MWh]: <span id="average_cost"></span></p>
+
     </div>
-    <div id="average_cost">
-      <h3>Average cost breakdown</h3>
-      <svg width="150" height="400" id="average_cost_graph"></svg>
+    <div id="average_cost_div">
+      <svg width="110" height="400" id="average_cost_graph"></svg>
+    </div>
+    <div id="power_capacity">
+      <svg width="110" height="400" id="power_capacity_graph"></svg>
+    </div>
+    <div id="energy_capacity">
+      <svg width="110" height="400" id="energy_capacity_graph"></svg>
     </div>
     <div id="energy">
-      <h3>Energy breakdown</h3>
-    </div>
-    <div id="capacity">
-      <h3>Capacity breakdown</h3>
+      <svg width="110" height="400" id="energy_graph"></svg>
     </div>
     <div id="legend">
       <h3>Legend</h3>

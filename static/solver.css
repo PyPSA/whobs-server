@@ -59,6 +59,21 @@
     height: 30px;
 }
 
+
+#solve-button-busy {
+    background: #888888;
+    padding-right: 26px;
+    border-radius: 3px;
+    border: none;
+    color: white;
+    margin: 0;
+    padding: 0 12px;
+    width: 80px;
+    cursor: pointer;
+    height: 30px;
+}
+
+
 #status {
     color: red;
 }
@@ -80,22 +95,27 @@
 
 #results_summary {
     float: left;
-    width: 300px;
+    width: 450px;
 }
 
-#average_cost {
+#average_cost_div {
     float: left;
-    width: 200px;
+    width: 111px;
 }
 
 #energy {
     float: left;
-    width: 200px;
+    width: 111px;
 }
 
-#capacity {
+#power_capacity {
     float: left;
-    width: 200px;
+    width: 111px;
+}
+
+#energy_capacity {
+    float: left;
+    width: 111px;
 }
 
 #legend {
@@ -118,4 +138,37 @@
 #end {
     float: left;
     width: 1100px;
+}
+
+
+tab_asset {
+    text-align: left;
+}
+
+.tab_data {
+    text-align: right;
+}
+
+#tab_results {
+    width: 430px;
+}
+
+#tabh_asset {
+    width: 30%;
+}
+
+#tabh_capacity {
+    width:22%;
+}
+
+#tabh_cf_available {
+    width:16%;
+}
+
+#tabh_cf_used {
+    width:16%;
+}
+
+#tabh_curtailment {
+    width:16%;
 }

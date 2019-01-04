@@ -16,7 +16,9 @@ var colors = {"wind":"#3B6182",
              };
 
 let assumptions = {"country" : "GB",
+		   "load" : 100,
 		   "year" : 2013,
+		   "frequency" : 3,
 		   "wind" : true,
 		   "wind_cost" : 1200,
 		   "solar" : true,
@@ -34,8 +36,6 @@ let assumptions = {"country" : "GB",
 
 //state variable for graph period
 let period = "year";
-
-let frequency = 3;
 
 var d = 10;
 
@@ -150,9 +150,6 @@ for (let i = 0; i < Object.keys(assumptions).length; i++){
 
 var solveButton = d3.select("#solve-button");
 
-
-var solving = false;
-
 var jobid = "";
 
 var timer;
@@ -170,13 +167,14 @@ solveButton.on("click", function() {
 	send_job.onload = function () {
 	    var data = JSON.parse(this.response);
 	    jobid = data["jobid"];
+	    console.log("Jobid:",jobid);
 	    timer = setInterval(poll_result, poll_interval);
 	    console.log("timer",timer,"polling every",poll_interval,"milliseconds");
 	};
 	send_job.send(JSON.stringify(assumptions));
 
-	solving = true;
 	button.text("Solving");
+	button.attr("id","solve-button-busy");
 	document.getElementById("status").innerHTML="Sending job to solver";
     };
 });
@@ -187,7 +185,6 @@ solveButton.on("click", function() {
 
 function poll_result() {
 
-    console.log("Jobid",jobid);
     var poll = new XMLHttpRequest();
 
     poll.open('GET', '/jobs/' + jobid, true);
@@ -203,13 +200,13 @@ function poll_result() {
 	    console.log("results:",results);
 	    document.getElementById("status").innerHTML=status + ": " + results["error"];
 	    solveButton.text("Solve");
-	    solving = false;
+	    solveButton.attr("id","solve-button");
 	};
 	if(status == "Finished"){
 	    clearInterval(timer);
 	    console.log("results:",results);
-	    solving = false;
 	    solveButton.text("Solve");
+	    solveButton.attr("id","solve-button");
 	    display_results();
 	};
     };
@@ -221,24 +218,49 @@ assets = ["solar","wind","battery_power",
 	      "battery_energy","hydrogen_electrolyser",
 	      "hydrogen_turbine","hydrogen_energy"]
 
+vre = ["solar","wind"]
+
 function clear_results(){
     document.getElementById("results_assumptions").innerHTML="";
-    document.getElementById("average_price").innerHTML="";
+    document.getElementById("average_cost").innerHTML="";
+    document.getElementById("load").innerHTML="";
     for (let i = 0; i < assets.length; i++){
 	document.getElementById(assets[i] + "_capacity").innerHTML="";
+	if(!assets[i].includes("energy")){
+	    document.getElementById(assets[i] + "_cf_used").innerHTML="";
+	};
+
+    };
+    for (let i = 0; i < vre.length; i++){
+	document.getElementById(assets[i] + "_cf_available").innerHTML="";
+	document.getElementById(assets[i] + "_curtailment").innerHTML="";
     };
     d3.select("#power").selectAll("g").remove();
+    d3.select("#average_cost_graph").selectAll("g").remove();
+    d3.select("#power_capacity_graph").selectAll("g").remove();
+    d3.select("#energy_capacity_graph").selectAll("g").remove();
+    d3.select("#energy_graph").selectAll("g").remove();
 
 };
 
 
 function display_results(){
     document.getElementById("results_assumptions").innerHTML=" for country " + results["assumptions"]["country"] + " in year " + results["assumptions"]["year"];
-    document.getElementById("average_price").innerHTML=results["average_price"].toFixed(1);
+    document.getElementById("average_cost").innerHTML=results["average_cost"].toFixed(1);
+    document.getElementById("load").innerHTML=results["assumptions"]["load"].toFixed(1);
 
     for (let i = 0; i < assets.length; i++){
-	document.getElementById(assets[i] + "_capacity").innerHTML=results[assets[i] + "_capacity"].toFixed(1);
+	document.getElementById(assets[i] + "_capacity").innerHTML=Math.abs(results[assets[i] + "_capacity"].toFixed(1));
+	if(!assets[i].includes("energy")){
+	    document.getElementById(assets[i] + "_cf_used").innerHTML=Math.abs((results[assets[i] + "_cf_used"]*100).toFixed(1));
+	};
     };
+    for (let i = 0; i < vre.length; i++){
+	document.getElementById(assets[i] + "_cf_available").innerHTML=Math.abs((results[assets[i] + "_cf_available"]*100).toFixed(1));
+	document.getElementById(assets[i] + "_curtailment").innerHTML=Math.abs((results[assets[i] + "_curtailment"]*100).toFixed(1));
+    };
+
+
 
     for(var j=0; j < results.snapshots.length; j++) {
 	results.snapshots[j] = parseDate(results.snapshots[j]);
@@ -246,6 +268,9 @@ function display_results(){
 
     draw_power_graph();
     draw_cost_stack();
+    draw_power_capacity_stack();
+    draw_energy_capacity_stack();
+    draw_energy_stack();
 };
 
 
@@ -265,8 +290,8 @@ function draw_power_graph(){
 
     if(period != "year"){
 	let week = parseInt(period.slice(4));
-	selection = selection.slice((week-1)*7*24/frequency,week*7*24/frequency);
-	snapshots = snapshots.slice((week-1)*7*24/frequency,week*7*24/frequency);
+	selection = selection.slice((week-1)*7*24/results["assumptions"]["frequency"],week*7*24/results["assumptions"]["frequency"]);
+	snapshots = snapshots.slice((week-1)*7*24/results["assumptions"]["frequency"],week*7*24/results["assumptions"]["frequency"]);
     };
 
     // Inspired by https://bl.ocks.org/mbostock/3885211
@@ -359,25 +384,82 @@ function draw_power_graph(){
 
 
 
-
-
 function draw_cost_stack(){
-
-    // Inspired by https://bl.ocks.org/mbostock/3885211 and
-    // https://bl.ocks.org/mbostock/1134768
 
     let data = [];
     let color = [];
 
-    let totals = [0.];
-
     for(let i=0; i < assets.length; i++){
-	data.push(results[assets[i]+"_cost"]/100.);
-	totals.push(totals[i] + data[i]);
+	data.push(results[assets[i]+"_cost"]/results["assumptions"]["load"]);
 	color.push(colors[assets[i]]);
     };
 
-    let svgGraph = d3.select("#average_cost_graph"),
+    draw_stack(data, color, "Breakdown of average system cost [EUR/MWh]", "#average_cost_graph");
+}
+
+
+function draw_power_capacity_stack(){
+
+    let data = [];
+    let color = [];
+
+    for(let i=0; i < assets.length; i++){
+	if(!assets[i].includes("energy")){
+	    data.push(results[assets[i]+"_capacity"]);
+	    color.push(colors[assets[i]]);
+	};
+    };
+
+    draw_stack(data, color, "Power capacity [MW]", "#power_capacity_graph");
+}
+
+
+
+function draw_energy_capacity_stack(){
+
+    let data = [];
+    let color = [];
+
+    for(let i=0; i < assets.length; i++){
+	if(assets[i].includes("energy")){
+	    data.push(results[assets[i]+"_capacity"]/1000.);
+	    color.push(colors[assets[i]]);
+	};
+    };
+
+    draw_stack(data, color, "Energy storage capacity [GWh]", "#energy_capacity_graph");
+}
+
+
+function draw_energy_stack(){
+
+    let data = [];
+    let color = [];
+
+    for(let i=0; i < assets.length; i++){
+	if(assets[i] + "_used" in results){
+	    data.push(results[assets[i]+"_used"]);
+	    color.push(colors[assets[i]]);
+	};
+    };
+
+    draw_stack(data, color, "Average power dispatch [MW]", "#energy_graph");
+}
+
+
+function draw_stack(data, color, ylabel, svgName){
+
+    // Inspired by https://bl.ocks.org/mbostock/3885211 and
+    // https://bl.ocks.org/mbostock/1134768
+
+
+    let totals = [0.];
+
+    for(let i=0; i < data.length; i++){
+	totals.push(totals[i] + data[i]);
+    };
+
+    let svgGraph = d3.select(svgName),
 	margin = {top: 20, right: 20, bottom: 30, left: 50},
 	width = svgGraph.attr("width") - margin.left - margin.right,
 	height = svgGraph.attr("height") - margin.top - margin.bottom;
@@ -388,7 +470,7 @@ function draw_cost_stack(){
     let y = d3.scaleLinear().range([height, 0]);
 
     x.domain([0,1]);
-    y.domain([0,results["average_price"]]).nice();
+    y.domain([0,totals[totals.length-1]]).nice();
 
     var g = svgGraph.append("g")
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
@@ -398,7 +480,8 @@ function draw_cost_stack(){
         .enter().append("rect")
 	.attr("x", x(0.1))
         .attr("y", function(d,i) { return y(totals[i+1]);})
-	.attr("height", function(d,i) { return y(totals[i]) - y(totals[i+1]); })
+        // following abs avoids rect with negative height e.g. -1e10
+	.attr("height", function(d,i) { return Math.abs((y(totals[i]) - y(totals[i+1])).toFixed(2)); })
     	.attr("width", x(0.8))
         .style("fill", function(d, i) { return color[i];});
 
@@ -420,7 +503,7 @@ function draw_cost_stack(){
         .attr("x",0 - (height / 2))
         .attr("dy", "1em")
         .style("text-anchor", "middle")
-        .text("Breakdown of average system cost [EUR/MWh]");
+        .text(ylabel);
 
     var label = svgGraph.append("g").attr("class", "column-total")
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
@@ -486,5 +569,6 @@ d3.select("#jumpmenu").on("change", function(){
 // load initial results for assumptions["country"]
 d3.json("static/results-initial.json", function(r){
     results = r;
+    console.log(results);
     display_results();
 });
