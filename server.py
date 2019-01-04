@@ -8,6 +8,8 @@ import rq
 from rq.job import Job
 from rq import Queue
 
+import time
+
 conn = Redis.from_url('redis://')
 
 queue = Queue('whobs', connection=conn)
@@ -42,14 +44,18 @@ def jobid_api(jobid):
     try:
         status = job.meta['status']
     except:
-        status = "Waiting for job to run"
+        status = "Waiting for job to run (jobs in queue: {})".format(len(queue.jobs))
 
     result = {"status" : status}
 
-    if "status" == "Error":
-        result.update(job.result)
-    elif job.is_finished:
-        result.update(job.result)
+    if "status" == "Error" or job.is_finished:
+        for i in range(10):
+            if job.result is not None:
+                result.update(job.result)
+                break
+            else:
+                print("Results not available on try {}".format(i))
+                time.sleep(1)
 
     return jsonify(result)
 
