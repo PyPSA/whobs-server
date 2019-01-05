@@ -67,6 +67,11 @@
     systems. Reaching lower levels of decarbonisation is much cheaper
     and doesn't necessarily require any storage at all.</p>
 
+
+    Lifetimes, battery charge and discharge efficiency 90%.
+
+
+
     <div id="assumptions">
       <h3>Choose technologies, costs and other assumptions</h3>
       <input type="text" name="country" value="FR"> European country (2-letter ISO code)<br />
@@ -75,13 +80,23 @@
       <input type="number" name="frequency"> Sampling frequency (n-hourly, n>2 - big n solves faster)<br />
       <br />
       <input type="number" name="load"> Constant demand [MW]<br />
+      <br />
+      <select name="tech_scenario" id="tech_scenario">
+	<option value="2020">2020 scenario</option>
+	<option value="2030" selected>2030 scenario</option>
+	<option value="2050">2050 scenario</option>
+      </select> Technology assumption scenario (individual ones can be changed below)<br />
+      <br />
       <input type="checkbox" name="wind" checked> Wind turbine<br />
       <input type="number" name="wind_cost"> Wind capital cost (overnight) [EUR/kW]<br />
+      <br />
       <input type="checkbox" name="solar" checked> Solar photovoltaic cell<br />
       <input type="number" name="solar_cost"> Solar capital cost (overnight) [EUR/kW]<br />
+      <br />
       <input type="checkbox" name="battery" checked> Battery storage<br />
       <input type="number" name="battery_energy_cost"> Battery energy capital cost (overnight) [EUR/kWh]<br />
       <input type="number" name="battery_power_cost"> Battery power capital cost (overnight) [EUR/kW]<br />
+      <br />
       <input type="checkbox" name="hydrogen" checked> Hydrogen gas storage<br />
       <input type="number" name="hydrogen_energy_cost"> Hydrogen energy capital cost (overnight) [EUR/kWh]<br />
       <input type="number" name="hydrogen_electrolyser_cost"> Hydrogen electrolyser capital cost (overnight) [EUR/kW]<br />

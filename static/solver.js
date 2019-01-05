@@ -15,24 +15,72 @@ var colors = {"wind":"#3B6182",
               "hydrogen_energy" : "magenta",
              };
 
+
+let tech_assumptions = {"2020" : {"wind_cost" : 1240,
+				  "solar_cost" : 750,
+				  "battery_energy_cost" : 300,
+				  "battery_power_cost" : 300,
+				  "hydrogen_energy_cost" : 0.5,
+				  "hydrogen_electrolyser_cost" : 900,
+				  "hydrogen_electrolyser_efficiency" : 75,
+				  "hydrogen_turbine_cost" : 800,
+				  "hydrogen_turbine_efficiency" : 60,
+				  "discount_rate" : 5,
+				 },
+			"2030" : {"wind_cost" : 1182,
+				  "solar_cost" : 600,
+				  "battery_energy_cost" : 200,
+				  "battery_power_cost" : 200,
+				  "hydrogen_energy_cost" : 0.5,
+				  "hydrogen_electrolyser_cost" : 700,
+				  "hydrogen_electrolyser_efficiency" : 80,
+				  "hydrogen_turbine_cost" : 800,
+				  "hydrogen_turbine_efficiency" : 60,
+				  "discount_rate" : 4,
+				 },
+			"2050" : {"wind_cost" : 1075,
+				  "solar_cost" : 425,
+				  "battery_energy_cost" : 100,
+				  "battery_power_cost" : 100,
+				  "hydrogen_energy_cost" : 0.5,
+				  "hydrogen_electrolyser_cost" : 500,
+				  "hydrogen_electrolyser_efficiency" : 80,
+				  "hydrogen_turbine_cost" : 800,
+				  "hydrogen_turbine_efficiency" : 60,
+				  "discount_rate" : 3,
+				 }
+		       };
+
 let assumptions = {"country" : "GB",
 		   "load" : 100,
 		   "year" : 2013,
 		   "frequency" : 3,
 		   "wind" : true,
-		   "wind_cost" : 1200,
 		   "solar" : true,
-		   "solar_cost" : 800,
 		   "battery" : true,
-		   "battery_energy_cost" : 300,
-		   "battery_power_cost" : 300,
 		   "hydrogen" : true,
-		   "hydrogen_energy_cost" : 0.5,
-		   "hydrogen_electrolyser_cost" : 750,
-		   "hydrogen_electrolyser_efficiency" : 80,
-		   "hydrogen_turbine_cost" : 800,
-		   "hydrogen_turbine_efficiency" : 60,
-		   "discount_rate" : 5};
+		  };
+
+let default_tech_scenario = "2030";
+
+for (let i = 0; i < Object.keys(tech_assumptions[default_tech_scenario]).length; i++){
+    let key = Object.keys(tech_assumptions[default_tech_scenario])[i];
+    assumptions[key] = tech_assumptions[default_tech_scenario][key];
+};
+
+
+d3.select("#tech_scenario").on("change", function(){
+    let scenario = this.value;
+    console.log("tech scenario change to ",scenario);
+    for (let i = 0; i < Object.keys(tech_assumptions[scenario]).length; i++){
+	let key = Object.keys(tech_assumptions[scenario])[i];
+	let value = tech_assumptions[scenario][key];
+	assumptions[key] = value;
+	document.getElementsByName(key)[0].value = value;
+    };
+});
+
+
 
 //state variable for graph period
 let period = "year";

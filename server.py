@@ -50,7 +50,7 @@ def jobid_api(jobid):
 
     if "status" == "Error" or job.is_finished:
         for i in range(10):
-            if job.result is not None:
+            if job.result is not None and job.result != {}:
                 result.update(job.result)
                 break
             else:
