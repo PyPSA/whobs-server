@@ -26,13 +26,9 @@ server {
     listen 443 ssl;
     server_name whobs.org www.whobs.org;
 
-    # location of the self-signed SSL certificate
-    ssl_certificate /etc/letsencrypt/live/whobs.org/fullchain.pem; # managed by Certbot
-    ssl_certificate_key /etc/letsencrypt/live/whobs.org/privkey.pem; # managed by Certbot
-
     # write access and error logs to /var/log
-    access_log /var/log/microblog_access.log;
-    error_log /var/log/microblog_error.log;
+    access_log /var/log/whobs_access.log;
+    error_log /var/log/whobs_error.log;
 
     location / {
         # forward application requests to the gunicorn server
@@ -45,9 +41,11 @@ server {
 
     location /static {
         # handle static files directly, without forwarding to the application
-        alias /home/ubuntu/whobs-server/static;
+        alias /var/www/whobs-server/static;
         expires 30d;
     }
 
+    ssl_certificate /etc/letsencrypt/live/whobs.org/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/whobs.org/privkey.pem; # managed by Certbot
 
 }
