@@ -8,7 +8,9 @@ import rq
 from rq.job import Job
 from rq import Queue
 
-import time
+import time, datetime
+
+import json
 
 conn = Redis.from_url('redis://')
 
@@ -29,6 +31,10 @@ def jobs_api():
         print(request.json)
         job = queue.enqueue("solve.solve",request.json)
         result = {"jobid" : job.get_id()}
+        request.json.update({"jobid" : result["jobid"],
+                             "timestamp" : str(datetime.datetime.now())})
+        with open('assumptions/assumptions-{}.json'.format(result["jobid"]), 'w') as fp:
+            json.dump(request.json, fp)
         return jsonify(result)
     elif request.method == "GET":
         #return number of active jobs
@@ -52,9 +58,13 @@ def jobid_api(jobid):
         for i in range(10):
             if job.result is not None and job.result != {}:
                 result.update(job.result)
+                print(result)
+                print(type(job.result))
                 break
             else:
                 print("Results not available on try {}".format(i))
+                print(job.result)
+                print(type(job.result))
                 time.sleep(1)
 
     return jsonify(result)

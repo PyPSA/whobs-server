@@ -25,7 +25,7 @@ let tech_assumptions = {"2020" : {"wind_cost" : 1240,
 				  "hydrogen_electrolyser_efficiency" : 75,
 				  "hydrogen_turbine_cost" : 800,
 				  "hydrogen_turbine_efficiency" : 60,
-				  "discount_rate" : 5,
+
 				 },
 			"2030" : {"wind_cost" : 1182,
 				  "solar_cost" : 600,
@@ -36,7 +36,6 @@ let tech_assumptions = {"2020" : {"wind_cost" : 1240,
 				  "hydrogen_electrolyser_efficiency" : 80,
 				  "hydrogen_turbine_cost" : 800,
 				  "hydrogen_turbine_efficiency" : 60,
-				  "discount_rate" : 4,
 				 },
 			"2050" : {"wind_cost" : 1075,
 				  "solar_cost" : 425,
@@ -47,7 +46,6 @@ let tech_assumptions = {"2020" : {"wind_cost" : 1240,
 				  "hydrogen_electrolyser_efficiency" : 80,
 				  "hydrogen_turbine_cost" : 800,
 				  "hydrogen_turbine_efficiency" : 60,
-				  "discount_rate" : 3,
 				 }
 		       };
 
@@ -59,6 +57,7 @@ let assumptions = {"country" : "GB",
 		   "solar" : true,
 		   "battery" : true,
 		   "hydrogen" : true,
+		   "discount_rate" : 5,
 		  };
 
 let default_tech_scenario = "2030";

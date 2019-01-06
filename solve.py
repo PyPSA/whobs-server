@@ -243,7 +243,9 @@ def solve(assumptions):
     job.save_meta()
 
     solver_name = "cbc"
+    formulation = "kirchhoff"
     status, termination_condition = network.lopf(solver_name=solver_name,
+                                                 formulation=formulation,
                                                  extra_functionality=extra_functionality)
 
     print(status,termination_condition)
@@ -280,17 +282,14 @@ def solve(assumptions):
 
 
     for g in ["wind","solar"]:
-        if assumptions[g]:
+        if assumptions[g] and network.generators.p_nom_opt[ct + " " + g] > 0:
             results[g+"_capacity"] = network.generators.p_nom_opt[ct + " " + g]
             results[g+"_cost"] = (network.generators.p_nom_opt*network.generators.capital_cost)[ct + " " + g]/year_weight
             results[g+"_available"] = network.generators.p_nom_opt[ct + " " + g]*network.generators_t.p_max_pu[ct + " " + g].mean()
             results[g+"_used"] = network.generators_t.p[ct + " " + g].mean()
             results[g+"_curtailment"] =  (results[g+"_available"] - results[g+"_used"])/results[g+"_available"]
             results[g+"_cf_available"] = network.generators_t.p_max_pu[ct + " " + g].mean()
-            if network.generators.p_nom_opt[ct + " " + g] > 0:
-                results[g+"_cf_used"] = results[g+"_used"]/network.generators.p_nom_opt[ct + " " + g]
-            else:
-                results[g+"_cf_used"] = 0.
+            results[g+"_cf_used"] = results[g+"_used"]/network.generators.p_nom_opt[ct + " " + g]
             power["positive"][g] = network.generators_t.p[ct + " " + g]
         else:
             results[g+"_capacity"] = 0.
@@ -302,16 +301,13 @@ def solve(assumptions):
             results[g+"_cf_available"] = 0.
             power["positive"][g] = 0.
 
-    if assumptions["battery"]:
+    if assumptions["battery"] and network.links.at[ct + " battery_power","p_nom_opt"] > 0:
         results["battery_power_capacity"] = network.links.at[ct + " battery_power","p_nom_opt"]
         results["battery_power_cost"] = network.links.at[ct + " battery_power","p_nom_opt"]*network.links.at[ct + " battery_power","capital_cost"]/year_weight
         results["battery_energy_capacity"] = network.stores.at[ct + " battery_energy","e_nom_opt"]
         results["battery_energy_cost"] = network.stores.at[ct + " battery_energy","e_nom_opt"]*network.stores.at[ct + " battery_energy","capital_cost"]/year_weight
         results["battery_power_used"] = network.links_t.p0[ct + " battery_discharge"].mean()
-        if network.links.at[ct + " battery_power","p_nom_opt"] > 0:
-            results["battery_power_cf_used"] = results["battery_power_used"]/network.links.at[ct + " battery_power","p_nom_opt"]
-        else:
-            results["battery_power_cf_used"] = 0.
+        results["battery_power_cf_used"] = results["battery_power_used"]/network.links.at[ct + " battery_power","p_nom_opt"]
         power["positive"]["battery"] = -network.links_t.p1[ct + " battery_discharge"]
         power["negative"]["battery"] = network.links_t.p0[ct + " battery_power"]
     else:
@@ -324,7 +320,7 @@ def solve(assumptions):
         power["positive"]["battery"] = 0.
         power["negative"]["battery"] = 0.
 
-    if assumptions["hydrogen"]:
+    if assumptions["hydrogen"] and network.links.at[ct + " hydrogen_electrolyser","p_nom_opt"] > 0 and network.links.at[ct + " hydrogen_turbine","p_nom_opt"] > 0:
         results["hydrogen_electrolyser_capacity"] = network.links.at[ct + " hydrogen_electrolyser","p_nom_opt"]
         results["hydrogen_electrolyser_cost"] = network.links.at[ct + " hydrogen_electrolyser","p_nom_opt"]*network.links.at[ct + " hydrogen_electrolyser","capital_cost"]/year_weight
         results["hydrogen_turbine_capacity"] = network.links.at[ct + " hydrogen_turbine","p_nom_opt"]*network.links.at[ct + " hydrogen_turbine","efficiency"]
@@ -332,15 +328,9 @@ def solve(assumptions):
         results["hydrogen_energy_capacity"] = network.stores.at[ct + " hydrogen_energy","e_nom_opt"]
         results["hydrogen_energy_cost"] = network.stores.at[ct + " hydrogen_energy","e_nom_opt"]*network.stores.at[ct + " hydrogen_energy","capital_cost"]/year_weight
         results["hydrogen_electrolyser_used"] = network.links_t.p0[ct + " hydrogen_electrolyser"].mean()
-        if network.links.at[ct + " hydrogen_electrolyser","p_nom_opt"] > 0:
-            results["hydrogen_electrolyser_cf_used"] = results["hydrogen_electrolyser_used"]/network.links.at[ct + " hydrogen_electrolyser","p_nom_opt"]
-        else:
-            results["hydrogen_electrolyser_cf_used"] = 0.
+        results["hydrogen_electrolyser_cf_used"] = results["hydrogen_electrolyser_used"]/network.links.at[ct + " hydrogen_electrolyser","p_nom_opt"]
         results["hydrogen_turbine_used"] = network.links_t.p0[ct + " hydrogen_turbine"].mean()
-        if network.links.at[ct + " hydrogen_turbine","p_nom_opt"] > 0:
-            results["hydrogen_turbine_cf_used"] = results["hydrogen_turbine_used"]/network.links.at[ct + " hydrogen_turbine","p_nom_opt"]
-        else:
-            results["hydrogen_turbine_cf_used"] = 0.
+        results["hydrogen_turbine_cf_used"] = results["hydrogen_turbine_used"]/network.links.at[ct + " hydrogen_turbine","p_nom_opt"]
         power["positive"]["hydrogen_turbine"] = -network.links_t.p1[ct + " hydrogen_turbine"]
         power["negative"]["hydrogen_electrolyser"] = network.links_t.p0[ct + " hydrogen_electrolyser"]
     else:
@@ -374,7 +364,7 @@ def solve(assumptions):
 
     print(balance.describe())
 
-    with open('results-{}.json'.format(job.id), 'w') as fp:
-        json.dump(results,fp)
+    #with open('results-{}.json'.format(job.id), 'w') as fp:
+    #    json.dump(results,fp)
 
     return results
