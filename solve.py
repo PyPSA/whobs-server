@@ -44,6 +44,9 @@ assumptions_df = pd.DataFrame(columns=["FOM","fixed","discount rate","lifetime",
                               dtype=float)
 
 assumptions_df["lifetime"] = 25.
+assumptions_df.at["hydrogen_electrolyser","lifetime"] = 20.
+assumptions_df.at["battery_power","lifetime"] = 15.
+assumptions_df.at["battery_energy","lifetime"] = 15.
 assumptions_df["discount rate"] = 0.05
 assumptions_df["FOM"] = 3.
 assumptions_df["efficiency"] = 1.
@@ -166,7 +169,7 @@ def solve(assumptions):
                     bus=ct,
                     p_max_pu = solar_pu[ct],
                     p_nom_extendable = True,
-                    marginal_cost = 1., #Small cost to prefer curtailment to destroying energy in storage, solar curtails before wind
+                    marginal_cost = 0.1, #Small cost to prefer curtailment to destroying energy in storage, solar curtails before wind
                     capital_cost = assumptions_df.at['solar','fixed'])
 
     if assumptions["wind"]:
@@ -174,7 +177,7 @@ def solve(assumptions):
                     bus=ct,
                     p_max_pu = wind_pu[ct+"_ON"],
                     p_nom_extendable = True,
-                    marginal_cost = 2., #Small cost to prefer curtailment to destroying energy in storage, solar curtails before wind
+                    marginal_cost = 0.2, #Small cost to prefer curtailment to destroying energy in storage, solar curtails before wind
                     capital_cost = assumptions_df.at['wind','fixed'])
 
 
