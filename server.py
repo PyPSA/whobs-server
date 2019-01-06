@@ -32,13 +32,13 @@ def jobs_api():
         job = queue.enqueue("solve.solve",request.json)
         result = {"jobid" : job.get_id()}
         request.json.update({"jobid" : result["jobid"],
-                             "timestamp" : str(datetime.datetime.now())})
+                             "timestamp" : str(datetime.datetime.now()),
+                             "queue_length" : len(queue.jobs)})
         with open('assumptions/assumptions-{}.json'.format(result["jobid"]), 'w') as fp:
             json.dump(request.json, fp)
         return jsonify(result)
     elif request.method == "GET":
-        #return number of active jobs
-        return "not implemented yet"
+        return "jobs in queue: {}".format(len(queue.jobs))
 
 @app.route('/jobs/<jobid>')
 def jobid_api(jobid):
