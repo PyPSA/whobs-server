@@ -41,7 +41,7 @@ server {
 
     location /static {
         # handle static files directly, without forwarding to the application
-        alias /var/www/whobs-server/static;
+        alias /home/tom/whobs-server/static;
         expires 30d;
     }
 

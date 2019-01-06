@@ -20,6 +20,7 @@
 <body>
 
   <div id="container">
+    <div id="introduction">
     <h1>Meet constant demand from wind+solar+storage with zero-direct-emissions using your own assumptions</h1>
 
     <p>This online tool calculates what it would cost to meet a
@@ -30,8 +31,8 @@
 
     <p>You can change the assumptions yourself (e.g. which country,
     which weather year, the selection of technologies, technological
-    parameters and costs) and re-solve the system to see how it
-    changes.</p>
+    parameters and costs) and then press the red "Solve" button to
+    re-solve the system to see how it changes.</p>
 
     <p>This tool is built only with free software and open data; the
     code for it can be downloaded from the Github
@@ -65,12 +66,28 @@
 
     <p>3) Costs here are for completely decarbonised electricity
     systems. Reaching lower levels of decarbonisation is much cheaper
-    and doesn't necessarily require any storage at all.</p>
+      and doesn't necessarily require any storage at all.</p>
 
+    <p>To see an animation of a 95% decarbonised European system,
+    including more renewable energy technologies and cross-border
+    transmission connections, see:</p>
 
-    Lifetimes, battery charge and discharge efficiency 90%.
+    <p><a href="https://pypsa.org/animations/pypsa-eur-30/">PyPSA-Eur-30
+    animation</a></p>
 
+    <p>In the examples below asset lifetimes are all assumed to be 25
+    years, with the exception of batteries (15 years) and hydrogen
+    electrolysers (20 years). Battery charging and discharging
+    efficiencies are both 90%. Fixed Operation and Maintenance (FOM)
+    costs are set at 3% of the investment cost of the asset per
+    year.</p>
 
+    <p>To avoid long job times, the examples here are only run for a single
+    weather year sampled at most every 3 hours. You can find solved
+    versions run against every hour over 31 weather years here at
+    the <a href="https://github.com/PyPSA/WHOBS">WHOBS repository</a>.</p>
+
+    </div>
 
     <div id="assumptions">
       <h3>Choose technologies, costs and other assumptions</h3>

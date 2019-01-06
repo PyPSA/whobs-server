@@ -24,3 +24,5 @@ static/ne_50*.json
 *.soln
 
 assumptions
+
+iptables*

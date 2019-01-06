@@ -19,6 +19,23 @@
 }
 
 
+
+#assumptions {
+    float: left;
+    width: 1100px;
+}
+
+
+/* Clear floats after the columns */
+#introduction:after {
+    content: "";
+    display: table;
+    clear: both;
+}
+
+
+
+
 #assumptions {
     float: left;
     width: 600px;
