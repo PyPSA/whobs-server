@@ -200,9 +200,15 @@ var solveButton = d3.select("#solve-button");
 var jobid = "";
 
 var timer;
+var timeout;
 
 // time between status polling in milliseconds
 var poll_interval = 2000;
+
+// time out for polling if it doesn't finish after 10 minutes
+// Shouldn't be divisible by poll_interval
+var poll_timeout = 10*60*1000 + poll_interval/2;
+
 
 solveButton.on("click", function() {
     var button = d3.select(this);
@@ -217,6 +223,7 @@ solveButton.on("click", function() {
 	    console.log("Jobid:",jobid);
 	    timer = setInterval(poll_result, poll_interval);
 	    console.log("timer",timer,"polling every",poll_interval,"milliseconds");
+	    timeout = setTimeout(poll_kill, poll_timeout);
 	};
 	send_job.send(JSON.stringify(assumptions));
 
@@ -244,6 +251,7 @@ function poll_result() {
 
 	if(status == "Error"){
 	    clearInterval(timer);
+	    clearTimeout(timeout);
 	    console.log("results:",results);
 	    document.getElementById("status").innerHTML=status + ": " + results["error"];
 	    solveButton.text("Solve");
@@ -251,6 +259,7 @@ function poll_result() {
 	};
 	if(status == "Finished"){
 	    clearInterval(timer);
+	    clearTimeout(timeout);
 	    console.log("results:",results);
 	    solveButton.text("Solve");
 	    solveButton.attr("id","solve-button");
@@ -259,6 +268,16 @@ function poll_result() {
     };
     poll.send();
 };
+
+
+function poll_kill() {
+    clearInterval(timer);
+    solveButton.text("Solve");
+    solveButton.attr("id","solve-button");
+    document.getElementById("status").innerHTML="Error: Timed out";
+};
+
+
 
 
 assets = ["solar","wind","battery_power",
@@ -299,12 +318,12 @@ function display_results(){
     for (let i = 0; i < assets.length; i++){
 	document.getElementById(assets[i] + "_capacity").innerHTML=Math.abs(results[assets[i] + "_capacity"].toFixed(1));
 	if(!assets[i].includes("energy")){
-	    document.getElementById(assets[i] + "_cf_used").innerHTML=Math.abs((results[assets[i] + "_cf_used"]*100).toFixed(1));
+	    document.getElementById(assets[i] + "_cf_used").innerHTML=Math.abs((results[assets[i] + "_cf_used"]*100)).toFixed(1);
 	};
     };
     for (let i = 0; i < vre.length; i++){
-	document.getElementById(assets[i] + "_cf_available").innerHTML=Math.abs((results[assets[i] + "_cf_available"]*100).toFixed(1));
-	document.getElementById(assets[i] + "_curtailment").innerHTML=Math.abs((results[assets[i] + "_curtailment"]*100).toFixed(1));
+	document.getElementById(assets[i] + "_cf_available").innerHTML=Math.abs((results[assets[i] + "_cf_available"]*100)).toFixed(1);
+	document.getElementById(assets[i] + "_curtailment").innerHTML=Math.abs((results[assets[i] + "_curtailment"]*100)).toFixed(1);
     };
 
 

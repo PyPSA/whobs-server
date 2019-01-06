@@ -44,7 +44,7 @@ assumptions_df = pd.DataFrame(columns=["FOM","fixed","discount rate","lifetime",
                               dtype=float)
 
 assumptions_df["lifetime"] = 25.
-assumptions_df["discount rate"] = 0.07
+assumptions_df["discount rate"] = 0.05
 assumptions_df["FOM"] = 3.
 assumptions_df["efficiency"] = 1.
 assumptions_df.at["battery_power","efficiency"] = 0.9
@@ -58,6 +58,8 @@ floats = ["wind_cost","solar_cost","battery_energy_cost",
           "hydrogen_turbine_cost",
           "hydrogen_turbine_efficiency",
           "discount_rate"]
+
+threshold = 0.1
 
 def solve(assumptions):
 
@@ -282,7 +284,7 @@ def solve(assumptions):
 
 
     for g in ["wind","solar"]:
-        if assumptions[g] and network.generators.p_nom_opt[ct + " " + g] > 0:
+        if assumptions[g] and network.generators.p_nom_opt[ct + " " + g] > threshold:
             results[g+"_capacity"] = network.generators.p_nom_opt[ct + " " + g]
             results[g+"_cost"] = (network.generators.p_nom_opt*network.generators.capital_cost)[ct + " " + g]/year_weight
             results[g+"_available"] = network.generators.p_nom_opt[ct + " " + g]*network.generators_t.p_max_pu[ct + " " + g].mean()
@@ -301,7 +303,7 @@ def solve(assumptions):
             results[g+"_cf_available"] = 0.
             power["positive"][g] = 0.
 
-    if assumptions["battery"] and network.links.at[ct + " battery_power","p_nom_opt"] > 0:
+    if assumptions["battery"] and network.links.at[ct + " battery_power","p_nom_opt"] > threshold:
         results["battery_power_capacity"] = network.links.at[ct + " battery_power","p_nom_opt"]
         results["battery_power_cost"] = network.links.at[ct + " battery_power","p_nom_opt"]*network.links.at[ct + " battery_power","capital_cost"]/year_weight
         results["battery_energy_capacity"] = network.stores.at[ct + " battery_energy","e_nom_opt"]
@@ -316,11 +318,11 @@ def solve(assumptions):
         results["battery_energy_capacity"] = 0.
         results["battery_energy_cost"] = 0.
         results["battery_power_used"] = 0.
-        results["batter_power_cf_used"] = 0.
+        results["battery_power_cf_used"] = 0.
         power["positive"]["battery"] = 0.
         power["negative"]["battery"] = 0.
 
-    if assumptions["hydrogen"] and network.links.at[ct + " hydrogen_electrolyser","p_nom_opt"] > 0 and network.links.at[ct + " hydrogen_turbine","p_nom_opt"] > 0:
+    if assumptions["hydrogen"] and network.links.at[ct + " hydrogen_electrolyser","p_nom_opt"] > threshold and network.links.at[ct + " hydrogen_turbine","p_nom_opt"] > threshold:
         results["hydrogen_electrolyser_capacity"] = network.links.at[ct + " hydrogen_electrolyser","p_nom_opt"]
         results["hydrogen_electrolyser_cost"] = network.links.at[ct + " hydrogen_electrolyser","p_nom_opt"]*network.links.at[ct + " hydrogen_electrolyser","capital_cost"]/year_weight
         results["hydrogen_turbine_capacity"] = network.links.at[ct + " hydrogen_turbine","p_nom_opt"]*network.links.at[ct + " hydrogen_turbine","efficiency"]
