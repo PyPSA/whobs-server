@@ -103,6 +103,12 @@ def solve(assumptions):
             job.save_meta()
             return {"error" : "{} could not be converted to float".format(key)}
 
+        if assumptions[key] < 0 or assumptions[key] > 1e5:
+            job.meta['status'] = "Error"
+            job.save_meta()
+            return {"error" : "{} {} wasn not in the valid range [0,1e5]".format(key,assumptions[key])}
+
+
     print(assumptions)
     ct = assumptions['country']
     if ct not in solar_pu.columns:
