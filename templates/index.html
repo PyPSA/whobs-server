@@ -35,7 +35,7 @@
     re-solve the system to see how it changes.</p>
 
     <p>This tool is built only with free software and open data; the
-    code for it can be downloaded from the Github
+    code for it can be downloaded from the GitHub
     repository <a href="https://github.com/PyPSA/whobs-server">whobs-server</a>. In particular, it uses
     the <a href="https://github.com/PyPSA/PyPSA">Python for Power
     System Analysis (PyPSA)</a> energy optimisation framework, open
@@ -46,7 +46,8 @@
 
     <p>This is a <b>toy model</b> with a <b>strongly simplified</b> setup. Please read the <a href="https://github.com/PyPSA/WHOBS#warnings">warnings</a> before interpreting the results. In particular:</p>
 
-    <p>1) Electricity systems with zero direct CO2 emissions can be
+    <ol>
+    <li>Electricity systems with zero direct CO2 emissions can be
     built more cheaply by using additional technology options. The
     examples here are simply a toy model to put an upper bound on the
     costs for a very simple setup. Additional generation technologies
@@ -56,19 +57,23 @@
     solar thermal, geothermal, ocean energy, nuclear and
     fossil/biomass plants with CCS. Additional storage technologies
     include redox flow batteries, compressed air energy storage,
-    etc. Other options include demand-side management.</p>
+      etc. Other options include demand-side management.</li>
 
-    <p>2) No import or export capacities with other countries are
+    <li>No import or export capacities with other countries are
     assumed, so each country must meet the baseload profile by
     itself. Existing and planned transmission grid connections between
     countries can reduce costs by up to 20% by smoothing wind over a
-    larger area.</p>
+      larger area (see e.g. <a href="https://arxiv.org/abs/1704.05492">this paper</a> or <a href="https://arxiv.org/abs/1705.07617">this one</a>).</li>
 
-    <p>3) Costs here are for completely decarbonised electricity
+    <li>Including energy demand sectors other than electricity, like transport, heating and non-electric industrial demand can offer additional flexibility (e.g. load-shifting by battery electric vehicles and electrified heating with thermal storage), see e.g. <a href="https://arxiv.org/abs/1801.05290">this paper</a>.</li>
+
+    <li>Costs here are for completely decarbonised electricity
     systems. Reaching lower levels of decarbonisation is much cheaper
-      and doesn't necessarily require any storage at all.</p>
+      and doesn't necessarily require any storage at all.</li>
 
-    <p>To see an animation of a 95% decarbonised European system,
+    </ol>
+
+    <p>To see an animation of a 95% decarbonised European electricity system,
     including more renewable energy technologies and cross-border
     transmission connections, see:</p>
 
@@ -241,10 +246,28 @@
     <br />
     <br />
     <div id="end">
-      <h3>Privacy statement</h3>
-      No personal information is stored on our server. There are no cookies.
 
-      Simulation assumptions for each run job are stored on the server for statistical purposes.
+      <h3>New functionality coming soon</h3>
+
+      <ul>
+	<li>Extension of location selection to the whole globe</li>
+	<li>Select weather data locations by latitude and longitude</li>
+	<li>More generation technologies (e.g. offshore wind, dispatchable sources)</li>
+	<li>Allow non-zero CO2 limits</li>
+      </ul>
+
+      <h3>Problems/comments/feedback/help out</h3>
+
+<p>If you encounter any problems please use the <a href="https://github.com/PyPSA/whobs-server/issues">GitHub issue tracker</a>. It would be helpful to note the jobid and any other error messages from the Javascript console (find via "Developer Tools").</p>
+
+<p>If you want to help out and contribute improvements, please submit a <a href="https://github.com/PyPSA/whobs-server/pulls">pull request</a>!</p>
+
+<p>Any other feedback and comments can be sent to <a href="https://nworbmot.org/">Tom Brown</a>.</p>
+
+      <h3>Privacy statement</h3>
+      <p>No personal information is stored on our server. There are no cookies.</p>
+
+      <p>Simulation assumptions for each run job are stored on the server for statistical purposes.</p>
     </div>
   </div>
   <script src="{{ url_for('static', filename='solver.js') }}"></script>
