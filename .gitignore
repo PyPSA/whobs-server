@@ -13,7 +13,7 @@ flask-by-example
 *.lp
 
 
-static/d3.v4.min.js
+static/d3*.js
 
 static/ne_50*.json
 

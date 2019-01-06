@@ -470,13 +470,15 @@ function draw_cost_stack(){
 
     let data = [];
     let color = [];
+    let labels = [];
 
     for(let i=0; i < assets.length; i++){
 	data.push(results[assets[i]+"_cost"]/results["assumptions"]["load"]);
 	color.push(colors[assets[i]]);
+	labels.push(assets[i].replace("_"," "));
     };
 
-    draw_stack(data, color, "Breakdown of average system cost [EUR/MWh]", "#average_cost_graph");
+    draw_stack(data, labels, color, "Breakdown of average system cost [EUR/MWh]", "#average_cost_graph");
 }
 
 
@@ -484,15 +486,17 @@ function draw_power_capacity_stack(){
 
     let data = [];
     let color = [];
+    let labels = [];
 
     for(let i=0; i < assets.length; i++){
 	if(!assets[i].includes("energy")){
 	    data.push(results[assets[i]+"_capacity"]);
 	    color.push(colors[assets[i]]);
+	    labels.push(assets[i].replace("_"," "));
 	};
     };
 
-    draw_stack(data, color, "Power capacity [MW]", "#power_capacity_graph");
+    draw_stack(data, labels, color, "Power capacity [MW]", "#power_capacity_graph");
 }
 
 
@@ -501,15 +505,17 @@ function draw_energy_capacity_stack(){
 
     let data = [];
     let color = [];
+    let labels = [];
 
     for(let i=0; i < assets.length; i++){
 	if(assets[i].includes("energy")){
 	    data.push(results[assets[i]+"_capacity"]/1000.);
 	    color.push(colors[assets[i]]);
+	    labels.push(assets[i].replace("_"," "));
 	};
     };
 
-    draw_stack(data, color, "Energy storage capacity [GWh]", "#energy_capacity_graph");
+    draw_stack(data, labels, color, "Energy storage capacity [GWh]", "#energy_capacity_graph");
 }
 
 
@@ -517,19 +523,21 @@ function draw_energy_stack(){
 
     let data = [];
     let color = [];
+    let labels = [];
 
     for(let i=0; i < assets.length; i++){
 	if(assets[i] + "_used" in results){
 	    data.push(results[assets[i]+"_used"]);
 	    color.push(colors[assets[i]]);
+	    labels.push(assets[i].replace("_"," "));
 	};
     };
 
-    draw_stack(data, color, "Average power dispatch [MW]", "#energy_graph");
+    draw_stack(data, labels, color, "Average power dispatch [MW]", "#energy_graph");
 }
 
 
-function draw_stack(data, color, ylabel, svgName){
+function draw_stack(data, labels, color, ylabel, svgName){
 
     // Inspired by https://bl.ocks.org/mbostock/3885211 and
     // https://bl.ocks.org/mbostock/1134768
@@ -557,6 +565,14 @@ function draw_stack(data, color, ylabel, svgName){
     var g = svgGraph.append("g")
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
+    let tip = d3.tip()
+	.attr('class', 'd3-tip')
+	.offset([-8, 0])
+	.html(function(d,i) {
+	    return labels[i] + ": " + Math.abs(data[i]).toFixed(1);
+	});
+    svgGraph.call(tip);
+
     var layer = g.selectAll("rect")
         .data(data)
         .enter().append("rect")
@@ -565,7 +581,9 @@ function draw_stack(data, color, ylabel, svgName){
         // following abs avoids rect with negative height e.g. -1e10
 	.attr("height", function(d,i) { return Math.abs((y(totals[i]) - y(totals[i+1])).toFixed(2)); })
     	.attr("width", x(0.8))
-        .style("fill", function(d, i) { return color[i];});
+        .style("fill", function(d, i) { return color[i];})
+        .on('mouseover', tip.show)
+        .on('mouseout', tip.hide);
 
     //g.append("g")
     //    .attr("class", "axis axis--x")
