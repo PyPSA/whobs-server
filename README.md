@@ -21,6 +21,8 @@ You can find a live version at:
 
 ## Requirements
 
+### Software
+
 Ubuntu packages:
 
 sudo apt install coinor-clp coinor-cbc python3-venv redis-server
@@ -31,7 +33,7 @@ sudo apt install nginx
 
 Python:
 
-pip install ipython pandas numpy redis rq Flask
+pip install ipython pandas numpy redis rq Flask xarray netcdf4 json
 
 pip install git+https://github.com/PyPSA/PyPSA.git
 
@@ -40,9 +42,25 @@ In addition for a server deployment:
 pip install gunicorn
 
 
+### Data
 
-renewables.ninja files
+For the wind and solar generation time series, get from the [renewables.ninja download page](https://www.renewables.ninja/downloads):
 
+- Solar time series `ninja_pv_europe_v1.1_sarah.csv` from "PV v1.1 Europe"
+
+- Wind time series `ninja_wind_europe_v1.1_current_on-offshore.csv` from "Wind v1.1 Europe"
+
+
+Convert them to netCDF format with:
+
+```python
+import xarray as xr
+import pandas as pd
+solar_pu = pd.read_csv('ninja_pv_europe_v1.1_sarah.csv',
+                       index_col=0, parse_dates=True)
+ds = xr.Dataset.from_dataframe(solar_pu)
+ds.to_netcdf('ninja_pv_europe_v1.1_sarah.nc')
+```
 
 ## Run without server
 
