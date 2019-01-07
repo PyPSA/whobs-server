@@ -23,19 +23,16 @@ from rq import get_current_job
 
 import json
 
-
-
-idx = pd.IndexSlice
+import xarray as xr
 
 
 
 #read in renewables.ninja solar time series
-solar_pu = pd.read_csv('ninja_pv_europe_v1.1_sarah.csv',
-                       index_col=0,parse_dates=True)
+solar_pu = xr.open_dataset('ninja_pv_europe_v1.1_sarah.nc')
 
 #read in renewables.ninja wind time series
-wind_pu = pd.read_csv('ninja_wind_europe_v1.1_current_on-offshore.csv',
-                       index_col=0,parse_dates=True)
+wind_pu = xr.open_dataset('ninja_wind_europe_v1.1_current_on-offshore.nc')
+
 
 colors = {"wind":"#3B6182",
           "solar" :"#FFFF00",
@@ -105,7 +102,7 @@ def solve(assumptions):
 
     print(assumptions)
     ct = assumptions['country']
-    if ct not in solar_pu.columns:
+    if ct not in solar_pu:
         return {"error" : "Country {} not found among valid countries".format(ct)}
 
     try:
@@ -164,7 +161,7 @@ def solve(assumptions):
     if assumptions["solar"]:
         network.add("Generator",ct+" solar",
                     bus=ct,
-                    p_max_pu = solar_pu[ct],
+                    p_max_pu = solar_pu[ct].to_series(),
                     p_nom_extendable = True,
                     marginal_cost = 0.1, #Small cost to prefer curtailment to destroying energy in storage, solar curtails before wind
                     capital_cost = assumptions_df.at['solar','fixed'])
@@ -172,7 +169,7 @@ def solve(assumptions):
     if assumptions["wind"]:
         network.add("Generator",ct+" wind",
                     bus=ct,
-                    p_max_pu = wind_pu[ct+"_ON"],
+                    p_max_pu = wind_pu[ct+"_ON"].to_series(),
                     p_nom_extendable = True,
                     marginal_cost = 0.2, #Small cost to prefer curtailment to destroying energy in storage, solar curtails before wind
                     capital_cost = assumptions_df.at['wind','fixed'])
