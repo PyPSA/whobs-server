@@ -70,7 +70,7 @@ assumptions_df.at["battery_power","efficiency"] = 0.9
 
 booleans = ["wind","solar","battery","hydrogen"]
 
-floats = ["wind_cost","solar_cost","battery_energy_cost",
+floats = ["load","wind_cost","solar_cost","battery_energy_cost",
           "battery_power_cost","hydrogen_electrolyser_cost",
           "hydrogen_energy_cost",
           "hydrogen_electrolyser_efficiency",
@@ -91,41 +91,29 @@ def solve(assumptions):
         try:
             assumptions[key] = bool(assumptions[key])
         except:
-            job.meta['status'] = "Error"
-            job.save_meta()
             return {"error" : "{} could not be converted to boolean".format(key)}
 
     for key in floats:
         try:
             assumptions[key] = float(assumptions[key])
         except:
-            job.meta['status'] = "Error"
-            job.save_meta()
             return {"error" : "{} could not be converted to float".format(key)}
 
         if assumptions[key] < 0 or assumptions[key] > 1e5:
-            job.meta['status'] = "Error"
-            job.save_meta()
             return {"error" : "{} {} was not in the valid range [0,1e5]".format(key,assumptions[key])}
 
 
     print(assumptions)
     ct = assumptions['country']
     if ct not in solar_pu.columns:
-        job.meta['status'] = "Error"
-        job.save_meta()
         return {"error" : "Country {} not found among valid countries".format(ct)}
 
     try:
         year = int(assumptions['year'])
     except:
-        job.meta['status'] = "Error"
-        job.save_meta()
         return {"error" : "Year {} could not be converted to an integer".format(assumptions['year'])}
 
     if year < 1985 or year > 2015:
-        job.meta['status'] = "Error"
-        job.save_meta()
         return {"error" : "Year {} not in valid range".format(year)}
 
     year_start = year
@@ -134,26 +122,13 @@ def solve(assumptions):
     Nyears = year_end - year_start + 1
 
     try:
-        load = float(assumptions['load'])
-    except:
-        job.meta['status'] = "Error"
-        job.save_meta()
-        return {"error" : "Load {} could not be converted to a float".format(assumptions["load"])}
-
-    try:
         frequency = int(assumptions['frequency'])
     except:
-        job.meta['status'] = "Error"
-        job.save_meta()
         return {"error" : "Frequency {} could not be converted to an int".format(assumptions["frequency"])}
 
     if frequency < 3:
-        job.meta['status'] = "Error"
-        job.save_meta()
         return {"error" : "Frequencies below 3 cannot be supported due to limited computation resources".format(frequency)}
     elif  frequency > 8760:
-        job.meta['status'] = "Error"
-        job.save_meta()
         return {"error" : "Frequency {} not in valid range".format(frequency)}
 
 
@@ -184,7 +159,7 @@ def solve(assumptions):
     network.add("Bus",ct)
     network.add("Load",ct,
                 bus=ct,
-                p_set=load)
+                p_set=assumptions["load"])
 
     if assumptions["solar"]:
         network.add("Generator",ct+" solar",
@@ -278,16 +253,12 @@ def solve(assumptions):
     print(status,termination_condition)
 
     if status != "ok":
-        job.meta['status'] = "Error"
-        job.save_meta()
         return {"error" : "Job failed to optimise correctly"}
 
     if termination_condition == "infeasible":
-        job.meta['status'] = "Error"
-        job.save_meta()
         return {"error" : "Problem was infeasible"}
 
-    job.meta['status'] = "Finished"
+    job.meta['status'] = "Finished solving, processing and sending results"
     job.save_meta()
 
     print(network.generators.p_nom_opt)
@@ -374,7 +345,7 @@ def solve(assumptions):
 
     results["assumptions"] = assumptions
 
-    results["average_cost"] = sum([results[s] for s in results if s[-5:] == "_cost"])/load
+    results["average_cost"] = sum([results[s] for s in results if s[-5:] == "_cost"])/assumptions["load"]
 
     results["snapshots"] = [str(s) for s in network.snapshots]
 

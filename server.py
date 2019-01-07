@@ -44,8 +44,6 @@ def root():
 @app.route('/jobs', methods=['GET','POST'])
 def jobs_api():
     if request.method == "POST":
-        print(request.headers['Content-Type'])
-        print(request.json)
         job = queue.enqueue("solve.solve",request.json)
         result = {"jobid" : job.get_id()}
         request.json.update({"jobid" : result["jobid"],
@@ -53,6 +51,8 @@ def jobs_api():
                              "queue_length" : len(queue.jobs)})
         with open('assumptions/assumptions-{}.json'.format(result["jobid"]), 'w') as fp:
             json.dump(request.json, fp)
+        print("jobid {} request:".format(result["jobid"]))
+        print(request.json)
         return jsonify(result)
     elif request.method == "GET":
         return "jobs in queue: {}".format(len(queue.jobs))
@@ -71,18 +71,24 @@ def jobid_api(jobid):
 
     result = {"status" : status}
 
-    if "status" == "Error" or job.is_finished:
-        for i in range(10):
-            if job.result is not None and job.result != {}:
-                result.update(job.result)
-                print(result)
-                print(type(job.result))
-                break
-            else:
-                print("Results not available on try {}".format(i))
-                print(job.result)
-                print(type(job.result))
-                time.sleep(1)
+    if job.is_finished:
+        result.update(job.result)
+        if "error" in result:
+            result["status"] = "Error"
+        else:
+            result["status"] = "Finished"
+
+        jobid = job.get_id()
+
+        mini_results = {"jobid" : jobid,
+                        "status" : result["status"],
+                        "error" : result.get("error",None),
+                        "average_cost" : result.get("average_cost",None)}
+
+        print("jobid {} results:".format(jobid))
+        print(mini_results)
+        with open('results/results-{}.json'.format(jobid), 'w') as fp:
+            json.dump(mini_results, fp)
 
     return jsonify(result)
 
