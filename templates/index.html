@@ -88,10 +88,25 @@
     costs are set at 3% of the investment cost of the asset per
     year.</p>
 
+    <p>The sources for most of the assumptions can be found
+    in <a href="https://github.com/PyPSA/WHOBS/blob/master/assumptions.csv">this
+    table</a>.</p>
+
     <p>To avoid long job times, the examples here are only run for a single
     weather year sampled at most every 3 hours. You can find solved
     versions run against every hour over 31 weather years here at
     the <a href="https://github.com/PyPSA/WHOBS">WHOBS repository</a>.</p>
+
+    <h3>How to use the tool</h3>
+
+    <p>Select the country from the map, alter the technological parameters via the input boxes, then press the red button "Solve" to send the assumptions to the solver. It can take 40 seconds to solve and return a result, or longer if there's a queue of jobs.</p>
+
+    <p>Fun things to try out:</p>
+
+    <ul>
+      <li>remove technologies with the checkboxes, e.g. hydrogen gas storage, and see system costs rise</li>
+      <li>set solar or battery costs very low, to simulate a breakthrough in manufacturing</li>
+    </ul>
 
     </div>
 
@@ -156,29 +171,29 @@
 	<tr>
 	  <th class="tab_asset" id="tabh_asset">Asset</th>
 	  <th class="tab_data" id="tabh_capacity">Capacity</th>
-	  <th class="tab_data" id="tabh_cf_available">Cap Ftr avail [%]</th>
 	  <th class="tab_data" id="tabh_cf_used">Cap Ftr used [%]</th>
+	  <th class="tab_data" id="tabh_cf_available">Cap Ftr avail [%]</th>
 	  <th class="tab_data" id="tabh_curtailment">Curtailmt [%]</th>
 	</tr>
 	<tr>
 	  <td class="tab_asset">Solar</td>
 	  <td class="tab_data"><span id="solar_capacity"></span> MW</td>
-	  <td class="tab_data"><span id="solar_cf_available"></span></td>
 	  <td class="tab_data"><span id="solar_cf_used"></span></td>
+	  <td class="tab_data"><span id="solar_cf_available"></span></td>
 	  <td class="tab_data"><span id="solar_curtailment"></span></td>
 	</tr>
 	<tr>
 	  <td class="tab_asset">Wind</td>
 	  <td class="tab_data"><span id="wind_capacity"></span> MW</td>
-	  <td class="tab_data"><span id="wind_cf_available"></span></td>
 	  <td class="tab_data"><span id="wind_cf_used"></span></td>
+	  <td class="tab_data"><span id="wind_cf_available"></span></td>
 	  <td class="tab_data"><span id="wind_curtailment"></span></td>
 	</tr>
 	<tr>
 	  <td class="tab_asset">Battery power</td>
 	  <td class="tab_data"><span id="battery_power_capacity"></span> MW</td>
-	  <td class="tab_data"></td>
 	  <td class="tab_data"><span id="battery_power_cf_used"></span></td>
+	  <td class="tab_data"></td>
 	  <td class="tab_data"></td>
 	</tr>
 	<tr>
@@ -191,15 +206,15 @@
 	<tr>
 	  <td class="tab_asset">Hydrogen electrolyser</td>
 	  <td class="tab_data"><span id="hydrogen_electrolyser_capacity"></span> MW</td>
-	  <td class="tab_data"></td>
 	  <td class="tab_data"><span id="hydrogen_electrolyser_cf_used"></span></td>
+	  <td class="tab_data"></td>
 	  <td class="tab_data"></td>
 	</tr>
 	<tr>
 	  <td class="tab_asset">Hydrogen turbine</td>
 	  <td class="tab_data"><span id="hydrogen_turbine_capacity"></span> MW</td>
-	  <td class="tab_data"></td>
 	  <td class="tab_data"><span id="hydrogen_turbine_cf_used"></span></td>
+	  <td class="tab_data"></td>
 	  <td class="tab_data"></td>
 	</tr>
 	<tr>
@@ -268,7 +283,7 @@
       <h3>Privacy statement</h3>
       <p>No personal information is stored on our server. There are no cookies.</p>
 
-      <p>Simulation assumptions for each run job are stored on the server for statistical purposes.</p>
+      <p>Simulation assumptions and results for each job are stored on the server for statistical purposes.</p>
     </div>
   </div>
   <script src="{{ url_for('static', filename='solver.js') }}"></script>
