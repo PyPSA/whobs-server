@@ -94,7 +94,7 @@ this is run. You can run multiple workers to process jobs in parallel.
 
 Use nginx, gunicorn for the Python server, rq, and manage with supervisor.
 
-See <nginx-configuration.txt> for the nginx server configuration.
+See [nginx server configuration](nginx-configuration.txt).
 
 
 ## License

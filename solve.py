@@ -77,9 +77,20 @@ floats = ["load","wind_cost","solar_cost","battery_energy_cost",
 
 threshold = 0.1
 
+def error(message, jobid):
+    with open('results-solve/results-{}.json'.format(jobid), 'w') as fp:
+        json.dump({"jobid" : jobid,
+                   "status" : "Error",
+                   "error" : message
+                   },fp)
+    print("Error: {}".format(message))
+    return {"error" : message}
+
 def solve(assumptions):
 
     job = get_current_job()
+    jobid = job.get_id()
+
     job.meta['status'] = "Reading in data"
     job.save_meta()
 
@@ -88,30 +99,30 @@ def solve(assumptions):
         try:
             assumptions[key] = bool(assumptions[key])
         except:
-            return {"error" : "{} could not be converted to boolean".format(key)}
+            return error("{} could not be converted to boolean".format(key), jobid)
 
     for key in floats:
         try:
             assumptions[key] = float(assumptions[key])
         except:
-            return {"error" : "{} could not be converted to float".format(key)}
+            return error("{} could not be converted to float".format(key), jobid)
 
         if assumptions[key] < 0 or assumptions[key] > 1e5:
-            return {"error" : "{} {} was not in the valid range [0,1e5]".format(key,assumptions[key])}
+            return error("{} {} was not in the valid range [0,1e5]".format(key,assumptions[key]), jobid)
 
 
     print(assumptions)
     ct = assumptions['country']
     if ct not in solar_pu or ct+"_ON" not in wind_pu:
-        return {"error" : "Country {} not found among valid countries".format(ct)}
+        return error("Country {} not found among valid countries".format(ct), jobid)
 
     try:
         year = int(assumptions['year'])
     except:
-        return {"error" : "Year {} could not be converted to an integer".format(assumptions['year'])}
+        return error("Year {} could not be converted to an integer".format(assumptions['year']), jobid)
 
     if year < 1985 or year > 2015:
-        return {"error" : "Year {} not in valid range".format(year)}
+        return error("Year {} not in valid range".format(year), jobid)
 
     year_start = year
     year_end = year
@@ -121,12 +132,12 @@ def solve(assumptions):
     try:
         frequency = int(assumptions['frequency'])
     except:
-        return {"error" : "Frequency {} could not be converted to an int".format(assumptions["frequency"])}
+        return error("Frequency {} could not be converted to an int".format(assumptions["frequency"]), jobid)
 
     if frequency < 3:
-        return {"error" : "Frequencies below 3 cannot be supported due to limited computation resources".format(frequency)}
+        return error("Frequencies below 3 cannot be supported due to limited computation resources".format(frequency), jobid)
     elif  frequency > 8760:
-        return {"error" : "Frequency {} not in valid range".format(frequency)}
+        return error("Frequency {} not in valid range".format(frequency), jobid)
 
 
     assumptions_df["discount rate"] = assumptions["discount_rate"]/100.
@@ -250,10 +261,10 @@ def solve(assumptions):
     print(status,termination_condition)
 
     if status != "ok":
-        return {"error" : "Job failed to optimise correctly"}
+        return error("Job failed to optimise correctly", jobid)
 
     if termination_condition == "infeasible":
-        return {"error" : "Problem was infeasible"}
+        return error("Problem was infeasible", jobid)
 
     job.meta['status'] = "Finished solving, processing and sending results"
     job.save_meta()
@@ -372,12 +383,13 @@ def solve(assumptions):
         results[sign]["data"] = power[sign].values.tolist()
         results[sign]["color"] = [colors[c] for c in power[sign].columns]
 
-    print(power["positive"].head())
-    print(power["negative"].head())
-
     balance = power["positive"].sum(axis=1) - power["negative"].sum(axis=1)
 
-    print(balance.describe())
+    with open('results-solve/results-{}.json'.format(jobid), 'w') as fp:
+        json.dump({"jobid" : jobid,
+                   "status" : "Finished",
+                   "average_cost" : results["average_cost"]
+                   },fp)
 
     #with open('results-{}.json'.format(job.id), 'w') as fp:
     #    json.dump(results,fp)
