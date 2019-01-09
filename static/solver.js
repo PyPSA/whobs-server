@@ -161,7 +161,7 @@ function onCountryClick(e){
     //console.log(e.target.feature.properties.name,e.target.feature.properties.iso_a2);
 
     assumptions["country"] = e.target.feature.properties.iso_a2;
-    document.getElementsByName("country")[0].value = assumptions["country"];
+    document.getElementsByName("country")[0].value = e.target.feature.properties.name;
     console.log("country changed to",assumptions["country"]);
 
     geojson.eachLayer(function(t,i){ geojson.resetStyle(t)});
@@ -200,6 +200,8 @@ for (let i = 0; i < Object.keys(assumptions).length; i++){
 	    assumptions[key] = this.checked;
 	    console.log(key,"changed to",assumptions[key]);
 	});
+    }
+    else if(key == "country"){
     }
     else{
 	document.getElementsByName(key)[0].value = value;
