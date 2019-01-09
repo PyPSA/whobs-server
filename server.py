@@ -44,7 +44,7 @@ def root():
 @app.route('/jobs', methods=['GET','POST'])
 def jobs_api():
     if request.method == "POST":
-        job = queue.enqueue("solve.solve",request.json)
+        job = queue.enqueue("solve.solve",request.json, timeout=300)
         result = {"jobid" : job.get_id()}
         request.json.update({"jobid" : result["jobid"],
                              "timestamp" : str(datetime.datetime.now()),

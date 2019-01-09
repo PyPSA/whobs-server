@@ -50,7 +50,7 @@
       <input type="text" name="country" value="United Kingdom" readonly> European country (select from map)<br />
       <br />
       <input type="number" name="year"> Weather year (from 1985 to 2015 inclusive)<br />
-      <input type="number" name="frequency"> Sampling frequency (n-hourly, n>2 - big n solves faster)<br />
+      <input type="number" name="frequency"> Sampling frequency (n-hourly, n<3 is very slow, big n solves faster)<br />
       <br />
       <input type="number" name="load"> Constant demand [MW]<br />
       <br />
@@ -74,7 +74,7 @@
       <input type="number" name="hydrogen_energy_cost"> Hydrogen energy capital cost (overnight) [EUR/kWh]<br />
       <input type="number" name="hydrogen_electrolyser_cost"> Hydrogen electrolyser capital cost (overnight) [EUR/kW]<br />
       <input type="number" name="hydrogen_electrolyser_efficiency"> Hydrogen electrolyser efficiency [percent, HHV]<br />
-      <input type="number" name="hydrogen_turbine_cost"> Hydrogen turbine capital cost (overnight) [EUR/kW]<br />
+      <input type="number" name="hydrogen_turbine_cost"> Hydrogen turbine (or fuel cell - see below) capital cost (overnight) [EUR/kW]<br />
       <input type="number" name="hydrogen_turbine_efficiency"> Hydrogen turbine efficiency [percent, HHV]<br />
       <br />
       <input type="number" name="discount_rate"> Cost of capital / interest rate [percent]<br />
@@ -230,11 +230,13 @@
     countries can reduce costs by up to 20% by smoothing wind over a
       larger area (see e.g. <a href="https://arxiv.org/abs/1704.05492">this paper</a> or <a href="https://arxiv.org/abs/1705.07617">this one</a>).</li>
 
-    <li>Including energy demand sectors other than electricity, like transport, heating and non-electric industrial demand can offer additional flexibility (e.g. load-shifting by battery electric vehicles and electrified heating with thermal storage), see e.g. <a href="https://arxiv.org/abs/1801.05290">this paper</a>.</li>
+    <li>Including energy demand sectors other than electricity, like transport, heating and non-electric industrial demand can offer additional flexibility (e.g. load-shifting by battery electric vehicles and electrified heating with thermal storage), see e.g. <a href="https://arxiv.org/abs/1801.05290">this paper</a> or <a href="https://doi.org/10.1016/j.rser.2016.02.025">this one</a>.</li>
 
     <li>Costs here are for completely decarbonised electricity
     systems. Reaching lower levels of decarbonisation is much cheaper
       and doesn't necessarily require any storage at all.</li>
+
+    <li>The costs for hydrogen storage assume hydrogen gas is stored underground. The costs for underground hydrogen storage are taken from Table 3 of <a href="https://www.nrel.gov/docs/fy10osti/46719.pdf">this NREL study</a>, using the most expensive option ("rock caverns created by excavating comparatively impervious rock formations"). Where salt deposits exist, salt caverns would be cheaper. Studies on salt deposit availability are available for most countries, see e.g. <a href="https://www.researchgate.net/figure/Underground-salt-deposits-and-cavern-fields-in-Europe-225_fig5_319417820">this map</a> for Europe.</li>
 
     </ol>
 
@@ -258,7 +260,7 @@
 
     <p>Fuel cells could be used instead of combined or open cycle turbines for hydrogen to power. Fuel cells are less mature than turbines, but have better chances of cost reduction and efficiency improvement.</p>
 
-    <p>To avoid long job times, the examples here are only run for a single
+    <p>To avoid long job times, the default here is to run only for a single
     weather year sampled at most every 3 hours. You can find solved
     versions run against every hour over 31 weather years here at
     the <a href="https://github.com/PyPSA/WHOBS">WHOBS repository</a>.</p>

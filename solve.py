@@ -134,10 +134,8 @@ def solve(assumptions):
     except:
         return error("Frequency {} could not be converted to an int".format(assumptions["frequency"]), jobid)
 
-    if frequency < 3:
-        return error("Frequencies below 3 cannot be supported due to limited computation resources".format(frequency), jobid)
-    elif  frequency > 8760:
-        return error("Frequency {} not in valid range".format(frequency), jobid)
+    if frequency < 1 or frequency > 8760:
+        return error("Frequency {} is not in the valid range [1,8760]".format(frequency), jobid)
 
 
     assumptions_df["discount rate"] = assumptions["discount_rate"]/100.
@@ -380,7 +378,7 @@ def solve(assumptions):
     for sign in ["negative","positive"]:
         results[sign] = {}
         results[sign]["columns"] = list(power[sign].columns)
-        results[sign]["data"] = power[sign].values.tolist()
+        results[sign]["data"] = power[sign].round(1).values.tolist()
         results[sign]["color"] = [colors[c] for c in power[sign].columns]
 
     balance = power["positive"].sum(axis=1) - power["negative"].sum(axis=1)
