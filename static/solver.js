@@ -308,11 +308,12 @@ function clear_results(){
     document.getElementById("load").innerHTML="";
     for (let i = 0; i < assets.length; i++){
 	document.getElementById(assets[i] + "_capacity").innerHTML="";
+	document.getElementById(assets[i] + "_cf_used").innerHTML="";
 	if(!assets[i].includes("energy")){
-	    document.getElementById(assets[i] + "_cf_used").innerHTML="";
+	    document.getElementById(assets[i] + "_rmv").innerHTML="";
 	};
-
     };
+    document.getElementById("battery_discharge_rmv").innerHTML="";
     for (let i = 0; i < vre.length; i++){
 	document.getElementById(assets[i] + "_cf_available").innerHTML="";
 	document.getElementById(assets[i] + "_curtailment").innerHTML="";
@@ -333,10 +334,12 @@ function display_results(){
 
     for (let i = 0; i < assets.length; i++){
 	document.getElementById(assets[i] + "_capacity").innerHTML=Math.abs(results[assets[i] + "_capacity"].toFixed(1));
+	document.getElementById(assets[i] + "_cf_used").innerHTML=Math.abs((results[assets[i] + "_cf_used"]*100)).toFixed(1);
 	if(!assets[i].includes("energy")){
-	    document.getElementById(assets[i] + "_cf_used").innerHTML=Math.abs((results[assets[i] + "_cf_used"]*100)).toFixed(1);
+	    document.getElementById(assets[i] + "_rmv").innerHTML=Math.abs((results[assets[i] + "_rmv"]*100)).toFixed(1);
 	};
     };
+    document.getElementById("battery_discharge_rmv").innerHTML=Math.abs((results["battery_discharge_rmv"]*100)).toFixed(1);
     for (let i = 0; i < vre.length; i++){
 	document.getElementById(assets[i] + "_cf_available").innerHTML=Math.abs((results[assets[i] + "_cf_available"]*100)).toFixed(1);
 	document.getElementById(assets[i] + "_curtailment").innerHTML=Math.abs((results[assets[i] + "_curtailment"]*100)).toFixed(1);
@@ -526,7 +529,7 @@ function draw_energy_stack(){
     let labels = [];
 
     for(let i=0; i < assets.length; i++){
-	if(assets[i] + "_used" in results){
+	if(!assets[i].includes("energy")){
 	    data.push(results[assets[i]+"_used"]);
 	    color.push(colors[assets[i]]);
 	    labels.push(assets[i].replace("_"," "));

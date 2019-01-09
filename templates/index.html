@@ -30,76 +30,11 @@
     electrolysed hydrogen) for different European countries. It will
     be extended worldwide shortly.</p>
 
-    <p>You can change the assumptions yourself (e.g. which country,
-    which weather year, the selection of technologies, technological
-    parameters and costs) and then press the red "Solve" button to
-    re-solve the system to see how it changes.</p>
-
-    <p>This tool is built only with free software and open data; the
-    code for it can be downloaded from the GitHub
-    repository <a href="https://github.com/PyPSA/whobs-server">whobs-server</a>. In particular, it uses
-    the <a href="https://github.com/PyPSA/PyPSA">Python for Power
-    System Analysis (PyPSA)</a> energy optimisation framework, open
-    weather data
-    from <a href="https://www.renewables.ninja/">renewables.ninja</a>,
-    the <a href="https://projects.coin-or.org/Clp">Clp</a> solver and
-    free software for the server infrastructure (GNU/Linux, nginx, gunicorn, Redis).</p>
-
-    <p>This is a <b>toy model</b> with a <b>strongly simplified</b> setup. Please read the <a href="https://github.com/PyPSA/WHOBS#warnings">warnings</a> before interpreting the results. In particular:</p>
-
-    <ol>
-    <li>Electricity systems with zero direct CO2 emissions can be
-    built more cheaply by using additional technology options. The
-    examples here are simply a toy model to put an upper bound on the
-    costs for a very simple setup. Additional generation technologies
-    which may reduce costs include using existing hydroelectric
-    generators, biomass from sustainable resources (such as waste and
-    agricultural/forestry residues), offshore wind, concentrating
-    solar thermal, geothermal, ocean energy, nuclear and
-    fossil/biomass plants with CCS. Additional storage technologies
-    include redox flow batteries, compressed air energy storage,
-      etc. Other options include demand-side management.</li>
-
-    <li>No import or export capacities with other countries are
-    assumed, so each country must meet the baseload profile by
-    itself. Existing and planned transmission grid connections between
-    countries can reduce costs by up to 20% by smoothing wind over a
-      larger area (see e.g. <a href="https://arxiv.org/abs/1704.05492">this paper</a> or <a href="https://arxiv.org/abs/1705.07617">this one</a>).</li>
-
-    <li>Including energy demand sectors other than electricity, like transport, heating and non-electric industrial demand can offer additional flexibility (e.g. load-shifting by battery electric vehicles and electrified heating with thermal storage), see e.g. <a href="https://arxiv.org/abs/1801.05290">this paper</a>.</li>
-
-    <li>Costs here are for completely decarbonised electricity
-    systems. Reaching lower levels of decarbonisation is much cheaper
-      and doesn't necessarily require any storage at all.</li>
-
-    </ol>
-
-    <p>To see an animation of a 95% decarbonised European electricity system,
-    including more renewable energy technologies and cross-border
-    transmission connections, see:</p>
-
-    <p><a href="https://pypsa.org/animations/pypsa-eur-30/">PyPSA-Eur-30
-    animation</a></p>
-
-    <p>In the examples below asset lifetimes are all assumed to be 25
-    years, with the exception of batteries (15 years) and hydrogen
-    electrolysers (20 years). Battery charging and discharging
-    efficiencies are both 90%. Fixed Operation and Maintenance (FOM)
-    costs are set at 3% of the investment cost of the asset per
-    year.</p>
-
-    <p>The sources for most of the assumptions can be found
-    in <a href="https://github.com/PyPSA/WHOBS/blob/master/assumptions.csv">this
-    table</a>.</p>
-
-    <p>To avoid long job times, the examples here are only run for a single
-    weather year sampled at most every 3 hours. You can find solved
-    versions run against every hour over 31 weather years here at
-    the <a href="https://github.com/PyPSA/WHOBS">WHOBS repository</a>.</p>
+    <p>This is a <b>toy model</b> with a <b>strongly simplified</b> setup. Please read the warnings below.</p>
 
     <h3>How to use the tool</h3>
 
-    <p>Select the country from the map, alter the technological parameters via the input boxes, then press the red button "Solve" to send the assumptions to the solver. It can take 40 seconds to solve and return a result, or longer if there's a queue of jobs.</p>
+    <p>Select the country from the map, alter the technological parameters via the input boxes, then press the red button "Solve" to send the assumptions to the solver. It can take 30 seconds to solve and return a result, or longer if there's a queue of jobs.</p>
 
     <p>Fun things to try out:</p>
 
@@ -147,7 +82,7 @@
 
       <div id="solve">
 	<button id="solve-button">Solve</button>
-	<p> Warning: It takes about 40 seconds to solve and return a
+	<p> Warning: It takes about 30 seconds to solve and return a
 	result, please be patient! If there's a queue, it may take
 	longer. We're working on improving the performance.</p>
 	<p>Status: <span id="status">Waiting for job</span></p>
@@ -166,14 +101,15 @@
 
       <h3>Results<span id="results_assumptions"></span></h3>
 
-      <p>Baseload demand [MW]: <span id="load"></span></p>
+      <p>Baseload demand: <span id="load"></span> MW</p>
       <table id="tab_results">
 	<tr>
 	  <th class="tab_asset" id="tabh_asset">Asset</th>
 	  <th class="tab_data" id="tabh_capacity">Capacity</th>
 	  <th class="tab_data" id="tabh_cf_used">Cap Ftr used [%]</th>
 	  <th class="tab_data" id="tabh_cf_available">Cap Ftr avail [%]</th>
-	  <th class="tab_data" id="tabh_curtailment">Curtailmt [%]</th>
+	  <th class="tab_data" id="tabh_curtailment">Curtlmt [%]</th>
+	  <th class="tab_data" id="tabh_rmv">Rel Mkt Value [%]</th>
 	</tr>
 	<tr>
 	  <td class="tab_asset">Solar</td>
@@ -181,6 +117,7 @@
 	  <td class="tab_data"><span id="solar_cf_used"></span></td>
 	  <td class="tab_data"><span id="solar_cf_available"></span></td>
 	  <td class="tab_data"><span id="solar_curtailment"></span></td>
+	  <td class="tab_data"><span id="solar_rmv"></span></td>
 	</tr>
 	<tr>
 	  <td class="tab_asset">Wind</td>
@@ -188,6 +125,7 @@
 	  <td class="tab_data"><span id="wind_cf_used"></span></td>
 	  <td class="tab_data"><span id="wind_cf_available"></span></td>
 	  <td class="tab_data"><span id="wind_curtailment"></span></td>
+	  <td class="tab_data"><span id="wind_rmv"></span></td>
 	</tr>
 	<tr>
 	  <td class="tab_asset">Battery power</td>
@@ -195,11 +133,12 @@
 	  <td class="tab_data"><span id="battery_power_cf_used"></span></td>
 	  <td class="tab_data"></td>
 	  <td class="tab_data"></td>
+	  <td class="tab_data"><span id="battery_power_rmv"></span>/<span id="battery_discharge_rmv"></span></td>
 	</tr>
 	<tr>
 	  <td class="tab_asset">Battery energy</td>
 	  <td class="tab_data"><span id="battery_energy_capacity"></span> MWh</td>
-	  <td class="tab_data"></td>
+	  <td class="tab_data"><span id="battery_energy_cf_used"></span></td>
 	  <td class="tab_data"></td>
 	  <td class="tab_data"></td>
 	</tr>
@@ -209,6 +148,7 @@
 	  <td class="tab_data"><span id="hydrogen_electrolyser_cf_used"></span></td>
 	  <td class="tab_data"></td>
 	  <td class="tab_data"></td>
+	  <td class="tab_data"><span id="hydrogen_electrolyser_rmv"></span></td>
 	</tr>
 	<tr>
 	  <td class="tab_asset">Hydrogen turbine</td>
@@ -216,11 +156,12 @@
 	  <td class="tab_data"><span id="hydrogen_turbine_cf_used"></span></td>
 	  <td class="tab_data"></td>
 	  <td class="tab_data"></td>
+	  <td class="tab_data"><span id="hydrogen_turbine_rmv"></span></td>
 	</tr>
 	<tr>
 	  <td class="tab_asset">Hydrogen energy</td>
 	  <td class="tab_data"><span id="hydrogen_energy_capacity"></span> MWh</td>
-	  <td class="tab_data"></td>
+	  <td class="tab_data"><span id="hydrogen_energy_cf_used"></span></td>
 	  <td class="tab_data"></td>
 	  <td class="tab_data"></td>
 	</tr>
@@ -256,12 +197,83 @@
       </select>
       </p>
 
-      <svg width="1000" height="400" id="power"></svg>
+      <svg width="1100" height="400" id="power"></svg>
     </div>
 
     <br />
     <br />
     <div id="end">
+
+      <h3> Background and warnings</h3>
+
+      <p>This is a <b>toy model</b> with a <b>strongly simplified</b>
+      setup. Please read
+      the <a href="https://github.com/PyPSA/WHOBS#warnings">warnings</a>
+      before interpreting the results. In particular:</p>
+
+    <ol>
+    <li>Electricity systems with zero direct CO2 emissions can be
+    built more cheaply by using additional technology options. The
+    examples here are simply a toy model to put an upper bound on the
+    costs for a very simple setup. Additional generation technologies
+    which may reduce costs include using existing hydroelectric
+    generators, biomass from sustainable resources (such as waste and
+    agricultural/forestry residues), offshore wind, concentrating
+    solar thermal, geothermal, ocean energy, nuclear and
+    fossil/biomass plants with CCS. Additional storage technologies
+    include redox flow batteries, compressed air energy storage,
+      etc. Other options include demand-side management.</li>
+
+    <li>No import or export capacities with other countries are
+    assumed, so each country must meet the baseload profile by
+    itself. Existing and planned transmission grid connections between
+    countries can reduce costs by up to 20% by smoothing wind over a
+      larger area (see e.g. <a href="https://arxiv.org/abs/1704.05492">this paper</a> or <a href="https://arxiv.org/abs/1705.07617">this one</a>).</li>
+
+    <li>Including energy demand sectors other than electricity, like transport, heating and non-electric industrial demand can offer additional flexibility (e.g. load-shifting by battery electric vehicles and electrified heating with thermal storage), see e.g. <a href="https://arxiv.org/abs/1801.05290">this paper</a>.</li>
+
+    <li>Costs here are for completely decarbonised electricity
+    systems. Reaching lower levels of decarbonisation is much cheaper
+      and doesn't necessarily require any storage at all.</li>
+
+    </ol>
+
+    <p>To see an animation of a 95% decarbonised European electricity system,
+    including more renewable energy technologies and cross-border
+    transmission connections, see:</p>
+
+    <p><a href="https://pypsa.org/animations/pypsa-eur-30/">PyPSA-Eur-30
+    animation</a></p>
+
+    <p>Here asset lifetimes are all assumed to be 25
+    years, with the exception of batteries (15 years) and hydrogen
+    electrolysers (20 years). Battery charging and discharging
+    efficiencies are both 90%. Fixed Operation and Maintenance (FOM)
+    costs are set at 3% of the investment cost of the asset per
+    year.</p>
+
+    <p>The sources for most of the assumptions can be found
+    in <a href="https://github.com/PyPSA/WHOBS/blob/master/assumptions.csv">this
+    table</a>.</p>
+
+    <p>Fuel cells could be used instead of combined or open cycle turbines for hydrogen to power. Fuel cells are less mature than turbines, but have better chances of cost reduction and efficiency improvement.</p>
+
+    <p>To avoid long job times, the examples here are only run for a single
+    weather year sampled at most every 3 hours. You can find solved
+    versions run against every hour over 31 weather years here at
+    the <a href="https://github.com/PyPSA/WHOBS">WHOBS repository</a>.</p>
+
+    <h3>Only free software and open data</h3>
+
+    <p>This tool is built only with free software and open data; the
+    code for it can be downloaded from the GitHub
+    repository <a href="https://github.com/PyPSA/whobs-server">whobs-server</a>. In particular, it uses
+    the <a href="https://github.com/PyPSA/PyPSA">Python for Power
+    System Analysis (PyPSA)</a> energy optimisation framework, open
+    weather data
+    from <a href="https://www.renewables.ninja/">renewables.ninja</a>,
+    the <a href="https://projects.coin-or.org/Clp">Clp</a> solver, <a href="https://d3js.org/">D3.js</a> for graphics, <a href="https://www.mapbox.com/">Mapbox</a>, <a href="http://leafletjs.com/">Leaflet</a> and <a href="https://www.naturalearthdata.com/">Natural Earth</a> for maps,  and
+    free software for the server infrastructure (GNU/Linux, nginx, Flask, gunicorn, Redis).</p>
 
       <h3>New functionality coming soon</h3>
 
@@ -274,14 +286,14 @@
 
       <h3>Problems/comments/feedback/help out</h3>
 
-<p>If you encounter any problems please use the <a href="https://github.com/PyPSA/whobs-server/issues">GitHub issue tracker</a>. It would be helpful to note the jobid and any other error messages from the Javascript console (find via "Developer Tools").</p>
+<p>If you encounter any problems please use the <a href="https://github.com/PyPSA/whobs-server/issues">GitHub issue tracker</a>. It would be helpful to note the jobid and any other error messages from your browser's JavaScript console (find the console via your browser's "Developer Tools").</p>
 
 <p>If you want to help out and contribute improvements, please submit a <a href="https://github.com/PyPSA/whobs-server/pulls">pull request</a>!</p>
 
 <p>Any other feedback and comments can be sent to <a href="https://nworbmot.org/">Tom Brown</a>.</p>
 
       <h3>Privacy statement</h3>
-      <p>No personal information is stored on our server. There are no cookies.</p>
+      <p>No personal information is stored on the server. There are no cookies.</p>
 
       <p>Simulation assumptions and results for each job are stored on the server for statistical purposes.</p>
     </div>

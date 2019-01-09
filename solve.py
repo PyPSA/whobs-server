@@ -102,7 +102,7 @@ def solve(assumptions):
 
     print(assumptions)
     ct = assumptions['country']
-    if ct not in solar_pu:
+    if ct not in solar_pu or ct+"_ON" not in wind_pu:
         return {"error" : "Country {} not found among valid countries".format(ct)}
 
     try:
@@ -285,6 +285,7 @@ def solve(assumptions):
             results[g+"_curtailment"] =  (results[g+"_available"] - results[g+"_used"])/results[g+"_available"]
             results[g+"_cf_available"] = network.generators_t.p_max_pu[ct + " " + g].mean()
             results[g+"_cf_used"] = results[g+"_used"]/network.generators.p_nom_opt[ct + " " + g]
+            results[g+"_rmv"] = (network.buses_t.marginal_price[ct]*network.generators_t.p[ct + " " + g]).sum()/network.generators_t.p[ct + " " + g].sum()/results["average_price"]
             power["positive"][g] = network.generators_t.p[ct + " " + g]
         else:
             results[g+"_capacity"] = 0.
@@ -294,15 +295,20 @@ def solve(assumptions):
             results[g+"_available"] = 0.
             results[g+"_cf_used"] = 0.
             results[g+"_cf_available"] = 0.
+            results[g+"_rmv"] = 0.
             power["positive"][g] = 0.
 
-    if assumptions["battery"] and network.links.at[ct + " battery_power","p_nom_opt"] > threshold:
+    if assumptions["battery"] and network.links.at[ct + " battery_power","p_nom_opt"] > threshold and network.stores.at[ct + " battery_energy","e_nom_opt"]:
         results["battery_power_capacity"] = network.links.at[ct + " battery_power","p_nom_opt"]
         results["battery_power_cost"] = network.links.at[ct + " battery_power","p_nom_opt"]*network.links.at[ct + " battery_power","capital_cost"]/year_weight
         results["battery_energy_capacity"] = network.stores.at[ct + " battery_energy","e_nom_opt"]
         results["battery_energy_cost"] = network.stores.at[ct + " battery_energy","e_nom_opt"]*network.stores.at[ct + " battery_energy","capital_cost"]/year_weight
         results["battery_power_used"] = network.links_t.p0[ct + " battery_discharge"].mean()
         results["battery_power_cf_used"] = results["battery_power_used"]/network.links.at[ct + " battery_power","p_nom_opt"]
+        results["battery_energy_used"] = network.stores_t.e[ct + " battery_energy"].mean()
+        results["battery_energy_cf_used"] = results["battery_energy_used"]/network.stores.at[ct + " battery_energy","e_nom_opt"]
+        results["battery_power_rmv"] = (network.buses_t.marginal_price[ct]*network.links_t.p0[ct + " battery_power"]).sum()/network.links_t.p0[ct + " battery_power"].sum()/results["average_price"]
+        results["battery_discharge_rmv"] = (network.buses_t.marginal_price[ct]*network.links_t.p0[ct + " battery_discharge"]).sum()/network.links_t.p0[ct + " battery_discharge"].sum()/results["average_price"]
         power["positive"]["battery"] = -network.links_t.p1[ct + " battery_discharge"]
         power["negative"]["battery"] = network.links_t.p0[ct + " battery_power"]
     else:
@@ -312,10 +318,14 @@ def solve(assumptions):
         results["battery_energy_cost"] = 0.
         results["battery_power_used"] = 0.
         results["battery_power_cf_used"] = 0.
+        results["battery_energy_used"] = 0.
+        results["battery_energy_cf_used"] = 0.
+        results["battery_power_rmv"] = 0.
+        results["battery_discharge_rmv"] = 0.
         power["positive"]["battery"] = 0.
         power["negative"]["battery"] = 0.
 
-    if assumptions["hydrogen"] and network.links.at[ct + " hydrogen_electrolyser","p_nom_opt"] > threshold and network.links.at[ct + " hydrogen_turbine","p_nom_opt"] > threshold:
+    if assumptions["hydrogen"] and network.links.at[ct + " hydrogen_electrolyser","p_nom_opt"] > threshold and network.links.at[ct + " hydrogen_turbine","p_nom_opt"] > threshold and network.stores.at[ct + " hydrogen_energy","e_nom_opt"] > threshold:
         results["hydrogen_electrolyser_capacity"] = network.links.at[ct + " hydrogen_electrolyser","p_nom_opt"]
         results["hydrogen_electrolyser_cost"] = network.links.at[ct + " hydrogen_electrolyser","p_nom_opt"]*network.links.at[ct + " hydrogen_electrolyser","capital_cost"]/year_weight
         results["hydrogen_turbine_capacity"] = network.links.at[ct + " hydrogen_turbine","p_nom_opt"]*network.links.at[ct + " hydrogen_turbine","efficiency"]
@@ -326,6 +336,10 @@ def solve(assumptions):
         results["hydrogen_electrolyser_cf_used"] = results["hydrogen_electrolyser_used"]/network.links.at[ct + " hydrogen_electrolyser","p_nom_opt"]
         results["hydrogen_turbine_used"] = network.links_t.p0[ct + " hydrogen_turbine"].mean()
         results["hydrogen_turbine_cf_used"] = results["hydrogen_turbine_used"]/network.links.at[ct + " hydrogen_turbine","p_nom_opt"]
+        results["hydrogen_energy_used"] = network.stores_t.e[ct + " hydrogen_energy"].mean()
+        results["hydrogen_energy_cf_used"] = results["hydrogen_energy_used"]/network.stores.at[ct + " hydrogen_energy","e_nom_opt"]
+        results["hydrogen_turbine_rmv"] = (network.buses_t.marginal_price[ct]*network.links_t.p0[ct + " hydrogen_turbine"]).sum()/network.links_t.p0[ct + " hydrogen_turbine"].sum()/results["average_price"]
+        results["hydrogen_electrolyser_rmv"] = (network.buses_t.marginal_price[ct]*network.links_t.p0[ct + " hydrogen_electrolyser"]).sum()/network.links_t.p0[ct + " hydrogen_electrolyser"].sum()/results["average_price"]
         power["positive"]["hydrogen_turbine"] = -network.links_t.p1[ct + " hydrogen_turbine"]
         power["negative"]["hydrogen_electrolyser"] = network.links_t.p0[ct + " hydrogen_electrolyser"]
     else:
@@ -335,8 +349,14 @@ def solve(assumptions):
         results["hydrogen_turbine_cost"] = 0.
         results["hydrogen_energy_capacity"] = 0.
         results["hydrogen_energy_cost"] = 0.
+        results["hydrogen_electrolyser_used"] = 0.
         results["hydrogen_electrolyser_cf_used"] = 0.
+        results["hydrogen_turbine_used"] = 0.
         results["hydrogen_turbine_cf_used"] = 0.
+        results["hydrogen_energy_used"] = 0.
+        results["hydrogen_energy_cf_used"] = 0.
+        results["hydrogen_turbine_rmv"] = 0.
+        results["hydrogen_electrolyser_rmv"] = 0.
         power["positive"]["hydrogen_turbine"] = 0.
         power["negative"]["hydrogen_electrolyser"] = 0.
 

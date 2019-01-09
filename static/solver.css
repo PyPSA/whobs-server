@@ -112,7 +112,7 @@
 
 #results_summary {
     float: left;
-    width: 450px;
+    width: 500px;
 }
 
 #average_cost_div {
@@ -137,7 +137,7 @@
 
 #legend {
     float: left;
-    width: 200px;
+    width: 150px;
 }
 
 
@@ -167,27 +167,31 @@ tab_asset {
 }
 
 #tab_results {
-    width: 430px;
+    width: 470px;
 }
 
 #tabh_asset {
-    width: 30%;
+    width: 25%;
 }
 
 #tabh_capacity {
-    width:22%;
+    width:19%;
 }
 
 #tabh_cf_available {
-    width:16%;
+    width:14%;
 }
 
 #tabh_cf_used {
-    width:16%;
+    width:14%;
 }
 
 #tabh_curtailment {
-    width:16%;
+    width:14%;
+}
+
+#tabh_rmv {
+    width:14%;
 }
 
 

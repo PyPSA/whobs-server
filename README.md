@@ -2,16 +2,20 @@
 # Online optimisation for Wind-Hydrogen-Other-Battery-Solar (WHOBS) systems
 
 This is the code for the online optimisation of
-[WHOBS](https://github.com/PyPSA/WHOBS) systems. You can
-optimise a zero-direct-emission electricity system with wind, solar
-and storage (using batteries and electrolysed hydrogen gas) to provide
-a baseload electricity demand, using the cost and other assumptions of
-your choice. It uses only free software and open data, including
-[Python for Power System Analysis
-(PyPSA)](https://github.com/PyPSA/PyPSA) for the optimisation
-framework, [renewables.ninja](https://www.renewables.ninja/) for the
-open weather data, [Clp](https://projects.coin-or.org/Clp) for the
-solver, and free software for the server infrastructure.
+[WHOBS](https://github.com/PyPSA/WHOBS) systems. You can optimise a
+zero-direct-emission electricity system with wind, solar and storage
+(using batteries and electrolysed hydrogen gas) to provide a baseload
+electricity demand, using the cost and other assumptions of your
+choice. It uses only free software and open data, including [Python
+for Power System Analysis (PyPSA)](https://github.com/PyPSA/PyPSA) for
+the optimisation framework,
+[renewables.ninja](https://www.renewables.ninja/) for the open weather
+data, [Clp](https://projects.coin-or.org/Clp) for the solver,
+[D3.js](https://d3js.org/) for graphics,
+[Mapbox](https://www.mapbox.com/), [Leaflet](http://leafletjs.com/)
+and [Natural Earth](https://www.naturalearthdata.com/) for maps, and
+free software for the server infrastructure (GNU/Linux, nginx, Flask,
+gunicorn, Redis).
 
 You can find a live version at:
 
@@ -25,21 +29,21 @@ You can find a live version at:
 
 Ubuntu packages:
 
-sudo apt install coinor-clp coinor-cbc python3-venv redis-server
+`sudo apt install coinor-clp coinor-cbc python3-venv redis-server`
 
 In addition for a server deployment:
 
-sudo apt install nginx
+`sudo apt install nginx`
 
 Python:
 
-pip install ipython pandas numpy redis rq Flask xarray netcdf4 json
+`pip install ipython pandas numpy redis rq Flask xarray netcdf4 json`
 
-pip install git+https://github.com/PyPSA/PyPSA.git
+`pip install git+https://github.com/PyPSA/PyPSA.git`
 
 In addition for a server deployment:
 
-pip install gunicorn
+`pip install gunicorn`
 
 
 ### Data
@@ -72,7 +76,7 @@ To run locally you need to start the Python Flask server in one terminal, and re
 
 Start the Flask server in one terminal with:
 
-`python flask_queue.py`
+`python server.py`
 
 This will serve to local address:
 
@@ -90,7 +94,7 @@ this is run. You can run multiple workers to process jobs in parallel.
 
 Use nginx, gunicorn for the Python server, rq, and manage with supervisor.
 
-See <./nginx-configuration.txt>
+See <nginx-configuration.txt> for the nginx server configuration.
 
 
 ## License

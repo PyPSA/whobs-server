@@ -52,6 +52,7 @@ def jobs_api():
         with open('assumptions/assumptions-{}.json'.format(result["jobid"]), 'w') as fp:
             json.dump(request.json, fp)
         print("jobid {} request:".format(result["jobid"]))
+        print(request.headers['Content-Type'])
         print(request.json)
         return jsonify(result)
     elif request.method == "GET":
