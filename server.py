@@ -44,6 +44,8 @@ def root():
 @app.route('/jobs', methods=['GET','POST'])
 def jobs_api():
     if request.method == "POST":
+        print(request.headers['Content-Type'])
+        print(request.json)
         job = queue.enqueue("solve.solve",request.json, timeout=300)
         result = {"jobid" : job.get_id()}
         request.json.update({"jobid" : result["jobid"],
@@ -52,7 +54,6 @@ def jobs_api():
         with open('assumptions/assumptions-{}.json'.format(result["jobid"]), 'w') as fp:
             json.dump(request.json, fp)
         print("jobid {} request:".format(result["jobid"]))
-        print(request.headers['Content-Type'])
         print(request.json)
         return jsonify(result)
     elif request.method == "GET":
