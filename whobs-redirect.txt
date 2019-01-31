@@ -1,0 +1,37 @@
+server {
+    if ($host = www.whobs.org) {
+        return 301 https://model.energy$request_uri;
+    } # managed by Certbot
+
+
+    if ($host = whobs.org) {
+        return 301 https://model.energy$request_uri;
+    } # managed by Certbot
+
+
+    # listen on port 80 (http)
+    listen 80;
+    server_name whobs.org www.whobs.org;
+    location / {
+        # redirect any requests to the same URL but on https
+        return 301 https://model.energy$request_uri;
+    }
+
+
+
+
+}
+server {
+    # listen on port 443 (https)
+    listen 443 ssl;
+    server_name whobs.org www.whobs.org;
+    return 301 https://model.energy$request_uri;
+
+    # write access and error logs to /var/log
+    access_log /var/log/whobs_access.log;
+    error_log /var/log/whobs_error.log;
+
+    ssl_certificate /etc/letsencrypt/live/whobs.org/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/whobs.org/privkey.pem; # managed by Certbot
+
+}

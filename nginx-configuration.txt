@@ -1,34 +1,10 @@
 server {
-    if ($host = www.whobs.org) {
-        return 301 https://$host$request_uri;
-    } # managed by Certbot
+    server_name .model.energy;
 
-
-    if ($host = whobs.org) {
-        return 301 https://$host$request_uri;
-    } # managed by Certbot
-
-
-    # listen on port 80 (http)
-    listen 80;
-    server_name whobs.org www.whobs.org;
-    location / {
-        # redirect any requests to the same URL but on https
-        return 301 https://$host$request_uri;
-    }
-
-
-
-
-}
-server {
-    # listen on port 443 (https)
-    listen 443 ssl;
-    server_name whobs.org www.whobs.org;
 
     # write access and error logs to /var/log
-    access_log /var/log/whobs_access.log;
-    error_log /var/log/whobs_error.log;
+    access_log /var/log/model_access.log;
+    error_log /var/log/model_error.log;
 
     location / {
         # forward application requests to the gunicorn server
@@ -45,7 +21,33 @@ server {
         expires 30d;
     }
 
-    ssl_certificate /etc/letsencrypt/live/whobs.org/fullchain.pem; # managed by Certbot
-    ssl_certificate_key /etc/letsencrypt/live/whobs.org/privkey.pem; # managed by Certbot
+
+    listen 443 ssl; # managed by Certbot
+    ssl_certificate /etc/letsencrypt/live/model.energy/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/model.energy/privkey.pem; # managed by Certbot
+    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+
+
+}
+server {
+    if ($host = www.model.energy) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+
+    if ($host = model.energy) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+
+    server_name .model.energy;
+
+	server_name _;
+    listen 80;
+    return 404; # managed by Certbot
+
+
+
 
 }
