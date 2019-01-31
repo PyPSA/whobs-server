@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+<title>model.energy</title>
 <meta charset="utf-8">
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.3/dist/leaflet.css"
@@ -22,25 +23,26 @@
 
   <div id="container">
     <div id="introduction">
-    <h1>Meet constant demand from wind+solar+storage with zero-direct-emissions using your own assumptions</h1>
+    <h1>model.energy: build your own zero-emission electricity supply</h1>
 
-    <p>This online tool calculates what it would cost to meet a
-    constant "baseload" electricity demand profile from a combination
-    of wind power, solar power and storage (using batteries and
-    electrolysed hydrogen) for different European countries. It will
-    be extended worldwide shortly.</p>
+    <p>This tool calculates the cost of meeting constant electricity
+    demand from a combination of wind power, solar power and storage
+    (using batteries and electrolysed hydrogen) for different European
+      countries.</p>
+
+    <p>It will be extended worldwide shortly.</p>
 
     <p>This is a <b>toy model</b> with a <b>strongly simplified</b> setup. Please read the warnings below.</p>
 
     <h3>How to use the tool</h3>
 
-    <p>Select the country from the map, alter the technological parameters via the input boxes, then press the red button "Solve" to send the assumptions to the solver. It can take 30 seconds to solve and return a result, or longer if there's a queue of jobs.</p>
+    <p>Select the country from the map, choose your technological parameters, then press the red "Solve" button.</p>
 
     <p>Fun things to try out:</p>
 
     <ul>
-      <li>remove technologies with the checkboxes, e.g. hydrogen gas storage, and see system costs rise</li>
-      <li>set solar or battery costs very low, to simulate a breakthrough in manufacturing</li>
+      <li>remove technologies with the checkboxes, e.g. hydrogen gas storage or wind, and see system costs rise</li>
+      <li>set solar or battery costs very low, to simulate breakthroughs in manufacturing</li>
     </ul>
 
     </div>
@@ -236,8 +238,13 @@
     systems. Reaching lower levels of decarbonisation is much cheaper
       and doesn't necessarily require any storage at all.</li>
 
-    <li>The costs for hydrogen storage assume hydrogen gas is stored underground. The costs for underground hydrogen storage are taken from Table 3 of <a href="https://www.nrel.gov/docs/fy10osti/46719.pdf">this NREL study</a>, using the most expensive option ("rock caverns created by excavating comparatively impervious rock formations"). Where salt deposits exist, salt caverns would be cheaper. Studies on salt deposit availability are available for most countries, see e.g. <a href="https://www.researchgate.net/figure/Underground-salt-deposits-and-cavern-fields-in-Europe-225_fig5_319417820">this map</a> for Europe.</li>
+    <li>The wind profiles used here are converted from wind speed time series assuming the current wind turbine fleet. New and future turbines have higher capacity factors because e.g. they're taller, capturing wind energy where resources are better.</li>
 
+    <li>Because the wind and solar profiles are computed using today's distribution of power plants, there is no possibility to optimise the distribution of power plants within each country to reduce the costs of providing a baseload profile.</li>
+
+    <li>The costs for hydrogen storage assume hydrogen gas is stored underground. The costs for underground hydrogen storage are taken from Table 3 of <a href="https://www.nrel.gov/docs/fy10osti/46719.pdf">this NREL study</a>, using the most expensive option ("rock caverns created by excavating comparatively impervious rock formations"). Where salt deposits exist, salt caverns may be cheaper. Studies on salt deposit availability are available for most countries, see e.g. <a href="https://www.researchgate.net/figure/Underground-salt-deposits-and-cavern-fields-in-Europe-225_fig5_319417820">this map</a> for Europe.</li>
+
+    <li>Costs for the electricity grid inside each country and costs for ancillary services are not included.</li>
     </ol>
 
     <p>To see an animation of a 95% decarbonised European electricity system,
