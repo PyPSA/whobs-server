@@ -187,8 +187,48 @@ function onCountryMouseOver(e){
     if (!L.Browser.ie && !L.Browser.opera) {
 	layer.bringToFront();
     }
-}
+};
 
+
+var popup = L.popup();
+
+function onMapClick(e) {
+
+    popup.setLatLng(e.latlng)
+	.setContent("You clicked the map at " + e.latlng.toString())
+	.openOn(mymap);
+};
+
+
+
+d3.selectAll("input[name='selectByCountry']").on("change", function(){
+    if(this.checked){
+	mymap.addLayer(geojson);
+	mymap.off('click', onMapClick);
+	mymap.closePopup();
+	d3.selectAll("input[name='selectByLocation']").property('checked',false);
+    }
+    else{
+	mymap.removeLayer(geojson);
+	mymap.on('click', onMapClick);
+	d3.selectAll("input[name='selectByLocation']").property('checked',true);
+    };
+});
+
+
+d3.selectAll("input[name='selectByLocation']").on("change", function(){
+    if(this.checked){
+	mymap.removeLayer(geojson);
+	mymap.on('click', onMapClick);
+	d3.selectAll("input[name='selectByCountry']").property('checked',false);
+    }
+    else{
+	mymap.addLayer(geojson);
+	mymap.off('click', onMapClick);
+	mymap.closePopup();
+	d3.selectAll("input[name='selectByCountry']").property('checked',true);
+    };
+});
 
 
 for (let i = 0; i < Object.keys(assumptions).length; i++){
