@@ -1,9 +1,8 @@
 
-# Online optimisation for Wind-Hydrogen-Other-Battery-Solar (WHOBS) systems
+# model.energy: online optimisation of energy systems
 
-This is the code for the online optimisation of
-[WHOBS](https://github.com/PyPSA/WHOBS) systems. You can optimise a
-zero-direct-emission electricity system with wind, solar and storage
+This is the code for the online optimisation
+zero-direct-emission electricity systems with wind, solar and storage
 (using batteries and electrolysed hydrogen gas) to provide a baseload
 electricity demand, using the cost and other assumptions of your
 choice. It uses only free software and open data, including [Python
@@ -19,8 +18,7 @@ gunicorn, Redis).
 
 You can find a live version at:
 
-<https://whobs.org/>
-
+<https://model.energy/>
 
 
 ## Requirements

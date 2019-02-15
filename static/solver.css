@@ -18,46 +18,9 @@
     clear: both;
 }
 
-
-
-#assumptions {
-    float: left;
-    width: 1100px;
-}
-
-
-/* Clear floats after the columns */
-#introduction:after {
-    content: "";
-    display: table;
-    clear: both;
-}
-
-
-
-
-#assumptions {
-    float: left;
-    width: 600px;
-}
-
-
-#selectCountry {
-    float: left;
-    width: 500px;
-    height: 500px;
-}
-
 #mapid {
-    float: left;
-    width: 450px;
-    height: 450px;
-}
-
-
-#solve {
-    float: left;
-    width: 600px;
+    width: 1100px;
+    height: 550px;
 }
 
 

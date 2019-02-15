@@ -34,10 +34,6 @@
 
     <p>This is a <b>toy model</b> with a <b>strongly simplified</b> setup. Please read the warnings below.</p>
 
-    <h3>How to use the tool</h3>
-
-    <p>Select the country from the map, choose your technological parameters, then press the red "Solve" button.</p>
-
     <p>Fun things to try out:</p>
 
     <ul>
@@ -47,8 +43,15 @@
 
     </div>
 
+    <div id="selectCountry">
+      <h2>Step 1: Select European country</h2>
+      <div id="mapid">
+      </div>
+    </div>
+
+
     <div id="assumptions">
-      <h3>Choose technologies, costs and other assumptions</h3>
+      <h2>Step 2: Choose technologies, costs and other assumptions</h2>
       <input type="text" name="country" value="United Kingdom" readonly> European country (select from map)<br />
       <br />
       <input type="number" name="year"> Weather year (from 1985 to 2015 inclusive)<br />
@@ -82,7 +85,12 @@
       <input type="number" name="discount_rate"> Cost of capital / interest rate [percent]<br />
       <br />
 
+    </div>
+
       <div id="solve">
+
+      <h2>Step 3: Solve and wait for results</h2>
+
 	<button id="solve-button">Solve</button>
 	<p> Warning: It takes about 30 seconds to solve and return a
 	result, please be patient! If there's a queue, it may take
@@ -90,18 +98,11 @@
 	<p>Status: <span id="status">Waiting for job</span></p>
       </div>
 
-    </div>
-
-    <div id="selectCountry">
-      <h3>Select European country</h3>
-      <div id="mapid">
-      </div>
-    </div>
 
     <div id="results">
       <div id="results_summary">
 
-      <h3>Results<span id="results_assumptions"></span></h3>
+      <h2>Results<span id="results_assumptions"></span></h2>
 
       <p>Baseload demand: <span id="load"></span> MW</p>
       <table id="tab_results">
@@ -206,7 +207,7 @@
     <br />
     <div id="end">
 
-      <h3> Background and warnings</h3>
+      <h2> Background and warnings</h2>
 
       <p>This is a <b>toy model</b> with a <b>strongly simplified</b>
       setup. Please read
@@ -272,7 +273,7 @@
     versions run against every hour over 31 weather years here at
     the <a href="https://github.com/PyPSA/WHOBS">WHOBS repository</a>.</p>
 
-    <h3>Only free software and open data</h3>
+    <h2>Only free software and open data</h2>
 
     <p>This tool is built only with free software and open data; the
     code for it can be downloaded from the GitHub
@@ -284,7 +285,7 @@
     the <a href="https://projects.coin-or.org/Clp">Clp</a> solver, <a href="https://d3js.org/">D3.js</a> for graphics, <a href="https://www.mapbox.com/">Mapbox</a>, <a href="http://leafletjs.com/">Leaflet</a> and <a href="https://www.naturalearthdata.com/">Natural Earth</a> for maps,  and
     free software for the server infrastructure (GNU/Linux, nginx, Flask, gunicorn, Redis).</p>
 
-      <h3>New functionality coming soon</h3>
+      <h2>New functionality coming soon</h2>
 
       <ul>
 	<li>Extension of location selection to the whole globe</li>
@@ -293,7 +294,7 @@
 	<li>Allow non-zero CO2 limits</li>
       </ul>
 
-      <h3>Problems/comments/feedback/help out</h3>
+      <h2>Problems/comments/feedback/help out</h2>
 
 <p>If you encounter any problems please use the <a href="https://github.com/PyPSA/whobs-server/issues">GitHub issue tracker</a>. It would be helpful to note the jobid and any other error messages from your browser's JavaScript console (find the console via your browser's "Developer Tools").</p>
 
@@ -301,7 +302,7 @@
 
 <p>Any other feedback and comments can be sent to <a href="https://nworbmot.org/">Tom Brown</a>.</p>
 
-      <h3>Privacy statement</h3>
+      <h2>Privacy statement</h2>
       <p>No personal information is stored on the server. There are no cookies.</p>
 
       <p>Simulation assumptions and results for each job are stored on the server for statistical purposes.</p>
