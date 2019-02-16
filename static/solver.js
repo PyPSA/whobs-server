@@ -190,43 +190,103 @@ function onCountryMouseOver(e){
 };
 
 
-var popup = L.popup();
+var editableLayers = new L.FeatureGroup();
 
-function onMapClick(e) {
+var options = {
+    position: 'topright',
+    draw: {
+	polyline: false,
+	polygon: {
+	    allowIntersection: false, // Restricts shapes to simple polygons
+	    drawError: {
+		color: '#e1e100', // Color the shape will turn when intersects
+		message: '<strong>Oh snap!<strong> you can\'t draw that!' // Message that will show when intersect
+	    },
+	    shapeOptions: {
+		color: '#bada55'
+	    }
+	},
+	circle: false, // Turns off this drawing tool
+	rectangle: {
+	    shapeOptions: {
+		clickable: false
+	    }
+	},
+	circlemarker: false,
+//	marker: {
+//	    icon: new MyCustomMarker()
+//	}
+    },
+    edit: {
+	featureGroup: editableLayers, //REQUIRED!!
+	remove: false,
+	edit: false
+    }
+};
 
-    popup.setLatLng(e.latlng)
-	.setContent("You clicked the map at " + e.latlng.toString())
-	.openOn(mymap);
+var drawControl = new L.Control.Draw(options);
+
+var activeLayer = false;
+var activeLayerType = false;
+
+mymap.on(L.Draw.Event.CREATED, function (e) {
+    var type = e.layerType,
+	layer = e.layer;
+
+    if (type === 'marker') {
+	layer.bindPopup('Location: lat: ' + Math.round(10*layer._latlng['lat'])/10 + ', lng: ' + Math.round(10*layer._latlng['lng'])/10);
+	console.log(layer._latlng);
+    }
+    else{
+	console.log(layer._latlngs);
+    }
+
+    if(activeLayer){
+	editableLayers.removeLayer(activeLayer);
+    };
+    editableLayers.addLayer(layer);
+    activeLayer=layer;
+    activeLayerType=type;
+});
+
+
+
+
+
+function locationToCountry(){
+    mymap.removeLayer(editableLayers);
+    mymap.removeControl(drawControl);
+    mymap.addLayer(geojson);
+    d3.selectAll("input[name='selectByCountry']").property('checked',true);
+    d3.selectAll("input[name='selectByLocation']").property('checked',false);
+};
+
+function countryToLocation(){
+    mymap.removeLayer(geojson);
+    mymap.addLayer(editableLayers);
+    mymap.addControl(drawControl);
+    d3.selectAll("input[name='selectByCountry']").property('checked',false);
+    d3.selectAll("input[name='selectByLocation']").property('checked',true);
 };
 
 
 
 d3.selectAll("input[name='selectByCountry']").on("change", function(){
     if(this.checked){
-	mymap.addLayer(geojson);
-	mymap.off('click', onMapClick);
-	mymap.closePopup();
-	d3.selectAll("input[name='selectByLocation']").property('checked',false);
+	locationToCountry();
     }
     else{
-	mymap.removeLayer(geojson);
-	mymap.on('click', onMapClick);
-	d3.selectAll("input[name='selectByLocation']").property('checked',true);
+	countryToLocation();
     };
 });
 
 
 d3.selectAll("input[name='selectByLocation']").on("change", function(){
     if(this.checked){
-	mymap.removeLayer(geojson);
-	mymap.on('click', onMapClick);
-	d3.selectAll("input[name='selectByCountry']").property('checked',false);
+	countryToLocation();
     }
     else{
-	mymap.addLayer(geojson);
-	mymap.off('click', onMapClick);
-	mymap.closePopup();
-	d3.selectAll("input[name='selectByCountry']").property('checked',true);
+	locationToCountry();
     };
 });
 

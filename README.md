@@ -1,7 +1,7 @@
 
 # model.energy: online optimisation of energy systems
 
-This is the code for the online optimisation
+This is the code for the online optimisation of
 zero-direct-emission electricity systems with wind, solar and storage
 (using batteries and electrolysed hydrogen gas) to provide a baseload
 electricity demand, using the cost and other assumptions of your
