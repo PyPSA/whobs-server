@@ -235,10 +235,18 @@ mymap.on(L.Draw.Event.CREATED, function (e) {
 
     if (type === 'marker') {
 	layer.bindPopup('Location: lat: ' + Math.round(10*layer._latlng['lat'])/10 + ', lng: ' + Math.round(10*layer._latlng['lng'])/10);
-	console.log(layer._latlng);
+	assumptions["country"] = "point:"+Math.round(10*layer._latlng['lng'])/10 + ',' + Math.round(10*layer._latlng['lat'])/10;
+	document.getElementsByName("country")[0].value = assumptions["country"];
+	console.log("location changed to",assumptions["country"]);
     }
     else{
 	console.log(layer._latlngs);
+	assumptions["country"] = "polygon:";
+	for(let i=0; i < layer._latlngs[0].length; i++) {
+	    assumptions["country"] += layer._latlngs[0][i]['lng'] + ',' + layer._latlngs[0][i]['lat'] + ';';
+	};
+	document.getElementsByName("country")[0].value = type;
+	console.log("location changed to",assumptions["country"]);
     }
 
     if(activeLayer){
