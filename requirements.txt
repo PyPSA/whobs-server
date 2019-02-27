@@ -1,0 +1,9 @@
+ipython
+pandas
+numpy
+redis
+rq
+Flask
+xarray
+netcdf4
+git+https://github.com/PyPSA/PyPSA.git

@@ -30,3 +30,7 @@ iptables*
 analysis
 
 testing
+
+data/
+
+venv/
