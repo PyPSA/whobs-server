@@ -29,40 +29,38 @@ Ubuntu packages:
 
 `sudo apt install coinor-clp coinor-cbc python3-venv redis-server`
 
-In addition for a server deployment:
-
-`sudo apt install nginx`
-
 Python:
 
-`pip install ipython pandas numpy redis rq Flask xarray netcdf4 json`
+	python3 -m venv venv
+	. venv/bin/activate
+	pip install -r requirements.txt
 
-`pip install git+https://github.com/PyPSA/PyPSA.git`
+For (optional) server deployment:
 
-In addition for a server deployment:
+	sudo apt install nginx
+	pip install gunicorn
 
-`pip install gunicorn`
+### Preparation
 
+After installing the dependencies above, run the following line of code:
+
+	python prepare.py
+
+This helps you:
+
+1. Fetch the weather data described below
+1. Convert it to netCDF
+1. Create folders for results
+1. Fetch static files not included in this repository
+
+Now you are ready to [run the server locally](#run-server-locally-on-your-own-computer).
 
 ### Data
 
-For the wind and solar generation time series, get from the [renewables.ninja download page](https://www.renewables.ninja/downloads):
+For the wind and solar generation time series, we use the following from the [renewables.ninja download page](https://www.renewables.ninja/downloads):
 
 - Solar time series `ninja_pv_europe_v1.1_sarah.csv` from "PV v1.1 Europe"
-
 - Wind time series `ninja_wind_europe_v1.1_current_on-offshore.csv` from "Wind v1.1 Europe"
-
-
-Convert them to netCDF format with:
-
-```python
-import xarray as xr
-import pandas as pd
-solar_pu = pd.read_csv('ninja_pv_europe_v1.1_sarah.csv',
-                       index_col=0, parse_dates=True)
-ds = xr.Dataset.from_dataframe(solar_pu)
-ds.to_netcdf('ninja_pv_europe_v1.1_sarah.nc')
-```
 
 ## Run without server
 

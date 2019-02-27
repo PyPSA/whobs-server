@@ -28,10 +28,10 @@ import xarray as xr
 
 
 #read in renewables.ninja solar time series
-solar_pu = xr.open_dataset('ninja_pv_europe_v1.1_sarah.nc')
+solar_pu = xr.open_dataset('data/ninja_pv_europe_v1.1_sarah.nc')
 
 #read in renewables.ninja wind time series
-wind_pu = xr.open_dataset('ninja_wind_europe_v1.1_current_on-offshore.nc')
+wind_pu = xr.open_dataset('data/ninja_wind_europe_v1.1_current_on-offshore.nc')
 
 
 colors = {"wind":"#3B6182",
