@@ -354,7 +354,7 @@ solveButton.on("click", function() {
 	send_job.send(JSON.stringify(assumptions));
 
 	button.text("Solving");
-	button.attr("id","solve-button-busy");
+	button.attr("disabled","");
 	document.getElementById("status").innerHTML="Sending job to solver";
     };
 });
@@ -388,7 +388,7 @@ function poll_result() {
 	    clearTimeout(timeout);
 	    console.log("results:",results);
 	    solveButton.text("Solve");
-	    solveButton.attr("id","solve-button");
+	    $('#solve-button').removeAttr("disabled");
 	    display_results();
 	};
     };
