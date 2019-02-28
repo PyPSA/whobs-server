@@ -11,6 +11,17 @@ section {
     height: 550px;
 }
 
+#solve-button {
+    width: 100px;
+}
+
+#status-button {
+    text-align: left;
+}
+
+#demo-button {
+    float: right;
+}
 
 #status {
     color: red;
@@ -78,7 +89,7 @@ section {
 }
 
 
-tab_asset {
+.tab_asset {
     text-align: left;
 }
 
@@ -88,6 +99,10 @@ tab_asset {
 
 #tab_results {
     width: 470px;
+}
+
+#tab_results th {
+    font-size: 85%;
 }
 
 #tabh_asset {
