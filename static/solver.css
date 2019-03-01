@@ -1,21 +1,9 @@
-
-
-
-#container {
-    width: 1100px;
-    margin-left: auto;
-    margin-right: auto;
-    margin-top: 20px;
-    padding: 10px;
-    background-color: white;
-    box-shadow: 1px 1px 1px 2px rgb(217, 217, 217);
+header {
+  padding: 150px 0 100px;
 }
 
-/* Clear floats after the columns */
-#container:after {
-    content: "";
-    display: table;
-    clear: both;
+section {
+  padding: 50px 0;
 }
 
 #mapid {
@@ -23,36 +11,17 @@
     height: 550px;
 }
 
-
-
-
 #solve-button {
-    background: #f08080;
-    padding-right: 26px;
-    border-radius: 3px;
-    border: none;
-    color: white;
-    margin: 0;
-    padding: 0 12px;
-    width: 80px;
-    cursor: pointer;
-    height: 30px;
+    width: 100px;
 }
 
-
-#solve-button-busy {
-    background: #888888;
-    padding-right: 26px;
-    border-radius: 3px;
-    border: none;
-    color: white;
-    margin: 0;
-    padding: 0 12px;
-    width: 80px;
-    cursor: pointer;
-    height: 30px;
+#status-button {
+    text-align: left;
 }
 
+#demo-button {
+    float: right;
+}
 
 #status {
     color: red;
@@ -110,9 +79,8 @@
 }
 
 
-
 #jumpmenu {
-    width: 100px;
+    width: 160px;
 }
 
 #end {
@@ -121,7 +89,7 @@
 }
 
 
-tab_asset {
+.tab_asset {
     text-align: left;
 }
 
@@ -131,6 +99,10 @@ tab_asset {
 
 #tab_results {
     width: 470px;
+}
+
+#tab_results th {
+    font-size: 85%;
 }
 
 #tabh_asset {
@@ -188,11 +160,11 @@ tab_asset {
 }
 
 
-input[type=number]{
-    width: 60px;
+input[type=text]{
+    background-color: #fff;
 }
 
-input[type=text]{
-    width: 100px;
-    background-color: #EEEEEE;
+.form-control:disabled, .form-control[readonly] {
+    background-color: #fff;
+    opacity: 1;
 }

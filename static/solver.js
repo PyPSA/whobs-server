@@ -65,18 +65,6 @@ let tech_assumptions = {"2020" : {"wind_cost" : 1240,
 				 }
 		       };
 
-let assumptions = {"country" : "GB",
-		   "load" : 100,
-		   "year" : 2013,
-		   "frequency" : 3,
-		   "wind" : true,
-		   "solar" : true,
-		   "battery" : true,
-		   "hydrogen" : true,
-		   "discount_rate" : 5,
-		  };
-
-let default_tech_scenario = "2030";
 
 for (let i = 0; i < Object.keys(tech_assumptions[default_tech_scenario]).length; i++){
     let key = Object.keys(tech_assumptions[default_tech_scenario])[i];
@@ -354,7 +342,7 @@ solveButton.on("click", function() {
 	send_job.send(JSON.stringify(assumptions));
 
 	button.text("Solving");
-	button.attr("id","solve-button-busy");
+	button.attr("disabled","");
 	document.getElementById("status").innerHTML="Sending job to solver";
     };
 });
@@ -388,8 +376,9 @@ function poll_result() {
 	    clearTimeout(timeout);
 	    console.log("results:",results);
 	    solveButton.text("Solve");
-	    solveButton.attr("id","solve-button");
+	    $('#solve-button').removeAttr("disabled");
 	    display_results();
+	    $('#collapseResults').addClass("show");
 	};
     };
     poll.send();
