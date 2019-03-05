@@ -369,7 +369,7 @@ function poll_result() {
 	    console.log("results:",results);
 	    document.getElementById("status").innerHTML=status + ": " + results["error"];
 	    solveButton.text("Solve");
-	    solveButton.attr("id","solve-button");
+	    $('#solve-button').removeAttr("disabled");
 	};
 	if(status == "Finished"){
 	    clearInterval(timer);
@@ -388,7 +388,7 @@ function poll_result() {
 function poll_kill() {
     clearInterval(timer);
     solveButton.text("Solve");
-    solveButton.attr("id","solve-button");
+    $('#solve-button').removeAttr("disabled");
     document.getElementById("status").innerHTML="Error: Timed out";
 };
 
