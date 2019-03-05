@@ -282,16 +282,21 @@ def solve(assumptions):
             return error("Year {} not in valid range".format(year), jobid)
         solar_pu = solar_pu_cts[ct].to_series()
         wind_pu = wind_pu_cts[ct+"_ON"].to_series()
+        assumptions["country"] = "country " + ct
     elif ct[:6] == "point:":
         if year != 2011:
             return error("Year {} not in valid range".format(year), jobid)
         error_msg, solar_pu, wind_pu = process_point(ct,year)
+        ct = "point"
+        assumptions["country"] = ct
         if error_msg is not None:
             return error(error_msg, jobid)
     elif ct[:8] == "polygon:":
         if year != 2011:
             return error("Year {} not in valid range".format(year), jobid)
         error_msg, solar_pu, wind_pu = process_polygon(ct,year)
+        ct = "polygon"
+        assumptions["country"] = ct
         if error_msg is not None:
             return error(error_msg, jobid)
     else:

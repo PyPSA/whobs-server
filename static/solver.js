@@ -427,7 +427,7 @@ function clear_results(){
 
 
 function display_results(){
-    document.getElementById("results_assumptions").innerHTML=" for country " + results["assumptions"]["country"] + " in year " + results["assumptions"]["year"];
+    document.getElementById("results_assumptions").innerHTML=" for " + results["assumptions"]["country"] + " in year " + results["assumptions"]["year"];
     document.getElementById("average_cost").innerHTML=results["average_cost"].toFixed(1);
     document.getElementById("load").innerHTML=results["assumptions"]["load"].toFixed(1);
 
