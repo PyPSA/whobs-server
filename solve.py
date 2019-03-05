@@ -97,13 +97,19 @@ def find_interval(interval_start,interval_length,value):
     return int((value-interval_start)//interval_length)
 
 
-def generate_octant_grid_cells(octant, mesh=0.5):
+def get_octant_bounds(octant):
 
     x0 = -180 + (octant//2)*90.
     x1 = x0 + 90.
 
     y0 = 90. - (octant%2)*90.
     y1 = y0 - 90.
+
+    return x0,x1,y0,y1
+
+def generate_octant_grid_cells(octant, mesh=0.5):
+
+    x0,x1,y0,y1 = get_octant_bounds(octant)
 
     x = np.arange(x0,
                   x1 + mesh,
@@ -173,6 +179,9 @@ def process_point(ct,year):
     except:
         return "Error turning point's latitude into float", None, None
 
+    if lon < -180 or lon > 180 or lat > 90 or lat < -90:
+        return "Point's coordinates not within lon*lat range of (-180,180)*(-90,90)", None, None
+
     octant, position = get_octant(lon,lat)
 
     pu = {}
@@ -211,6 +220,11 @@ def process_polygon(ct,year):
     except:
         return "Error creating polygon", None, None
 
+    #minimum bounding region (minx, miny, maxx, maxy)
+    bounds = polygon.bounds
+    if bounds[0] < -180 or bounds[2] > 180 or bounds[3] > 90 or bounds[1] < -90:
+        return "Polygon's coordinates not within lon*lat range of (-180,180)*(-90,90)", None, None
+
     #use for index
     da = xr.open_dataarray("{}octant0-{}-onwind.nc".format(octant_folder,year))
 
@@ -220,6 +234,14 @@ def process_polygon(ct,year):
 
     #range over octants
     for i in range(8):
+
+        x0,x1,y0,y1 = get_octant_bounds(i)
+
+        if bounds[0] > x1 or bounds[2] < x0 or bounds[3] < y1 or bounds[1] > y0:
+            print("Skipping octant {}, since it is out of bounds".format(i))
+            continue
+
+        print("Computing transfer matrix with octant {}".format(i))
 
         grid_cells = generate_octant_grid_cells(i, mesh=0.5)
 
