@@ -49,7 +49,7 @@ def root():
     if request.method == "GET":
         # Try to get settings from URL
         country = request.args.get('country', default = 'GB', type = str)
-        year = request.args.get('year', default = 2013, type = int)
+        year = request.args.get('year', default = 2011, type = int)
         freq = request.args.get('freq', default = 3, type = int)
         demand = request.args.get('demand', default = 100, type = int)
         scenario = request.args.get('scenario', default = 2030, type = int)
@@ -63,7 +63,7 @@ def root():
             country = 'GB'
         country_name = country_names_full[country_names.index(country)]
         if year < 1985 or year > 2015:
-            year = 2013
+            year = 2011
         if freq < 1 or freq > 8760:
             freq = 3
         if demand <= 0:
@@ -123,7 +123,10 @@ def jobid_api(jobid):
     try:
         job = Job.fetch(jobid, connection=conn)
     except:
-        return {"status" : "Error", "error" : "Failed to find job!"}
+        return jsonify({"status" : "Error", "error" : "Failed to find job!"})
+
+    if job.is_failed:
+        return jsonify({"status" : "Error", "error" : "Job failed."})
 
     try:
         status = job.meta['status']
