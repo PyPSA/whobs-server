@@ -28,11 +28,12 @@ import xarray as xr
 
 
 #read in renewables.ninja solar time series
-solar_pu = xr.open_dataset('data/ninja_pv_europe_v1.1_sarah.nc')
+solar_pu_cts = xr.open_dataset('data/ninja_pv_europe_v1.1_sarah.nc')
 
 #read in renewables.ninja wind time series
-wind_pu = xr.open_dataset('data/ninja_wind_europe_v1.1_current_on-offshore.nc')
+wind_pu_cts = xr.open_dataset('data/ninja_wind_europe_v1.1_current_on-offshore.nc')
 
+octant_folder = "../cutouts/"
 
 colors = {"wind":"#3B6182",
           "solar" :"#FFFF00",
@@ -86,6 +87,67 @@ def error(message, jobid):
     print("Error: {}".format(message))
     return {"error" : message}
 
+def find_interval(interval_start,interval_length,value):
+    return int((value-interval_start)//interval_length)
+
+def get_octant(lon,lat):
+
+    # 0 for lon -180--90, 1 for lon -90-0, etc.
+    quadrant = find_interval(-180.,90,lon)
+
+    #0 for lat 90-0, 1 for lat 0--90
+    hemisphere = 1-find_interval(-90,90,lat)
+
+    octant = 2*quadrant + hemisphere
+
+    rel_x = lon - quadrant*90 + 180.
+
+    rel_y = lat + 90*hemisphere
+
+    span = 0.5
+
+    n_per_octant = int(90/span +1)
+
+    i = find_interval(0-span/2,span,rel_x)
+    j = n_per_octant - 1 - find_interval(0-span/2,span,rel_y)
+
+    position = j*n_per_octant+i
+
+    return octant, position
+
+def process_point(ct,year):
+    """Return error_msg, solar_pu, wind_pu
+    error_msg: string
+    solar/wind_pu: pandas.Series
+    """
+
+    try:
+        lon,lat = ct[6:].split(",")
+    except:
+        return "Error reading point's coordinates", None, None
+
+    try:
+        lon = float(lon)
+    except:
+        return "Error turning point's longitude into float", None, None
+
+    try:
+        lat = float(lat)
+    except:
+        return "Error turning point's latitude into float", None, None
+
+    octant, position = get_octant(lon,lat)
+
+    pu = {}
+
+    for tech in ["solar", "onwind"]:
+        o = xr.open_dataarray("{}octant{}-{}-{}-monthly.nc".format(octant_folder,octant,year,tech))
+        pu[tech] = o.loc[:,position].to_pandas()
+
+    return None, pu["solar"], pu["onwind"]
+
+
+
 def solve(assumptions):
 
     job = get_current_job()
@@ -112,22 +174,36 @@ def solve(assumptions):
 
 
     print(assumptions)
-    ct = assumptions['country']
-    if ct not in solar_pu or ct+"_ON" not in wind_pu:
-        return error("Country {} not found among valid countries".format(ct), jobid)
 
     try:
         year = int(assumptions['year'])
     except:
         return error("Year {} could not be converted to an integer".format(assumptions['year']), jobid)
 
-    if year < 1985 or year > 2015:
-        return error("Year {} not in valid range".format(year), jobid)
-
     year_start = year
     year_end = year
 
     Nyears = year_end - year_start + 1
+
+    ct = assumptions['country']
+
+    if ct in solar_pu_cts and ct+"_ON" in wind_pu_cts:
+        if year < 1985 or year > 2015:
+            return error("Year {} not in valid range".format(year), jobid)
+        solar_pu = solar_pu_cts[ct].to_series()
+        wind_pu = wind_pu_cts[ct+"_ON"].to_series()
+    elif ct[:6] == "point:":
+        if year != 2011:
+            return error("Year {} not in valid range".format(year), jobid)
+        error_msg, solar_pu, wind_pu = process_point(ct,year)
+        if error_msg is not None:
+            return error(error_msg, jobid)
+    elif ct[:8] == "polygon:":
+        return error("Location {} is not supported yet".format(ct), jobid)
+        #error_msg, solar_pu, wind_pu = process_polygon()
+    else:
+        return error("Location {} is not valid".format(ct), jobid)
+
 
     try:
         frequency = int(assumptions['frequency'])
@@ -170,7 +246,7 @@ def solve(assumptions):
     if assumptions["solar"]:
         network.add("Generator",ct+" solar",
                     bus=ct,
-                    p_max_pu = solar_pu[ct].to_series(),
+                    p_max_pu = solar_pu.reindex(snapshots,method="nearest"),
                     p_nom_extendable = True,
                     marginal_cost = 0.1, #Small cost to prefer curtailment to destroying energy in storage, solar curtails before wind
                     capital_cost = assumptions_df.at['solar','fixed'])
@@ -178,7 +254,7 @@ def solve(assumptions):
     if assumptions["wind"]:
         network.add("Generator",ct+" wind",
                     bus=ct,
-                    p_max_pu = wind_pu[ct+"_ON"].to_series(),
+                    p_max_pu = wind_pu.reindex(snapshots,method="nearest"),
                     p_nom_extendable = True,
                     marginal_cost = 0.2, #Small cost to prefer curtailment to destroying energy in storage, solar curtails before wind
                     capital_cost = assumptions_df.at['wind','fixed'])
