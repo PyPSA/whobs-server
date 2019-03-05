@@ -96,6 +96,32 @@ def error(message, jobid):
 def find_interval(interval_start,interval_length,value):
     return int((value-interval_start)//interval_length)
 
+
+def generate_octant_grid_cells(octant, mesh=0.5):
+
+    x0 = -180 + (octant//2)*90.
+    x1 = x0 + 90.
+
+    y0 = 90. - (octant%2)*90.
+    y1 = y0 - 90.
+
+    x = np.arange(x0,
+                  x1 + mesh,
+                  mesh)
+
+    y = np.arange(y0,
+                  y1 - mesh,
+                      -mesh)
+
+
+    #grid_coordinates and grid_cells copied from atlite/cutout.py
+    xs, ys = np.meshgrid(x,y)
+    grid_coordinates = np.asarray((np.ravel(xs), np.ravel(ys))).T
+
+    span = mesh / 2
+    return [box(*c) for c in np.hstack((grid_coordinates - span, grid_coordinates + span))]
+
+
 def get_octant(lon,lat):
 
     # 0 for lon -180--90, 1 for lon -90-0, etc.
@@ -118,6 +144,11 @@ def get_octant(lon,lat):
     j = n_per_octant - 1 - find_interval(0-span/2,span,rel_y)
 
     position = j*n_per_octant+i
+
+    #paranoid check
+    if True:
+        grid_cells = generate_octant_grid_cells(octant, mesh=span)
+        assert grid_cells[position].contains(Point(lon,lat))
 
     return octant, position
 
@@ -180,8 +211,6 @@ def process_polygon(ct,year):
     except:
         return "Error creating polygon", None, None
 
-    new_mesh = 0.5
-
     #use for index
     da = xr.open_dataarray("{}octant0-{}-onwind.nc".format(octant_folder,year))
 
@@ -192,27 +221,7 @@ def process_polygon(ct,year):
     #range over octants
     for i in range(8):
 
-        x0 = -180 + (i//2)*90.
-        x1 = x0 + 90.
-
-        y0 = 90. - (i%2)*90.
-        y1 = y0 - 90.
-
-        x = np.arange(x0,
-                      x1 + new_mesh,
-                      new_mesh)
-
-        y = np.arange(y0,
-                      y1 - new_mesh,
-                      -new_mesh)
-
-
-        #grid_coordinates and grid_cells copied from atlite/cutout.py
-        xs, ys = np.meshgrid(x,y)
-        grid_coordinates = np.asarray((np.ravel(xs), np.ravel(ys))).T
-
-        span = new_mesh / 2
-        grid_cells = [box(*c) for c in np.hstack((grid_coordinates - span, grid_coordinates + span))]
+        grid_cells = generate_octant_grid_cells(i, mesh=0.5)
 
         matrix = compute_indicatormatrix(grid_cells,[polygon])
 
