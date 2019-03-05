@@ -25,7 +25,13 @@ import json
 
 import xarray as xr
 
+from atlite.gis import compute_indicatormatrix
 
+import scipy as sp
+
+import numpy as np
+
+from shapely.geometry import box, Point, Polygon
 
 #read in renewables.ninja solar time series
 solar_pu_cts = xr.open_dataset('data/ninja_pv_europe_v1.1_sarah.nc')
@@ -33,7 +39,7 @@ solar_pu_cts = xr.open_dataset('data/ninja_pv_europe_v1.1_sarah.nc')
 #read in renewables.ninja wind time series
 wind_pu_cts = xr.open_dataset('data/ninja_wind_europe_v1.1_current_on-offshore.nc')
 
-octant_folder = "../cutouts/"
+octant_folder = "data/"
 
 colors = {"wind":"#3B6182",
           "solar" :"#FFFF00",
@@ -141,12 +147,96 @@ def process_point(ct,year):
     pu = {}
 
     for tech in ["solar", "onwind"]:
-        o = xr.open_dataarray("{}octant{}-{}-{}-monthly.nc".format(octant_folder,octant,year,tech))
+        o = xr.open_dataarray("{}octant{}-{}-{}.nc".format(octant_folder,octant,year,tech))
         pu[tech] = o.loc[:,position].to_pandas()
 
     return None, pu["solar"], pu["onwind"]
 
 
+def process_polygon(ct,year):
+    """Return error_msg, solar_pu, wind_pu
+    error_msg: string
+    solar/wind_pu: pandas.Series
+    """
+
+    try:
+        coords_string = ct[8:].split(";")
+    except:
+        return "Error parsing polygon coordinates", None, None
+
+    coords = []
+    for lonlat_string in coords_string:
+        if lonlat_string == "":
+            continue
+        try:
+            coords.append([float(item) for item in lonlat_string.split(",")])
+        except:
+            return "Error parsing polygon coordinates", None, None
+
+    print("Polygon coordinates:",coords)
+
+    try:
+        polygon = Polygon(coords)
+    except:
+        return "Error creating polygon", None, None
+
+    new_mesh = 0.5
+
+    #use for index
+    da = xr.open_dataarray("{}octant0-{}-onwind.nc".format(octant_folder,year))
+
+    techs = ["onwind","solar"]
+    final_result = { tech : pd.Series(0.,index=da.coords["time"]) for tech in techs}
+    matrix_sum = 0.
+
+    #range over octants
+    for i in range(8):
+
+        x0 = -180 + (i//2)*90.
+        x1 = x0 + 90.
+
+        y0 = 90. - (i%2)*90.
+        y1 = y0 - 90.
+
+        x = np.arange(x0,
+                      x1 + new_mesh,
+                      new_mesh)
+
+        y = np.arange(y0,
+                      y1 - new_mesh,
+                      -new_mesh)
+
+
+        #grid_coordinates and grid_cells copied from atlite/cutout.py
+        xs, ys = np.meshgrid(x,y)
+        grid_coordinates = np.asarray((np.ravel(xs), np.ravel(ys))).T
+
+        span = new_mesh / 2
+        grid_cells = [box(*c) for c in np.hstack((grid_coordinates - span, grid_coordinates + span))]
+
+        matrix = compute_indicatormatrix(grid_cells,[polygon])
+
+        matrix = sp.sparse.csr_matrix(matrix)
+
+        for tech in techs:
+            da = xr.open_dataarray("{}octant{}-{}-{}.nc".format(octant_folder,i,year,tech))
+
+            print(da.shape,matrix.shape)
+
+            #should remove .T for non-monthly da?
+            result = matrix*da.T
+
+            final_result[tech] += pd.Series(result[0],
+                                            index=da.coords["time"])
+
+        matrix_sum += matrix.sum(axis=1)[0,0]
+
+    for tech in techs:
+        final_result[tech] = final_result[tech]/matrix_sum
+    print("Matrix sum:",matrix_sum)
+
+
+    return None, final_result["solar"], final_result["onwind"]
 
 def solve(assumptions):
 
@@ -199,8 +289,11 @@ def solve(assumptions):
         if error_msg is not None:
             return error(error_msg, jobid)
     elif ct[:8] == "polygon:":
-        return error("Location {} is not supported yet".format(ct), jobid)
-        #error_msg, solar_pu, wind_pu = process_polygon()
+        if year != 2011:
+            return error("Year {} not in valid range".format(year), jobid)
+        error_msg, solar_pu, wind_pu = process_polygon(ct,year)
+        if error_msg is not None:
+            return error(error_msg, jobid)
     else:
         return error("Location {} is not valid".format(ct), jobid)
 
