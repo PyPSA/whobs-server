@@ -25,6 +25,16 @@ import json
 
 import xarray as xr
 
+#need to be opened before atlite import, otherwise there is an error
+#TODO: understand why
+
+#read in renewables.ninja solar time series
+solar_pu_cts = xr.open_dataset('data/ninja_pv_europe_v1.1_sarah.nc')
+
+#read in renewables.ninja wind time series
+wind_pu_cts = xr.open_dataset('data/ninja_wind_europe_v1.1_current_on-offshore.nc')
+
+
 from atlite.gis import compute_indicatormatrix
 
 import scipy as sp
@@ -33,13 +43,7 @@ import numpy as np
 
 from shapely.geometry import box, Point, Polygon
 
-#read in renewables.ninja solar time series
-solar_pu_cts = xr.open_dataset('data/ninja_pv_europe_v1.1_sarah.nc')
-
-#read in renewables.ninja wind time series
-wind_pu_cts = xr.open_dataset('data/ninja_wind_europe_v1.1_current_on-offshore.nc')
-
-octant_folder = "data/"
+octant_folder = "../cutouts/"
 
 colors = {"wind":"#3B6182",
           "solar" :"#FFFF00",
@@ -152,7 +156,7 @@ def get_octant(lon,lat):
     position = j*n_per_octant+i
 
     #paranoid check
-    if True:
+    if False:
         grid_cells = generate_octant_grid_cells(octant, mesh=span)
         assert grid_cells[position].contains(Point(lon,lat))
 
@@ -188,7 +192,7 @@ def process_point(ct,year):
 
     for tech in ["solar", "onwind"]:
         o = xr.open_dataarray("{}octant{}-{}-{}.nc".format(octant_folder,octant,year,tech))
-        pu[tech] = o.loc[:,position].to_pandas()
+        pu[tech] = o.loc[position,:].to_pandas()
 
     return None, pu["solar"], pu["onwind"]
 
@@ -229,7 +233,7 @@ def process_polygon(ct,year):
     da = xr.open_dataarray("{}octant0-{}-onwind.nc".format(octant_folder,year))
 
     techs = ["onwind","solar"]
-    final_result = { tech : pd.Series(0.,index=da.coords["time"]) for tech in techs}
+    final_result = { tech : pd.Series(0.,index=da.coords["time"].to_pandas()) for tech in techs}
     matrix_sum = 0.
 
     #range over octants
@@ -252,13 +256,10 @@ def process_polygon(ct,year):
         for tech in techs:
             da = xr.open_dataarray("{}octant{}-{}-{}.nc".format(octant_folder,i,year,tech))
 
-            print(da.shape,matrix.shape)
-
-            #should remove .T for non-monthly da?
-            result = matrix*da.T
+            result = matrix*da
 
             final_result[tech] += pd.Series(result[0],
-                                            index=da.coords["time"])
+                                            index=da.coords["time"].to_pandas())
 
         matrix_sum += matrix.sum(axis=1)[0,0]
 
