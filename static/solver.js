@@ -191,13 +191,14 @@ var options = {
 		message: '<strong>Oh snap!<strong> you can\'t draw that!' // Message that will show when intersect
 	    },
 	    shapeOptions: {
-		color: '#bada55'
+		color: 'red'
 	    }
 	},
 	circle: false, // Turns off this drawing tool
 	rectangle: {
 	    shapeOptions: {
-		clickable: false
+		clickable: false,
+		color: 'red'
 	    }
 	},
 	circlemarker: false,
