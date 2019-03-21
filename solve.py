@@ -23,25 +23,15 @@ from rq import get_current_job
 
 import json
 
-import xarray as xr
-
-#need to be opened before atlite import, otherwise there is an error
-#TODO: understand why
-
-#read in renewables.ninja solar time series
-solar_pu_cts = xr.open_dataset('data/ninja_pv_europe_v1.1_sarah.nc')
-
-#read in renewables.ninja wind time series
-wind_pu_cts = xr.open_dataset('data/ninja_wind_europe_v1.1_current_on-offshore.nc')
-
-
 from atlite.gis import compute_indicatormatrix
+
+import xarray as xr
 
 import scipy as sp
 
 import numpy as np
 
-from shapely.geometry import box, Point, Polygon
+from shapely.geometry import box, Point, Polygon, MultiPolygon
 
 octant_folder = "../cutouts/"
 
@@ -54,6 +44,35 @@ colors = {"wind":"#3B6182",
           "hydrogen_electrolyser" : "cyan",
           "hydrogen_energy" : "magenta",
 }
+
+years_available_start = 2011
+years_available_end = 2013
+
+
+def get_country_multipolygons():
+
+    with open('static/ne-countries-110m.json', 'r') as myfile:
+        data=myfile.read()
+
+        geojson = json.loads(data)
+
+    def get_multipolygon(feature):
+        if feature["geometry"]["type"] == "Polygon":
+            polys = [Polygon(feature['geometry']["coordinates"][0])]
+        else:
+            polys = []
+
+            for p in feature['geometry']["coordinates"]:
+                polys.append(Polygon(p[0]))
+
+        return MultiPolygon(polys)
+
+    return {feature["properties"]["iso_a2"] : get_multipolygon(feature) for feature in geojson["features"] if feature["properties"]["iso_a2"] != "-99"}
+
+country_multipolygons = get_country_multipolygons()
+
+
+
 
 def annuity(lifetime,rate):
     if rate == 0.:
@@ -197,32 +216,11 @@ def process_point(ct,year):
     return None, pu["solar"], pu["onwind"]
 
 
-def process_polygon(ct,year):
+def process_shapely_polygon(polygon,year):
     """Return error_msg, solar_pu, wind_pu
     error_msg: string
     solar/wind_pu: pandas.Series
     """
-
-    try:
-        coords_string = ct[8:].split(";")
-    except:
-        return "Error parsing polygon coordinates", None, None
-
-    coords = []
-    for lonlat_string in coords_string:
-        if lonlat_string == "":
-            continue
-        try:
-            coords.append([float(item) for item in lonlat_string.split(",")])
-        except:
-            return "Error parsing polygon coordinates", None, None
-
-    print("Polygon coordinates:",coords)
-
-    try:
-        polygon = Polygon(coords)
-    except:
-        return "Error creating polygon", None, None
 
     #minimum bounding region (minx, miny, maxx, maxy)
     bounds = polygon.bounds
@@ -270,6 +268,39 @@ def process_polygon(ct,year):
 
     return None, final_result["solar"], final_result["onwind"]
 
+
+
+def process_polygon(ct,year):
+    """Return error_msg, solar_pu, wind_pu
+    error_msg: string
+    solar/wind_pu: pandas.Series
+    """
+
+    try:
+        coords_string = ct[8:].split(";")
+    except:
+        return "Error parsing polygon coordinates", None, None
+
+    coords = []
+    for lonlat_string in coords_string:
+        if lonlat_string == "":
+            continue
+        try:
+            coords.append([float(item) for item in lonlat_string.split(",")])
+        except:
+            return "Error parsing polygon coordinates", None, None
+
+    print("Polygon coordinates:",coords)
+
+    try:
+        polygon = Polygon(coords)
+    except:
+        return "Error creating polygon", None, None
+
+    return process_shapely_polygon(polygon,year)
+
+
+
 def solve(assumptions):
 
     job = get_current_job()
@@ -302,6 +333,10 @@ def solve(assumptions):
     except:
         return error("Year {} could not be converted to an integer".format(assumptions['year']), jobid)
 
+
+    if year < years_available_start or year > years_available_end:
+        return error("Year {} not in valid range".format(year), jobid)
+
     year_start = year
     year_end = year
 
@@ -309,31 +344,22 @@ def solve(assumptions):
 
     ct = assumptions['country']
 
-    if ct in solar_pu_cts and ct+"_ON" in wind_pu_cts:
-        if year < 1985 or year > 2015:
-            return error("Year {} not in valid range".format(year), jobid)
-        solar_pu = solar_pu_cts[ct].to_series()
-        wind_pu = wind_pu_cts[ct+"_ON"].to_series()
+    if ct in country_multipolygons:
+        error_msg, solar_pu, wind_pu = process_shapely_polygon(country_multipolygons[ct],year)
         assumptions["country"] = "country " + ct
     elif ct[:6] == "point:":
-        if year != 2011:
-            return error("Year {} not in valid range".format(year), jobid)
         error_msg, solar_pu, wind_pu = process_point(ct,year)
         ct = "point"
         assumptions["country"] = ct
-        if error_msg is not None:
-            return error(error_msg, jobid)
     elif ct[:8] == "polygon:":
-        if year != 2011:
-            return error("Year {} not in valid range".format(year), jobid)
         error_msg, solar_pu, wind_pu = process_polygon(ct,year)
         ct = "polygon"
         assumptions["country"] = ct
-        if error_msg is not None:
-            return error(error_msg, jobid)
     else:
         return error("Location {} is not valid".format(ct), jobid)
 
+    if error_msg is not None:
+        return error(error_msg, jobid)
 
     try:
         frequency = int(assumptions['frequency'])

@@ -3,24 +3,8 @@ import subprocess
 import xarray as xr
 import pandas as pd
 
-# Get weather data from renewables.ninja
+# TODO Get weather data from ERA5
 os.makedirs('data', exist_ok=True)
-subprocess.call(['wget', '-O', 'data/ninja_europe_pv_v1.1.zip',
-                 'https://www.renewables.ninja/static/downloads/ninja_europe_pv_v1.1.zip'])
-subprocess.call(['wget', '-O', 'data/ninja_europe_wind_v1.1.zip',
-                 'https://www.renewables.ninja/static/downloads/ninja_europe_wind_v1.1.zip'])
-subprocess.call(['unzip', 'data/*', '-d', 'data/'])
-
-# Convert data to netCDF
-solar_pu = pd.read_csv('data/ninja_pv_europe_v1.1_sarah.csv',
-                       index_col=0, parse_dates=True)
-ds = xr.Dataset.from_dataframe(solar_pu)
-ds.to_netcdf('data/ninja_pv_europe_v1.1_sarah.nc')
-
-wind_pu = pd.read_csv(
-    'data/ninja_wind_europe_v1.1_current_on-offshore.csv', index_col=0, parse_dates=True)
-ds = xr.Dataset.from_dataframe(wind_pu)
-ds.to_netcdf('data/ninja_wind_europe_v1.1_current_on-offshore.nc')
 
 # Create folders for results
 os.makedirs('results', exist_ok=True)

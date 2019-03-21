@@ -7,8 +7,7 @@ zero-direct-emission electricity systems with wind, solar and storage
 electricity demand, using the cost and other assumptions of your
 choice. It uses only free software and open data, including [Python
 for Power System Analysis (PyPSA)](https://github.com/PyPSA/PyPSA) for
-the optimisation framework,
-[renewables.ninja](https://www.renewables.ninja/) for the open weather
+the optimisation framework, the European Centre for Medium-Range Weather Forecasts (ECMWF) [ERA5 dataset](https://www.ecmwf.int/en/forecasts/datasets/reanalysis-datasets/era5) for the open weather
 data, [Clp](https://projects.coin-or.org/Clp) for the solver,
 [D3.js](https://d3js.org/) for graphics,
 [Mapbox](https://www.mapbox.com/), [Leaflet](http://leafletjs.com/)
@@ -57,10 +56,9 @@ Now you are ready to [run the server locally](#run-server-locally-on-your-own-co
 
 ### Data
 
-For the wind and solar generation time series, we use the following from the [renewables.ninja download page](https://www.renewables.ninja/downloads):
-
-- Solar time series `ninja_pv_europe_v1.1_sarah.csv` from "PV v1.1 Europe"
-- Wind time series `ninja_wind_europe_v1.1_current_on-offshore.csv` from "Wind v1.1 Europe"
+For the wind and solar generation time series, we use the European
+Centre for Medium-Range Weather Forecasts (ECMWF) [ERA5
+dataset](https://www.ecmwf.int/en/forecasts/datasets/reanalysis-datasets/era5).
 
 ## Run without server
 

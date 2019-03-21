@@ -107,7 +107,7 @@ L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={
 
 
 // See https://oramind.com/country-border-highlighting-with-leaflet-js/
-d3.json("static/ne_50m_admin_0_countries_simplified_europe.json", function (json){
+d3.json("static/ne-countries-110m.json", function (json){
     function style(feature) {
 	function getColor(f){
 	    if(feature.properties.iso_a2 == assumptions["country"]){

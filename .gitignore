@@ -15,7 +15,7 @@ flask-by-example
 
 static/d3*.js
 
-static/ne_50*.json
+static/ne*
 
 *results-*.json
 

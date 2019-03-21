@@ -57,9 +57,7 @@
               <h2>Introduction</h2>
               <hr>
               <p class="lead">
-                This tool calculates the cost of meeting constant electricity demand from a combination of wind power, solar power and storage (using batteries and electrolysed hydrogen) for different European countries.
-              </p>
-              <p class="lead">It will be extended worldwide shortly.</p>
+                This tool calculates the cost of meeting constant electricity demand from a combination of wind power, solar power and storage (using batteries and electrolysed hydrogen) for different regions of the world.</p>
               <p class="lead">This is a <b>toy model</b> with a <b>strongly simplified</b> setup. Please read the <a class="js-scroll-trigger" href="#background">warnings</a> below.</p>
               <p class="lead">Fun things to try out:</p>
               <ul class="lead">
@@ -81,7 +79,7 @@
               <div class="form-check mb-1">
                 <input class="form-check-input" type="checkbox" name="selectByCountry" checked id="c1">
                 <label class="form-check-label" for="c1">
-                  Select European country
+                  Select country
                 </label>
               </div>
               <div class="form-check mb-3">
@@ -111,7 +109,7 @@
               <div class="form-group">
                 <label for="weatherSelector">Weather year</label>
                 <input type="number" class="form-control" id="weatherSelector" aria-describedby="weatherSelect" name="year">
-                <small id="weatherSelect" class="form-text text-muted">For regions: from 1985 to 2015 inclusive; for points, polygons and rectangles: 2011 only.</small>
+                <small id="weatherSelect" class="form-text text-muted">Only years from 2011 to 2013 inclusive are available (until we get a bigger hard-drive).</small>
               </div>
               <div class="form-group">
                 <label for="samplingSelector">Sampling frequency</label>
@@ -395,10 +393,10 @@
                     Costs here are for completely decarbonised electricity systems. Reaching lower levels of decarbonisation is much cheaper and doesn't necessarily require any storage at all.
                   </li>
                   <li>
-                    The wind profiles used here are converted from wind speed time series assuming the current wind turbine fleet. New and future turbines have higher capacity factors because e.g. they're taller, capturing wind energy where resources are better.
+                    The wind profiles used here are converted from wind speed time series assuming an existing wind turbine model (Vestas V112 3MW with a hub height of 80m). Newer and future turbines will have higher capacity factors because e.g. they're taller, capturing wind energy where resources are better.
                   </li>
                   <li>
-                    Because the wind and solar profiles are computed using today's distribution of power plants, there is no possibility to optimise the distribution of power plants within each country to reduce the costs of providing a baseload profile.
+                    Because the wind and solar profiles are computed using a fixed distribution of power plants, there is no possibility to optimise the distribution of power plants within each country to reduce the costs of providing a baseload profile.
                   </li>
                   <li>
                     The costs for hydrogen storage assume hydrogen gas is stored underground. The costs for underground hydrogen storage are taken from Table 3 of <a href="https://www.nrel.gov/docs/fy10osti/46719.pdf">this NREL study</a>, using the most expensive option ("rock caverns created by excavating comparatively impervious rock formations"). Where salt deposits exist, salt caverns may be cheaper. Studies on salt deposit availability are available for most countries, see e.g. <a href="https://www.researchgate.net/figure/Underground-salt-deposits-and-cavern-fields-in-Europe-225_fig5_319417820">this map</a> for Europe.
@@ -435,7 +433,7 @@
                   the <a href="https://github.com/PyPSA/PyPSA">Python for Power
                   System Analysis (PyPSA)</a> energy optimisation framework, open
                   weather data
-                  from <a href="https://www.renewables.ninja/">renewables.ninja</a>,
+                  from the European Centre for Medium-Range Weather Forecasts (ECMWF) <a href="https://www.ecmwf.int/en/forecasts/datasets/reanalysis-datasets/era5">ERA5 dataset</a>,
                   the <a href="https://projects.coin-or.org/Clp">Clp</a> solver, <a href="https://d3js.org/">D3.js</a> for graphics, <a href="https://www.mapbox.com/">Mapbox</a>, <a href="http://leafletjs.com/">Leaflet</a> and <a href="https://www.naturalearthdata.com/">Natural Earth</a> for maps,  and
                 free software for the server infrastructure (GNU/Linux, nginx, Flask, gunicorn, Redis).</p>
                 <h3>New functionality coming soon</h3>
