@@ -23,7 +23,10 @@ from rq import get_current_job
 
 import json
 
-from atlite.gis import compute_indicatormatrix
+#required to stop wierd failures
+import netCDF4
+
+from atlite.gis import spdiag, compute_indicatormatrix
 
 import xarray as xr
 
@@ -97,7 +100,7 @@ assumptions_df.at["battery_power","efficiency"] = 0.9
 
 booleans = ["wind","solar","battery","hydrogen"]
 
-floats = ["load","wind_cost","solar_cost","battery_energy_cost",
+floats = ["cf_exponent","load","wind_cost","solar_cost","battery_energy_cost",
           "battery_power_cost","hydrogen_electrolyser_cost",
           "hydrogen_energy_cost",
           "hydrogen_electrolyser_efficiency",
@@ -216,7 +219,7 @@ def process_point(ct,year):
     return None, pu["solar"], pu["onwind"]
 
 
-def process_shapely_polygon(polygon,year):
+def process_shapely_polygon(polygon,year,cf_exponent):
     """Return error_msg, solar_pu, wind_pu
     error_msg: string
     solar/wind_pu: pandas.Series
@@ -232,7 +235,7 @@ def process_shapely_polygon(polygon,year):
 
     techs = ["onwind","solar"]
     final_result = { tech : pd.Series(0.,index=da.coords["time"].to_pandas()) for tech in techs}
-    matrix_sum = 0.
+    matrix_sum = { tech : 0. for tech in techs}
 
     #range over octants
     for i in range(8):
@@ -254,23 +257,28 @@ def process_shapely_polygon(polygon,year):
         for tech in techs:
             da = xr.open_dataarray("{}octant{}-{}-{}.nc".format(octant_folder,i,year,tech))
 
-            result = matrix*da
+            layout = (da.sum(dim='time').values)**cf_exponent
+
+            tech_matrix = matrix.dot(spdiag(layout))
+
+            result = tech_matrix*da
 
             final_result[tech] += pd.Series(result[0],
                                             index=da.coords["time"].to_pandas())
 
-        matrix_sum += matrix.sum(axis=1)[0,0]
+            matrix_sum[tech] += tech_matrix.sum(axis=1)[0,0]
 
     for tech in techs:
-        final_result[tech] = final_result[tech]/matrix_sum
-    print("Matrix sum:",matrix_sum)
+        print("Matrix sum for {}: {}".format(tech,matrix_sum[tech]))
+        final_result[tech] = final_result[tech]/matrix_sum[tech]
+
 
 
     return None, final_result["solar"], final_result["onwind"]
 
 
 
-def process_polygon(ct,year):
+def process_polygon(ct,year,cf_exponent):
     """Return error_msg, solar_pu, wind_pu
     error_msg: string
     solar/wind_pu: pandas.Series
@@ -297,7 +305,7 @@ def process_polygon(ct,year):
     except:
         return "Error creating polygon", None, None
 
-    return process_shapely_polygon(polygon,year)
+    return process_shapely_polygon(polygon,year,cf_exponent)
 
 
 
@@ -345,14 +353,14 @@ def solve(assumptions):
     ct = assumptions['country']
 
     if ct in country_multipolygons:
-        error_msg, solar_pu, wind_pu = process_shapely_polygon(country_multipolygons[ct],year)
+        error_msg, solar_pu, wind_pu = process_shapely_polygon(country_multipolygons[ct],year,assumptions['cf_exponent'])
         assumptions["country"] = "country " + ct
     elif ct[:6] == "point:":
         error_msg, solar_pu, wind_pu = process_point(ct,year)
         ct = "point"
         assumptions["country"] = ct
     elif ct[:8] == "polygon:":
-        error_msg, solar_pu, wind_pu = process_polygon(ct,year)
+        error_msg, solar_pu, wind_pu = process_polygon(ct,year,assumptions['cf_exponent'])
         ct = "polygon"
         assumptions["country"] = ct
     else:

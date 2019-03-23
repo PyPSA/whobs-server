@@ -112,6 +112,11 @@
                 <small id="weatherSelect" class="form-text text-muted">Only years from 2011 to 2013 inclusive are available (until we get a bigger hard-drive).</small>
               </div>
               <div class="form-group">
+                <label for="distributionSelector">Capacity factor exponent for spatial distribution of wind and solar</label>
+                <input type="number" class="form-control" id="distributionSelector" aria-describedby="distributionSelect" name="cf_exponent">
+                <small id="distributionSelect" class="form-text text-muted">If exponent is 0 generators are distributed evenly across the region, if it is 1 they are distributed proportional to capacity factor, if it is x they are distributed proportional to (capacity factor)^x.</small>
+              </div>
+              <div class="form-group">
                 <label for="samplingSelector">Sampling frequency</label>
                 <input type="number" class="form-control" id="samplingSelector" aria-describedby="samplingSelect" name="frequency">
                 <small id="samplingSelect" class="form-text text-muted">n-hourly, n&lt;3 is very slow, big n solves faster.</small>

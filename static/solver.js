@@ -291,7 +291,7 @@ d3.selectAll("input[name='selectByLocation']").on("change", function(){
 for (let i = 0; i < Object.keys(assumptions).length; i++){
     let key = Object.keys(assumptions)[i];
     let value = assumptions[key];
-    if(value == true){
+    if(value === true){
 	document.getElementsByName(key)[0].checked = value;
 	d3.selectAll("input[name='" + key + "']").on("change", function(){
 	    assumptions[key] = this.checked;
