@@ -7,7 +7,7 @@ zero-direct-emission electricity systems with wind, solar and storage
 electricity demand, using the cost and other assumptions of your
 choice. It uses only free software and open data, including [Python
 for Power System Analysis (PyPSA)](https://github.com/PyPSA/PyPSA) for
-the optimisation framework, the European Centre for Medium-Range Weather Forecasts (ECMWF) [ERA5 dataset](https://www.ecmwf.int/en/forecasts/datasets/reanalysis-datasets/era5) for the open weather
+the optimisation framework, the European Centre for Medium-Range Weather Forecasts (ECMWF) [ERA5 dataset](https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels) for the open weather
 data, [Clp](https://projects.coin-or.org/Clp) for the solver,
 [D3.js](https://d3js.org/) for graphics,
 [Mapbox](https://www.mapbox.com/), [Leaflet](http://leafletjs.com/)
@@ -58,7 +58,43 @@ Now you are ready to [run the server locally](#run-server-locally-on-your-own-co
 
 For the wind and solar generation time series, we use the European
 Centre for Medium-Range Weather Forecasts (ECMWF) [ERA5
-dataset](https://www.ecmwf.int/en/forecasts/datasets/reanalysis-datasets/era5).
+dataset](https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels).
+
+First you need to download the weather data (e.g. wind speeds, direct
+and diffuse solar radiation) as cutouts, then you need to convert them
+to power system data for particular wind turbines and solar
+panels. The weather data is in a 0.25 by 0.25 degree spatial
+resolution grid for the whole globe, but to save space, we downscale
+it to 0.5 by 0.5 degrees.
+
+Data is downloaded from the European [Climate Data Store
+(CDS)](https://cds.climate.copernicus.eu/) using the [atlite
+library](https://github.com/FRESNA/atlite) using the script:
+
+`python build_cutouts.py`
+
+Note that you need to register an account on the CDS first in order to
+get a CDS API key.
+
+You need to set the `year` variable in the script first, then it will
+download 4 quadrants cutouts (4 slices of 90 degrees of longitude) to
+cover the whole globe. Each quadrant takes up 60 GB, so you will need
+240 GB per year.
+
+To build the power system data, i.e. wind and solar generation time
+series for each point on the globe, run the script:
+
+`python convert_and_downscale_cutout.py`
+
+Each quadrant is split into two octants, one for the northern half of
+the quadrant with solar panels facing south, and the other for the
+southern half with solar panels facing north. The script downscales
+the spatial resolution to 0.5 by 0.5 degrees to save disk space. Each
+octant takes up 2.2 GB for each technology (solar and onshore wind),
+so in total for a year we have 2.2 GB times 2 technologies times 8
+octants, i.e. 35 GB.
+
+
 
 ## Run without server
 
