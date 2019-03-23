@@ -95,6 +95,13 @@ so in total for a year we have 2.2 GB times 2 technologies times 8
 octants, i.e. 35 GB.
 
 
+For spatial distributions of wind and solar proportional to (capacity
+factor)^x, precalculating the capacity factors for each octant in
+`data/` speeds things up significantly. To calculate these means, use
+the script:
+
+`python get_statistics.py`
+
 
 ## Run without server
 
