@@ -256,8 +256,9 @@ def process_shapely_polygon(polygon,year,cf_exponent):
 
         for tech in techs:
             da = xr.open_dataarray("{}octant{}-{}-{}.nc".format(octant_folder,i,year,tech))
+            means = pd.read_csv("data/octant{}-{}-{}-mean.csv".format(i,year,tech),index_col=0,squeeze=True)
 
-            layout = (da.sum(dim='time').values)**cf_exponent
+            layout = (means.values)**cf_exponent
 
             tech_matrix = matrix.dot(spdiag(layout))
 
