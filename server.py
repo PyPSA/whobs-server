@@ -51,7 +51,7 @@ def root():
         country = request.args.get('country', default = 'GB', type = str)
         year = request.args.get('year', default = 2011, type = int)
         freq = request.args.get('freq', default = 3, type = int)
-        cf_exponent = request.args.get('cf_exponent', default = 1, type = float)
+        cf_exponent = request.args.get('cf_exponent', default = 2, type = float)
         demand = request.args.get('demand', default = 100, type = float)
         scenario = request.args.get('scenario', default = 2030, type = int)
         wind = request.args.get('wind', default = 1, type = int)
