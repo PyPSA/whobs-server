@@ -1,15 +1,19 @@
 
 # model.energy: online optimisation of energy systems
 
-This is the code for the online optimisation of
-zero-direct-emission electricity systems with wind, solar and storage
-(using batteries and electrolysed hydrogen gas) to provide a baseload
-electricity demand, using the cost and other assumptions of your
-choice. It uses only free software and open data, including [Python
-for Power System Analysis (PyPSA)](https://github.com/PyPSA/PyPSA) for
-the optimisation framework, the European Centre for Medium-Range Weather Forecasts (ECMWF) [ERA5 dataset](https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels) for the open weather
-data, [Clp](https://projects.coin-or.org/Clp) for the solver,
-[D3.js](https://d3js.org/) for graphics,
+This is the code for the online optimisation of zero-direct-emission
+electricity systems with wind, solar and storage (using batteries and
+electrolysed hydrogen gas) to provide a baseload electricity demand,
+using the cost and other assumptions of your choice. It uses only free
+software and open data, including [Python for Power System Analysis
+(PyPSA)](https://github.com/PyPSA/PyPSA) for the optimisation
+framework, the European Centre for Medium-Range Weather Forecasts
+(ECMWF) [ERA5
+dataset](https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels)
+for the open weather data, the [atlite
+library](https://github.com/FRESNA/atlite) for converting weather data
+to generation profiles, [Clp](https://projects.coin-or.org/Clp) for
+the solver, [D3.js](https://d3js.org/) for graphics,
 [Mapbox](https://www.mapbox.com/), [Leaflet](http://leafletjs.com/)
 and [Natural Earth](https://www.naturalearthdata.com/) for maps, and
 free software for the server infrastructure (GNU/Linux, nginx, Flask,
@@ -88,7 +92,8 @@ series for each point on the globe, run the script:
 
 Each quadrant is split into two octants, one for the northern half of
 the quadrant with solar panels facing south, and the other for the
-southern half with solar panels facing north. The script downscales
+southern half with solar panels facing north (with a slope of 35
+degrees against the horizontal in both cases). The script downscales
 the spatial resolution to 0.5 by 0.5 degrees to save disk space. Each
 octant takes up 2.2 GB for each technology (solar and onshore wind),
 so in total for a year we have 2.2 GB times 2 technologies times 8
