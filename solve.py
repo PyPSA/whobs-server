@@ -52,6 +52,10 @@ years_available_start = 2011
 years_available_end = 2013
 
 
+#based on mean deviation against renewables.ninja capacity factors for European countries for 2011-2013
+solar_correction_factor = 0.926328
+
+
 def get_country_multipolygons():
 
     with open('static/ne-countries-110m.json', 'r') as myfile:
@@ -418,7 +422,7 @@ def solve(assumptions):
     if assumptions["solar"]:
         network.add("Generator",ct+" solar",
                     bus=ct,
-                    p_max_pu = pu["solar"].reindex(snapshots,method="nearest"),
+                    p_max_pu = solar_correction_factor*pu["solar"].reindex(snapshots,method="nearest"),
                     p_nom_extendable = True,
                     marginal_cost = 0.1, #Small cost to prefer curtailment to destroying energy in storage, solar curtails before wind
                     capital_cost = assumptions_df.at['solar','fixed'])
