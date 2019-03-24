@@ -12,6 +12,7 @@ flask-by-example
 
 *.lp
 
+*~
 
 static/d3*.js
 

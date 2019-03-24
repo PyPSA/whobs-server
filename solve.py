@@ -216,7 +216,7 @@ def process_point(ct,year):
         o = xr.open_dataarray("{}octant{}-{}-{}.nc".format(octant_folder,octant,year,tech))
         pu[tech] = o.loc[position,:].to_pandas()
 
-    return None, pu["solar"], pu["onwind"]
+    return None, pd.DataFrame(pu)
 
 
 def process_shapely_polygon(polygon,year,cf_exponent):
@@ -234,7 +234,8 @@ def process_shapely_polygon(polygon,year,cf_exponent):
     da = xr.open_dataarray("{}octant0-{}-onwind.nc".format(octant_folder,year))
 
     techs = ["onwind","solar"]
-    final_result = { tech : pd.Series(0.,index=da.coords["time"].to_pandas()) for tech in techs}
+    final_result = pd.DataFrame(0.,columns=techs,
+                                index=da.coords["time"].to_pandas())
     matrix_sum = { tech : 0. for tech in techs}
 
     #range over octants
@@ -275,7 +276,7 @@ def process_shapely_polygon(polygon,year,cf_exponent):
 
 
 
-    return None, final_result["solar"], final_result["onwind"]
+    return None, final_result, matrix_sum
 
 
 
@@ -354,14 +355,20 @@ def solve(assumptions):
     ct = assumptions['country']
 
     if ct in country_multipolygons:
-        error_msg, solar_pu, wind_pu = process_shapely_polygon(country_multipolygons[ct],year,assumptions['cf_exponent'])
+        if assumptions['cf_exponent'] in [0.,1.,2.]:
+            error_msg = None
+            fn = "data/{}-{}-{}.csv".format(ct,year,assumptions["cf_exponent"])
+            print("Reading in precalculated data",fn)
+            pu = pd.read_csv(fn,index_col=0,parse_dates=True)
+        else:
+            error_msg, pu, matrix_sum = process_shapely_polygon(country_multipolygons[ct],year,assumptions['cf_exponent'])
         assumptions["country"] = "country " + ct
     elif ct[:6] == "point:":
-        error_msg, solar_pu, wind_pu = process_point(ct,year)
+        error_msg, pu = process_point(ct,year)
         ct = "point"
         assumptions["country"] = ct
     elif ct[:8] == "polygon:":
-        error_msg, solar_pu, wind_pu = process_polygon(ct,year,assumptions['cf_exponent'])
+        error_msg, pu, matrix_sum = process_polygon(ct,year,assumptions['cf_exponent'])
         ct = "polygon"
         assumptions["country"] = ct
     else:
@@ -411,7 +418,7 @@ def solve(assumptions):
     if assumptions["solar"]:
         network.add("Generator",ct+" solar",
                     bus=ct,
-                    p_max_pu = solar_pu.reindex(snapshots,method="nearest"),
+                    p_max_pu = pu["solar"].reindex(snapshots,method="nearest"),
                     p_nom_extendable = True,
                     marginal_cost = 0.1, #Small cost to prefer curtailment to destroying energy in storage, solar curtails before wind
                     capital_cost = assumptions_df.at['solar','fixed'])
@@ -419,7 +426,7 @@ def solve(assumptions):
     if assumptions["wind"]:
         network.add("Generator",ct+" wind",
                     bus=ct,
-                    p_max_pu = wind_pu.reindex(snapshots,method="nearest"),
+                    p_max_pu = pu["onwind"].reindex(snapshots,method="nearest"),
                     p_nom_extendable = True,
                     marginal_cost = 0.2, #Small cost to prefer curtailment to destroying energy in storage, solar curtails before wind
                     capital_cost = assumptions_df.at['wind','fixed'])
