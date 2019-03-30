@@ -27,6 +27,10 @@ section {
     color: red;
 }
 
+#weather-status {
+    color: red;
+}
+
 
 #results {
     float: left;
@@ -91,6 +95,13 @@ section {
 
 .tab_asset {
     text-align: left;
+}
+
+.line  {
+    stroke-width: 3;
+    fill: none;
+    stroke-opacity: 0.6;
+    stroke-linejoin: round;
 }
 
 .tab_data {

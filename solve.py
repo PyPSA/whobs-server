@@ -323,7 +323,6 @@ def solve(assumptions):
     job.meta['status'] = "Reading in data"
     job.save_meta()
 
-
     for key in booleans:
         try:
             assumptions[key] = bool(assumptions[key])
@@ -381,6 +380,25 @@ def solve(assumptions):
     if error_msg is not None:
         return error(error_msg, jobid)
 
+    pu["solar"] = solar_correction_factor*pu["solar"]
+
+    snapshots = pd.date_range("{}-01-01".format(year),"{}-12-31 23:00".format(year),freq="H")
+    pu = pu.reindex(snapshots,method="nearest")
+
+
+    if assumptions["job_type"] == "weather":
+        print("Returning weather for {}".format(ct))
+
+        results = {}
+        results['assumptions'] = assumptions
+        results["snapshots"] = [str(s) for s in snapshots]
+
+        for v in ["onwind","solar"]:
+            results[v+'_pu'] = pu[v].round(3).values.tolist()
+
+        return results
+
+
     try:
         frequency = int(assumptions['frequency'])
     except:
@@ -422,7 +440,7 @@ def solve(assumptions):
     if assumptions["solar"]:
         network.add("Generator",ct+" solar",
                     bus=ct,
-                    p_max_pu = solar_correction_factor*pu["solar"].reindex(snapshots,method="nearest"),
+                    p_max_pu = pu["solar"],
                     p_nom_extendable = True,
                     marginal_cost = 0.1, #Small cost to prefer curtailment to destroying energy in storage, solar curtails before wind
                     capital_cost = assumptions_df.at['solar','fixed'])
@@ -430,7 +448,7 @@ def solve(assumptions):
     if assumptions["wind"]:
         network.add("Generator",ct+" wind",
                     bus=ct,
-                    p_max_pu = pu["onwind"].reindex(snapshots,method="nearest"),
+                    p_max_pu = pu["onwind"],
                     p_nom_extendable = True,
                     marginal_cost = 0.2, #Small cost to prefer curtailment to destroying energy in storage, solar curtails before wind
                     capital_cost = assumptions_df.at['wind','fixed'])

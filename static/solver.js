@@ -22,6 +22,7 @@ var formatDate = d3.timeFormat("%b %d %H:%M");
 
 
 var colors = {"wind":"#3B6182",
+	      "onwind":"#3B6182",
               "solar" :"#FFFF00",
               "battery" : "#999999",
               "battery_power" : "#999999",
@@ -312,10 +313,17 @@ for (let i = 0; i < Object.keys(assumptions).length; i++){
 
 var solveButton = d3.select("#solve-button");
 
+var weatherButton = d3.select("#weather-button");
+
+
 var jobid = "";
+var weatherJobid = "";
 
 var timer;
 var timeout;
+
+var weatherTimer;
+var weatherTimeout;
 
 // time between status polling in milliseconds
 var poll_interval = 2000;
@@ -340,6 +348,7 @@ solveButton.on("click", function() {
 	    console.log("timer",timer,"polling every",poll_interval,"milliseconds");
 	    timeout = setTimeout(poll_kill, poll_timeout);
 	};
+	assumptions["job_type"] = "solve";
 	send_job.send(JSON.stringify(assumptions));
 
 	button.text("Solving");
@@ -347,9 +356,32 @@ solveButton.on("click", function() {
 	document.getElementById("status").innerHTML="Sending job to solver";
     };
 });
-//api.add_resource(Poll, '/poll/<jobid>')
-//api.add_resource(Final, '/final/<jobid>')
-//api.add_resource(Coordinates, '/coordinates/<lat>/<lng>')
+
+
+
+weatherButton.on("click", function() {
+    var button = d3.select(this);
+    if (button.text() == "Get wind & solar output") {
+	clear_weather();
+	var send_job = new XMLHttpRequest();
+	send_job.open('POST', '/jobs', true);
+	send_job.setRequestHeader("Content-Type", "application/json");
+	send_job.onload = function () {
+	    var data = JSON.parse(this.response);
+	    weatherJobid = data["jobid"];
+	    console.log("Weather jobid:",jobid);
+	    weatherTimer = setInterval(poll_weather_result, poll_interval);
+	    console.log("timer",weatherTimer,"polling every",poll_interval,"milliseconds");
+	    weatherTimeout = setTimeout(poll_weather_kill, poll_timeout);
+	};
+	assumptions["job_type"] = "weather";
+	send_job.send(JSON.stringify(assumptions));
+
+	button.text("Getting wind & solar output");
+	button.attr("disabled","");
+	document.getElementById("weather-status").innerHTML="Sending job to weather database";
+    };
+});
 
 
 function poll_result() {
@@ -386,11 +418,59 @@ function poll_result() {
 };
 
 
+
+
+
+
+function poll_weather_result() {
+
+    var poll = new XMLHttpRequest();
+
+    poll.open('GET', '/jobs/' + weatherJobid, true);
+
+    poll.onload = function () {
+	results = JSON.parse(this.response);
+	status = results["status"];
+	document.getElementById("weather-status").innerHTML=status;
+	console.log("status is",status);
+
+	if(status == "Error"){
+	    clearInterval(weatherTimer);
+	    clearTimeout(weatherTimeout);
+	    console.log("results:",results);
+	    document.getElementById("weather-status").innerHTML=status + ": " + results["error"];
+	    weatherButton.text("Get wind & solar output");
+	    $('#weather-button').removeAttr("disabled");
+	};
+	if(status == "Finished"){
+	    clearInterval(weatherTimer);
+	    clearTimeout(weatherTimeout);
+	    console.log("results:",results);
+	    weatherButton.text("Get wind & solar output");
+	    $('#weather-button').removeAttr("disabled");
+	    display_weather();
+	    $('#collapseResults').addClass("show");
+	};
+    };
+    poll.send();
+};
+
+
+
+
 function poll_kill() {
     clearInterval(timer);
     solveButton.text("Solve");
     $('#solve-button').removeAttr("disabled");
     document.getElementById("status").innerHTML="Error: Timed out";
+};
+
+
+function poll_weather_kill() {
+    clearInterval(weatherTimer);
+    solveButton.text("Get wind & solar output");
+    $('#weather-button').removeAttr("disabled");
+    document.getElementById("weather-status").innerHTML="Error: Timed out";
 };
 
 
@@ -427,6 +507,12 @@ function clear_results(){
 };
 
 
+function clear_weather(){
+    d3.select("#weather").selectAll("g").remove();
+};
+
+
+
 function display_results(){
     document.getElementById("results_assumptions").innerHTML=" for " + results["assumptions"]["country"] + " in year " + results["assumptions"]["year"];
     document.getElementById("average_cost").innerHTML=results["average_cost"].toFixed(1);
@@ -457,6 +543,19 @@ function display_results(){
     draw_energy_capacity_stack();
     draw_energy_stack();
 };
+
+
+
+
+function display_weather(){
+
+    for(var j=0; j < results.snapshots.length; j++) {
+	results.snapshots[j] = parseDate(results.snapshots[j]);
+    };
+
+    draw_weather_graph();
+};
+
 
 
 //graph parameters
@@ -721,6 +820,59 @@ function draw_stack(data, labels, color, ylabel, svgName){
         .text(totals[totals.length-1].toFixed(1));
 
 
+
+};
+
+
+
+
+function draw_weather_graph(){
+
+    var name = "weather";
+
+    let snapshots = results["snapshots"];
+
+    var svgGraph = d3.select("#weather"),
+	margin = {top: 20, right: 20, bottom: 30, left: 50},
+	width = svgGraph.attr("width") - margin.left - margin.right,
+	height = svgGraph.attr("height") - margin.top - margin.bottom;
+
+    // remove existing
+    svgGraph.selectAll("g").remove();
+    x[name] = d3.scaleTime().range([0, width]).domain(d3.extent(snapshots)),
+    y[name] = d3.scaleLinear().range([height, 0]).domain([0.,1.]);
+
+
+    var g = svgGraph.append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    var line = d3.line()
+        .x(function(d, i) { return x[name](snapshots[i]); })
+        .y(function(d) { return y[name](d); });
+//        .x(function(d, i) { return x[name](snapshots[i]); })
+//        .y(function(d, i) { return y[name](results[d+"_pu"][i]); });
+
+    data = ["solar","onwind"];
+
+    var layer = g.selectAll(".layer")
+        .data(data)
+        .enter().append("g")
+        .attr("class", "layer");
+
+    layer.append("path")
+        .attr("class", "line") // Assign a class for styling
+              .style("stroke", function(d) { return colors[d]; })
+        .attr("d", function(d) { return line(results[d+"_pu"]);});
+
+
+    g.append("g")
+        .attr("class", "axis axis--x")
+        .attr("transform", "translate(0," + height + ")")
+        .call(d3.axisBottom(x[name]));
+
+    g.append("g")
+        .attr("class", "axis axis--y")
+        .call(d3.axisLeft(y[name]));
 
 };
 

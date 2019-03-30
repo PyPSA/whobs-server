@@ -38,7 +38,7 @@ app = Flask(__name__)
 app.jinja_env.filters['json'] = lambda v: Markup(json.dumps(v))
 
 # Load allowed country names
-with(open('static/ne_50m_admin_0_countries_simplified_europe.json', 'r')) as f:
+with(open('static/ne-countries-110m.json', 'r')) as f:
     j = json.load(f)
 country_names = [f['properties']['iso_a2'] for f in j['features']]
 country_names_full = [f['properties']['name'] for f in j['features']]
@@ -48,7 +48,7 @@ country_names_full = [f['properties']['name'] for f in j['features']]
 def root():
     if request.method == "GET":
         # Try to get settings from URL
-        country = request.args.get('country', default = 'GB', type = str)
+        country = request.args.get('country', default = 'DE', type = str)
         year = request.args.get('year', default = 2011, type = int)
         freq = request.args.get('freq', default = 3, type = int)
         cf_exponent = request.args.get('cf_exponent', default = 2, type = float)

@@ -73,9 +73,8 @@
         <div class="container">
           <div class="row">
             <div class="col-lg-12 mx-auto">
-              <h2>Step 1: Select location</h2>
+              <h2>Step 1: Select location and get available wind and solar output</h2>
               <hr>
-              <p class="lead">This choice determines wind and solar output.</p>
               <div class="form-check mb-1">
                 <input class="form-check-input" type="checkbox" name="selectByCountry" checked id="c1">
                 <label class="form-check-label" for="c1">
@@ -90,17 +89,7 @@
               </div>
               <div id="mapid">
               </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="step2">
-        <div class="container">
-          <div class="row">
-            <div class="col-lg-12 mx-auto">
-              <h2>Step 2: Choose technologies, costs and other assumptions</h2>
-              <hr>
+	      <br />
               <div class="form-group">
                 <label for="countrySelecter">Location</label>
                 <input type="text" class="form-control" id="countrySelecter" aria-describedby="countrySelect" name="country" value="{{ country_name }}" readonly>
@@ -116,6 +105,24 @@
                 <input type="number" class="form-control" id="distributionSelector" aria-describedby="distributionSelect" name="cf_exponent">
                 <small id="distributionSelect" class="form-text text-muted">If exponent is 0 generators are distributed evenly across the region, if it is 1 they are distributed proportional to capacity factor, if it is x they are distributed proportional to (capacity factor)^x.</small>
               </div>
+
+                <p>
+                  <button type="button" class="btn btn-lg btn-primary" id="weather-button">Get wind & solar output</button>
+                  <button type="button" class="btn btn-light" id="status-weather-button" disabled> Status: <span id="weather-status">Waiting for job</span> </button>
+                </p>
+
+		<svg width="1100" height="400" id="weather"></svg>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="step2">
+        <div class="container">
+          <div class="row">
+            <div class="col-lg-12 mx-auto">
+              <h2>Step 2: Choose technologies, costs and other assumptions</h2>
+              <hr>
               <div class="form-group">
                 <label for="samplingSelector">Sampling frequency</label>
                 <input type="number" class="form-control" id="samplingSelector" aria-describedby="samplingSelect" name="frequency">
