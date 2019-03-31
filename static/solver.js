@@ -313,8 +313,14 @@ for (let i = 0; i < Object.keys(assumptions).length; i++){
 
 var solveButton = d3.select("#solve-button");
 
+var solveButtonText = {"before" : "Solve",
+		       "after" : "Solving"}
+
+
 var weatherButton = d3.select("#weather-button");
 
+var weatherButtonText = {"before" : "Fetch wind & solar",
+			 "after" : "Fetching wind & solar"}
 
 var jobid = "";
 var weatherJobid = "";
@@ -335,7 +341,7 @@ var poll_timeout = 10*60*1000 + poll_interval/2;
 
 solveButton.on("click", function() {
     var button = d3.select(this);
-    if (button.text() == "Solve") {
+    if (button.text() == solveButtonText["before"]) {
 	clear_results();
 	var send_job = new XMLHttpRequest();
 	send_job.open('POST', '/jobs', true);
@@ -351,7 +357,7 @@ solveButton.on("click", function() {
 	assumptions["job_type"] = "solve";
 	send_job.send(JSON.stringify(assumptions));
 
-	button.text("Solving");
+	button.text(solveButtonText["after"]);
 	button.attr("disabled","");
 	document.getElementById("status").innerHTML="Sending job to solver";
     };
@@ -361,7 +367,7 @@ solveButton.on("click", function() {
 
 weatherButton.on("click", function() {
     var button = d3.select(this);
-    if (button.text() == "Get wind & solar output") {
+    if (button.text() == weatherButtonText["before"]) {
 	clear_weather();
 	var send_job = new XMLHttpRequest();
 	send_job.open('POST', '/jobs', true);
@@ -377,7 +383,7 @@ weatherButton.on("click", function() {
 	assumptions["job_type"] = "weather";
 	send_job.send(JSON.stringify(assumptions));
 
-	button.text("Getting wind & solar output");
+	button.text(weatherButtonText["after"]);
 	button.attr("disabled","");
 	document.getElementById("weather-status").innerHTML="Sending job to weather database";
     };
@@ -401,14 +407,14 @@ function poll_result() {
 	    clearTimeout(timeout);
 	    console.log("results:",results);
 	    document.getElementById("status").innerHTML=status + ": " + results["error"];
-	    solveButton.text("Solve");
+	    solveButton.text(solveButtonText["before"]);
 	    $('#solve-button').removeAttr("disabled");
 	};
 	if(status == "Finished"){
 	    clearInterval(timer);
 	    clearTimeout(timeout);
 	    console.log("results:",results);
-	    solveButton.text("Solve");
+	    solveButton.text(solveButtonText["before"]);
 	    $('#solve-button').removeAttr("disabled");
 	    display_results();
 	    $('#collapseResults').addClass("show");
@@ -439,17 +445,16 @@ function poll_weather_result() {
 	    clearTimeout(weatherTimeout);
 	    console.log("results:",results);
 	    document.getElementById("weather-status").innerHTML=status + ": " + results["error"];
-	    weatherButton.text("Get wind & solar output");
+	    weatherButton.text(weatherButtonText["before"]);
 	    $('#weather-button').removeAttr("disabled");
 	};
 	if(status == "Finished"){
 	    clearInterval(weatherTimer);
 	    clearTimeout(weatherTimeout);
 	    console.log("results:",results);
-	    weatherButton.text("Get wind & solar output");
+	    weatherButton.text(weatherButtonText["before"]);
 	    $('#weather-button').removeAttr("disabled");
 	    display_weather();
-	    $('#collapseResults').addClass("show");
 	};
     };
     poll.send();
@@ -460,7 +465,7 @@ function poll_weather_result() {
 
 function poll_kill() {
     clearInterval(timer);
-    solveButton.text("Solve");
+    solveButton.text(solveButtonText["before"]);
     $('#solve-button').removeAttr("disabled");
     document.getElementById("status").innerHTML="Error: Timed out";
 };
@@ -468,7 +473,7 @@ function poll_kill() {
 
 function poll_weather_kill() {
     clearInterval(weatherTimer);
-    solveButton.text("Get wind & solar output");
+    solveButton.text(weatherButtonText["before"]);
     $('#weather-button').removeAttr("disabled");
     document.getElementById("weather-status").innerHTML="Error: Timed out";
 };
@@ -917,13 +922,4 @@ d3.select("#jumpmenu").on("change", function(){
     period = this.value;
     console.log("period change to ",period);
     draw_power_graph();
-});
-
-
-
-// load initial results for assumptions["country"]
-d3.json("static/results-initial.json", function(r){
-    results = r;
-    console.log(results);
-    display_results();
 });

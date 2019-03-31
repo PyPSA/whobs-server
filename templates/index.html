@@ -28,13 +28,16 @@
                 <a class="nav-link js-scroll-trigger" href="#intro">Introduction</a>
               </li>
               <li class="nav-item">
-                <a class="nav-link js-scroll-trigger" href="#step1">Select location</a>
+                <a class="nav-link js-scroll-trigger" href="#location">Select location</a>
               </li>
               <li class="nav-item">
-                <a class="nav-link js-scroll-trigger" href="#step2">Choose technologies</a>
+                <a class="nav-link js-scroll-trigger" href="#time-series">Fetch wind & solar</a>
               </li>
               <li class="nav-item">
-                <a class="nav-link js-scroll-trigger" href="#step3">Solve</a>
+                <a class="nav-link js-scroll-trigger" href="#assumptions">Choose technologies</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link js-scroll-trigger" href="#solve">Solve</a>
               </li>
               <li class="nav-item">
                 <a class="nav-link js-scroll-trigger" href="#background">Background</a>
@@ -69,11 +72,11 @@
         </div>
       </section>
 
-      <section id="step1" class="bg-light">
+      <section id="location" class="bg-light">
         <div class="container">
           <div class="row">
             <div class="col-lg-12 mx-auto">
-              <h2>Step 1: Select location and get available wind and solar output</h2>
+              <h2>Step 1: Select location and weather year</h2>
               <hr>
               <div class="form-check mb-1">
                 <input class="form-check-input" type="checkbox" name="selectByCountry" checked id="c1">
@@ -105,29 +108,38 @@
                 <input type="number" class="form-control" id="distributionSelector" aria-describedby="distributionSelect" name="cf_exponent">
                 <small id="distributionSelect" class="form-text text-muted">If exponent is 0 generators are distributed evenly across the region, if it is 1 they are distributed proportional to capacity factor, if it is x they are distributed proportional to (capacity factor)^x.</small>
               </div>
+	    </div>
+	  </div>
+	</div>
+      </section>
+      <section id="time-series">
+        <div class="container">
+          <div class="row">
+            <div class="col-lg-12 mx-auto">
+              <h2>Step 2: Fetch available wind and solar output</h2>
+              <hr>
+	      <p class="lead">
+                <b>Warning:</b> It takes about 4 seconds to fetch the available wind and solar output.</p>
+              <p>
 
                 <p>
-                  <button type="button" class="btn btn-lg btn-primary" id="weather-button">Get wind & solar output</button>
-                  <button type="button" class="btn btn-light" id="status-weather-button" disabled> Status: <span id="weather-status">Waiting for job</span> </button>
+                  <button type="button" class="btn btn-lg btn-primary" id="weather-button">Fetch wind & solar</button>
+                   &nbsp;&nbsp;Status: <span id="weather-status">Waiting for job</span>
                 </p>
-
-		<svg width="1100" height="400" id="weather"></svg>
+		<div class="col-xs-12 col-lg-6" id="chartArea">
+		  <svg width="1100" height="400" id="weather"></svg>
+		</div>
             </div>
           </div>
         </div>
       </section>
 
-      <section id="step2">
+      <section id="assumptions"  class="bg-light">
         <div class="container">
           <div class="row">
             <div class="col-lg-12 mx-auto">
-              <h2>Step 2: Choose technologies, costs and other assumptions</h2>
+              <h2>Step 3: Choose technologies, costs and other assumptions</h2>
               <hr>
-              <div class="form-group">
-                <label for="samplingSelector">Sampling frequency</label>
-                <input type="number" class="form-control" id="samplingSelector" aria-describedby="samplingSelect" name="frequency">
-                <small id="samplingSelect" class="form-text text-muted">n-hourly, n&lt;3 is very slow, big n solves faster (n=25 or n=49 give fast and relatively accurate results).</small>
-              </div>
               <div class="form-group">
                 <label for="samplingSelector">Constant demand [MW]</label>
                 <input type="number" class="form-control" id="samplingSelector" name="load">
@@ -168,12 +180,17 @@
               </div>
               <br>
               <p>
-                <a class="btn btn-secondary" data-toggle="collapse" href="#advCost" role="button" aria-expanded="false" aria-controls="advCost">Show advanced cost settings</a>
+                <a class="btn btn-secondary" data-toggle="collapse" href="#advCost" role="button" aria-expanded="false" aria-controls="advCost">Show advanced assumption settings</a>
               </p>
               <div class="row">
                 <div class="col">
                   <div class="collapse multi-collapse" id="advCost">
                     <div class="card card-body">
+		      <div class="form-group">
+			<label for="samplingSelector">Sampling frequency</label>
+			<input type="number" class="form-control" id="samplingSelector" aria-describedby="samplingSelect" name="frequency">
+			<small id="samplingSelect" class="form-text text-muted">n-hourly, n&lt;3 is very slow, big n solves faster (n=25 or n=49 give fast and relatively accurate results).</small>
+		      </div>
                       <div class="form-group">
                         <label for="avdSel1">Wind capital cost (overnight) [EUR/kW]</label>
                         <input type="number" class="form-control" id="advSel1" name="wind_cost">
@@ -223,17 +240,17 @@
         </div>
       </section>
 
-        <section id="step3" class="bg-light">
+        <section id="solve">
           <div class="container">
             <div class="row">
               <div class="col-lg-12 mx-auto">
-                <h2>Step 3: Solve and wait for results</h2>
+                <h2>Step 4: Solve and wait for results</h2>
                 <hr>
                 <p class="lead">
                 <b>Warning:</b> It takes about 30 seconds to solve and return a result, please be patient! If there's a queue, it may take longer. We're working on improving the performance.</p>
                 <p>
                   <button type="button" class="btn btn-lg btn-primary" id="solve-button">Solve</button>
-                  <button type="button" class="btn btn-light" id="status-button" disabled> Status: <span id="status">Waiting for job</span> </button>
+                  &nbsp;&nbsp;Status: <span id="status">Waiting for job</span>
                   <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#resultModal" id="demo-button">Show demo results</button>
                 </p>
 
@@ -368,7 +385,7 @@
           </div>
         </section>
 
-        <section id="background">
+        <section id="background" class="bg-light">
           <div class="container">
             <div class="row">
               <div class="col-lg-12 mx-auto">
