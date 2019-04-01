@@ -85,10 +85,6 @@ d3.select("#tech_scenario").on("change", function(){
 });
 
 
-
-//state variable for graph period
-let period = "year";
-
 var d = 10;
 
 var results = {};
@@ -562,38 +558,44 @@ function display_weather(){
 };
 
 
-
-//graph parameters
-var x = {};
-var y = {};
-var ymin = {};
-var ymax = {};
-
-
 function draw_power_graph(){
-
-    var name = "time";
 
     let snapshots = results["snapshots"];
     let selection = [...Array(results["snapshots"].length).keys()];
 
-    if(period != "year"){
-	let week = parseInt(period.slice(4));
-	selection = selection.slice((week-1)*7*24/results["assumptions"]["frequency"],week*7*24/results["assumptions"]["frequency"]);
-	snapshots = snapshots.slice((week-1)*7*24/results["assumptions"]["frequency"],week*7*24/results["assumptions"]["frequency"]);
-    };
-
     // Inspired by https://bl.ocks.org/mbostock/3885211
 
     var svgGraph = d3.select("#power"),
-	margin = {top: 20, right: 20, bottom: 30, left: 50},
+	margin = {top: 20, right: 20, bottom: 110, left: 40},
+	marginContext = {top: 430, right: 20, bottom: 30, left: 40},
 	width = svgGraph.attr("width") - margin.left - margin.right,
-	height = svgGraph.attr("height") - margin.top - margin.bottom;
+	height = svgGraph.attr("height") - margin.top - margin.bottom,
+	heightContext = svgGraph.attr("height") - marginContext.top - marginContext.bottom;
 
     // remove existing
     svgGraph.selectAll("g").remove();
-    x[name] = d3.scaleTime().range([0, width]),
-	y[name] = d3.scaleLinear().range([height, 0]);
+
+    var x = d3.scaleTime().range([0, width]).domain(d3.extent(snapshots));
+    var y = d3.scaleLinear().range([height, 0]);
+    var xContext = d3.scaleTime().range([0, width]).domain(d3.extent(snapshots));
+    var yContext = d3.scaleLinear().range([heightContext, 0]);
+
+    var xAxis = d3.axisBottom(x),
+	xAxisContext = d3.axisBottom(xContext),
+	yAxis = d3.axisLeft(y);
+
+
+    var brush = d3.brushX()
+        .extent([[0, 0], [width, heightContext]])
+        .on("start brush end", brushed);
+
+
+    var zoom = d3.zoom()
+        .scaleExtent([1, Infinity])
+        .translateExtent([[0, 0], [width, height]])
+        .extent([[0, 0], [width, height]])
+        .on("zoom", zoomed);
+
 
     data = [];
 
@@ -620,26 +622,43 @@ function draw_power_graph(){
 	data.push(item);
     }
 
-    ymin[name] = 0, ymax[name] = 0;
+    ymin = 0, ymax = 0;
     for (var k = 0; k < selection.length; k++){
-	if(data[results["positive"].columns.length-1][k][1] > ymax[name]){ ymax[name] = data[results["positive"].columns.length-1][k][1];};
-	if(data[results["positive"].columns.length+results["negative"].columns.length-1][k][0] < ymin[name]){ ymin[name] = data[results["positive"].columns.length+results["negative"].columns.length-1][k][0];};
+	if(data[results["positive"].columns.length-1][k][1] > ymax){ ymax = data[results["positive"].columns.length-1][k][1];};
+	if(data[results["positive"].columns.length+results["negative"].columns.length-1][k][0] < ymin){ ymin = data[results["positive"].columns.length+results["negative"].columns.length-1][k][0];};
     };
 
+    y.domain([ymin,ymax]);
+    yContext.domain([ymin,ymax]);
+
     var area = d3.area()
-        .x(function(d, i) { return x[name](snapshots[i]); })
-        .y0(function(d) { return y[name](d[0]); })
-        .y1(function(d) { return y[name](d[1]); });
+        .curve(d3.curveMonotoneX)
+        .x(function(d,i) { return x(snapshots[i]); })
+        .y0(function(d) { return y(d[0]); })
+        .y1(function(d) { return y(d[1]); });
+
+    var areaContext = d3.area()
+        .curve(d3.curveMonotoneX)
+        .x(function(d,i) { return xContext(snapshots[i]); })
+        .y0(function(d) { return yContext(d[0]); })
+        .y1(function(d) { return yContext(d[1]); });
 
 
-    var g = svgGraph.append("g")
+    svgGraph.append("defs").append("clipPath")
+        .attr("id", "clip")
+	.append("rect")
+        .attr("width", width)
+        .attr("height", height);
+
+    var focus = svgGraph.append("g")
+        .attr("class", "focus")
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
+    var context = svgGraph.append("g")
+        .attr("class", "context")
+        .attr("transform", "translate(" + marginContext.left + "," + marginContext.top + ")");
 
-    x[name].domain(d3.extent(snapshots));
-    y[name].domain([ymin[name],ymax[name]]);
-
-    var layer = g.selectAll(".layer")
+    var layer = focus.selectAll(".layer")
         .data(data)
         .enter().append("g")
         .attr("class", "layer");
@@ -649,14 +668,16 @@ function draw_power_graph(){
         .style("fill", function(d, i) {if(i < results["positive"].color.length){ return results["positive"].color[i];} else{return results["negative"].color[i-results["positive"].color.length];} })
         .attr("d", area);
 
-    g.append("g")
+
+    focus.append("g")
         .attr("class", "axis axis--x")
         .attr("transform", "translate(0," + height + ")")
-        .call(d3.axisBottom(x[name]));
+        .call(xAxis);
 
-    g.append("g")
+    focus.append("g")
         .attr("class", "axis axis--y")
-        .call(d3.axisLeft(y[name]));
+        .call(yAxis);
+
 
     var label = svgGraph.append("g").attr("class", "y-label");
 
@@ -668,6 +689,82 @@ function draw_power_graph(){
         .attr("dy", "1em")
         .style("text-anchor", "middle")
         .text("Power [MW]");
+
+
+    var layerContext = context.selectAll(".layerContext")
+        .data(data)
+        .enter().append("g")
+        .attr("class", "layerContext");
+
+    layerContext.append("path")
+        .attr("class", "area")
+        .style("fill", function(d, i) {if(i < results["positive"].color.length){ return results["positive"].color[i];} else{return results["negative"].color[i-results["positive"].color.length];} })
+        .attr("d", areaContext);
+
+    context.append("g")
+        .attr("class", "axis axis--x")
+        .attr("transform", "translate(0," + heightContext + ")")
+        .call(xAxisContext);
+
+    var gBrush = context.append("g")
+        .attr("class", "brush")
+        .call(brush);
+
+    // brush handle follows
+    // https://bl.ocks.org/Fil/2d43867ba1f36a05459c7113c7f6f98a
+
+    // following handle looks nicer
+    // https://bl.ocks.org/robyngit/89327a78e22d138cff19c6de7288c1cf
+
+    var brushResizePath = function(d) {
+	var e = +(d.type == "e"),
+	    x = e ? 1 : -1,
+	    y = heightContext / 2;
+	return "M" + (.5 * x) + "," + y + "A6,6 0 0 " + e + " " + (6.5 * x) + "," + (y + 6) + "V" + (2 * y - 6) + "A6,6 0 0 " + e + " " + (.5 * x) + "," + (2 * y) + "Z" + "M" + (2.5 * x) + "," + (y + 8) + "V" + (2 * y - 8) + "M" + (4.5 * x) + "," + (y + 8) + "V" + (2 * y - 8);
+    }
+
+    var handle = gBrush.selectAll(".handle--custom")
+	.data([{type: "w"}, {type: "e"}])
+	.enter().append("path")
+        .attr("class", "handle--custom")
+        .attr("stroke", "#000")
+        .attr("cursor", "ew-resize")
+        .attr("d", brushResizePath);
+
+    gBrush.call(brush.move, x.range()); //this sets initial position of brush
+
+
+    svgGraph.append("rect")
+        .attr("class", "zoom")
+        .attr("width", width)
+        .attr("height", height)
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+        .call(zoom);
+
+    function brushed() {
+	if (d3.event.sourceEvent && d3.event.sourceEvent.type === "zoom") return; // ignore brush-by-zoom
+	var s = d3.event.selection || xContext.range();
+	x.domain(s.map(xContext.invert, xContext));
+	layer.attr("d", area);
+	focus.select(".axis--x").call(xAxis);
+	svgGraph.select(".zoom").call(zoom.transform, d3.zoomIdentity
+				      .scale(width / (s[1] - s[0]))
+				      .translate(-s[0], 0));
+	handle.attr("transform", function(d, i) { return "translate(" + [ s[i], - heightContext / 4] + ")"; });
+    }
+
+    function zoomed() {
+	if (d3.event.sourceEvent && d3.event.sourceEvent.type === "brush") return; // ignore zoom-by-brush
+	var t = d3.event.transform;
+	x.domain(t.rescaleX(xContext).domain());
+	layer.select(".area").attr("d", area);
+	focus.select(".axis--x").call(xAxis);
+	var newRange = x.range().map(t.invertX, t);
+	context.select(".brush").call(brush.move, newRange);
+	handle.attr("transform", function(d, i) { return "translate(" + [ newRange[i], - heightContext / 4] + ")"; });
+    }
+
+
 };
 
 
@@ -833,8 +930,6 @@ function draw_stack(data, labels, color, ylabel, svgName){
 
 function draw_weather_graph(){
 
-    var name = "weather";
-
     let snapshots = results["snapshots"];
 
     var svgGraph = d3.select("#weather"),
@@ -846,6 +941,7 @@ function draw_weather_graph(){
 
     // remove existing
     svgGraph.selectAll("g").remove();
+
     var x = d3.scaleTime().range([0, width]).domain(d3.extent(snapshots));
     var y = d3.scaleLinear().range([height, 0]).domain([0.,1.]);
     var xContext = d3.scaleTime().range([0, width]).domain(d3.extent(snapshots));
@@ -965,13 +1061,6 @@ function draw_weather_graph(){
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
         .call(zoom);
 
-
-//    var line = d3.line()
-//        .x(function(d, i) { return x[name](snapshots[i]); })
-//        .y(function(d) { return y[name](d); });
-//        .x(function(d, i) { return x[name](snapshots[i]); })
-//        .y(function(d, i) { return y[name](results[d+"_pu"][i]); });
-
     function brushed() {
 	if (d3.event.sourceEvent && d3.event.sourceEvent.type === "zoom") return; // ignore brush-by-zoom
 	var s = d3.event.selection || xContext.range();
@@ -1021,20 +1110,3 @@ legend.append("text")
     .attr("x",20)
     .attr("y",10)
     .text(function (d) { return d.replace("_"," ")});
-
-
-
-
-
-let selectPeriod = d3.select("#jumpmenu").selectAll("option")
-    .data([...Array(53).keys()])
-    .enter()
-    .append("option")
-    .attr("value", function (d, i) {  return "week"+d })
-    .text( function (d, i) {  return "week "+d });
-
-d3.select("#jumpmenu").on("change", function(){
-    period = this.value;
-    console.log("period change to ",period);
-    draw_power_graph();
-});
