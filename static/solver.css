@@ -97,12 +97,17 @@ section {
     text-align: left;
 }
 
-.line  {
-    stroke-width: 3;
-    fill: none;
-    stroke-opacity: 0.6;
-    stroke-linejoin: round;
+.area {
+    opacity: 0.8;
+    clip-path: url(#clip);
 }
+
+.zoom {
+    cursor: move;
+    fill: none;
+    pointer-events: all;
+}
+
 
 .tab_data {
     text-align: right;

@@ -838,47 +838,136 @@ function draw_weather_graph(){
     let snapshots = results["snapshots"];
 
     var svgGraph = d3.select("#weather"),
-	margin = {top: 20, right: 20, bottom: 30, left: 50},
+	margin = {top: 20, right: 20, bottom: 110, left: 40},
+	marginContext = {top: 430, right: 20, bottom: 30, left: 40},
 	width = svgGraph.attr("width") - margin.left - margin.right,
-	height = svgGraph.attr("height") - margin.top - margin.bottom;
+	height = svgGraph.attr("height") - margin.top - margin.bottom,
+	heightContext = svgGraph.attr("height") - marginContext.top - marginContext.bottom;
 
     // remove existing
     svgGraph.selectAll("g").remove();
-    x[name] = d3.scaleTime().range([0, width]).domain(d3.extent(snapshots)),
-    y[name] = d3.scaleLinear().range([height, 0]).domain([0.,1.]);
+    var x = d3.scaleTime().range([0, width]).domain(d3.extent(snapshots));
+    var y = d3.scaleLinear().range([height, 0]).domain([0.,1.]);
+    var xContext = d3.scaleTime().range([0, width]).domain(d3.extent(snapshots));
+    var yContext = d3.scaleLinear().range([heightContext, 0]).domain([0.,1.]);
+
+    var xAxis = d3.axisBottom(x),
+	xAxisContext = d3.axisBottom(xContext),
+	yAxis = d3.axisLeft(y);
+
+    var brush = d3.brushX()
+        .extent([[0, 0], [width, heightContext]])
+        .on("brush end", brushed);
 
 
-    var g = svgGraph.append("g")
+    var zoom = d3.zoom()
+        .scaleExtent([1, Infinity])
+        .translateExtent([[0, 0], [width, height]])
+        .extent([[0, 0], [width, height]])
+        .on("zoom", zoomed);
+
+    var area = d3.area()
+        .curve(d3.curveMonotoneX)
+        .x(function(d,i) { return x(snapshots[i]); })
+        .y0(height)
+        .y1(function(d) { return y(d); });
+
+    var areaContext = d3.area()
+        .curve(d3.curveMonotoneX)
+        .x(function(d,i) { return xContext(snapshots[i]); })
+        .y0(heightContext)
+        .y1(function(d) { return yContext(d); });
+
+    svgGraph.append("defs").append("clipPath")
+        .attr("id", "clip")
+	.append("rect")
+        .attr("width", width)
+        .attr("height", height);
+
+    var focus = svgGraph.append("g")
+        .attr("class", "focus")
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-    var line = d3.line()
-        .x(function(d, i) { return x[name](snapshots[i]); })
-        .y(function(d) { return y[name](d); });
-//        .x(function(d, i) { return x[name](snapshots[i]); })
-//        .y(function(d, i) { return y[name](results[d+"_pu"][i]); });
+    var context = svgGraph.append("g")
+        .attr("class", "context")
+        .attr("transform", "translate(" + marginContext.left + "," + marginContext.top + ")");
+
 
     data = ["solar","onwind"];
 
-    var layer = g.selectAll(".layer")
+    var layer = focus.selectAll(".layer")
         .data(data)
         .enter().append("g")
         .attr("class", "layer");
 
     layer.append("path")
-        .attr("class", "line") // Assign a class for styling
-              .style("stroke", function(d) { return colors[d]; })
-        .attr("d", function(d) { return line(results[d+"_pu"]);});
+        .attr("class", "area") // Assign a class for styling
+              .style("fill", function(d) { return colors[d]; })
+        .attr("d", function(d) { return area(results[d+"_pu"]);});
 
-
-    g.append("g")
+    focus.append("g")
         .attr("class", "axis axis--x")
         .attr("transform", "translate(0," + height + ")")
-        .call(d3.axisBottom(x[name]));
+        .call(xAxis);
 
-    g.append("g")
+    focus.append("g")
         .attr("class", "axis axis--y")
-        .call(d3.axisLeft(y[name]));
+        .call(yAxis);
 
+
+    var layerContext = context.selectAll(".layerContext")
+        .data(data)
+        .enter().append("g")
+        .attr("class", "layerContext");
+
+    layerContext.append("path")
+        .attr("class", "areaContext") // Assign a class for styling
+              .style("fill", function(d) { return colors[d]; })
+        .attr("d", function(d) { return areaContext(results[d+"_pu"]);});
+
+    context.append("g")
+        .attr("class", "axis axis--x")
+        .attr("transform", "translate(0," + heightContext + ")")
+        .call(xAxisContext);
+
+    context.append("g")
+        .attr("class", "brush")
+        .call(brush)
+        .call(brush.move, x.range());
+
+    svgGraph.append("rect")
+        .attr("class", "zoom")
+        .attr("width", width)
+        .attr("height", height)
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+        .call(zoom);
+
+
+//    var line = d3.line()
+//        .x(function(d, i) { return x[name](snapshots[i]); })
+//        .y(function(d) { return y[name](d); });
+//        .x(function(d, i) { return x[name](snapshots[i]); })
+//        .y(function(d, i) { return y[name](results[d+"_pu"][i]); });
+
+    function brushed() {
+	if (d3.event.sourceEvent && d3.event.sourceEvent.type === "zoom") return; // ignore brush-by-zoom
+	var s = d3.event.selection || xContext.range();
+	x.domain(s.map(xContext.invert, xContext));
+	layer.attr("d", function(d) { return area(results[d+"_pu"]);});
+	focus.select(".axis--x").call(xAxis);
+	svgGraph.select(".zoom").call(zoom.transform, d3.zoomIdentity
+				      .scale(width / (s[1] - s[0]))
+				      .translate(-s[0], 0));
+    }
+
+    function zoomed() {
+	if (d3.event.sourceEvent && d3.event.sourceEvent.type === "brush") return; // ignore zoom-by-brush
+	var t = d3.event.transform;
+	x.domain(t.rescaleX(xContext).domain());
+	layer.select(".area").attr("d", function(d) { return area(results[d+"_pu"]);});
+	focus.select(".axis--x").call(xAxis);
+	context.select(".brush").call(brush.move, x.range().map(t.invertX, t));
+    }
 };
 
 
