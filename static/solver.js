@@ -829,7 +829,7 @@ function draw_stack(data, labels, color, ylabel, svgName){
 };
 
 
-
+// Zoom and brush follow https://bl.ocks.org/mbostock/34f08d5e11952a80609169b7917d4172
 
 function draw_weather_graph(){
 
@@ -857,7 +857,7 @@ function draw_weather_graph(){
 
     var brush = d3.brushX()
         .extent([[0, 0], [width, heightContext]])
-        .on("brush end", brushed);
+        .on("start brush end", brushed);
 
 
     var zoom = d3.zoom()
@@ -930,10 +930,33 @@ function draw_weather_graph(){
         .attr("transform", "translate(0," + heightContext + ")")
         .call(xAxisContext);
 
-    context.append("g")
+    var gBrush = context.append("g")
         .attr("class", "brush")
-        .call(brush)
-        .call(brush.move, x.range());
+        .call(brush);
+
+    // brush handle follows
+    // https://bl.ocks.org/Fil/2d43867ba1f36a05459c7113c7f6f98a
+
+    // following handle looks nicer
+    // https://bl.ocks.org/robyngit/89327a78e22d138cff19c6de7288c1cf
+
+    var brushResizePath = function(d) {
+	var e = +(d.type == "e"),
+	    x = e ? 1 : -1,
+	    y = heightContext / 2;
+	return "M" + (.5 * x) + "," + y + "A6,6 0 0 " + e + " " + (6.5 * x) + "," + (y + 6) + "V" + (2 * y - 6) + "A6,6 0 0 " + e + " " + (.5 * x) + "," + (2 * y) + "Z" + "M" + (2.5 * x) + "," + (y + 8) + "V" + (2 * y - 8) + "M" + (4.5 * x) + "," + (y + 8) + "V" + (2 * y - 8);
+    }
+
+    var handle = gBrush.selectAll(".handle--custom")
+	.data([{type: "w"}, {type: "e"}])
+	.enter().append("path")
+        .attr("class", "handle--custom")
+        .attr("stroke", "#000")
+        .attr("cursor", "ew-resize")
+        .attr("d", brushResizePath);
+
+    gBrush.call(brush.move, x.range()); //this sets initial position of brush
+
 
     svgGraph.append("rect")
         .attr("class", "zoom")
@@ -958,6 +981,7 @@ function draw_weather_graph(){
 	svgGraph.select(".zoom").call(zoom.transform, d3.zoomIdentity
 				      .scale(width / (s[1] - s[0]))
 				      .translate(-s[0], 0));
+	handle.attr("transform", function(d, i) { return "translate(" + [ s[i], - heightContext / 4] + ")"; });
     }
 
     function zoomed() {
@@ -966,7 +990,9 @@ function draw_weather_graph(){
 	x.domain(t.rescaleX(xContext).domain());
 	layer.select(".area").attr("d", function(d) { return area(results[d+"_pu"]);});
 	focus.select(".axis--x").call(xAxis);
-	context.select(".brush").call(brush.move, x.range().map(t.invertX, t));
+	var newRange = x.range().map(t.invertX, t);
+	context.select(".brush").call(brush.move, newRange);
+	handle.attr("transform", function(d, i) { return "translate(" + [ newRange[i], - heightContext / 4] + ")"; });
     }
 };
 
