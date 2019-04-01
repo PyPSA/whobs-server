@@ -18,6 +18,9 @@ static/d3*.js
 
 static/ne*
 
+static/solver-*.js
+static/solver-*.css
+
 *results-*.json
 
 *.nc

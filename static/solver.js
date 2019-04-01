@@ -22,7 +22,6 @@ var formatDate = d3.timeFormat("%b %d %H:%M");
 
 
 var colors = {"wind":"#3B6182",
-	      "onwind":"#3B6182",
               "solar" :"#FFFF00",
               "battery" : "#999999",
               "battery_power" : "#999999",
@@ -988,8 +987,7 @@ function draw_weather_graph(){
         .attr("class", "context")
         .attr("transform", "translate(" + marginContext.left + "," + marginContext.top + ")");
 
-
-    var data = ["solar","onwind"];
+    var data = [results['solar_pu'],results['onwind_pu']];
 
     var layer = focus.selectAll(".layer")
         .data(data)
@@ -998,8 +996,8 @@ function draw_weather_graph(){
 
     layer.append("path")
         .attr("class", "area") // Assign a class for styling
-              .style("fill", function(d) { return colors[d]; })
-        .attr("d", function(d) { return area(results[d+"_pu"]);});
+        .style("fill", function(d,i) { return colors[vre[i]]; })
+        .attr("d", area);
 
     focus.append("g")
         .attr("class", "axis axis--x")
@@ -1018,8 +1016,8 @@ function draw_weather_graph(){
 
     layerContext.append("path")
         .attr("class", "areaContext") // Assign a class for styling
-              .style("fill", function(d) { return colors[d]; })
-        .attr("d", function(d) { return areaContext(results[d+"_pu"]);});
+        .style("fill", function(d,i) { return colors[vre[i]]; })
+        .attr("d", areaContext);
 
     context.append("g")
         .attr("class", "axis axis--x")
@@ -1065,7 +1063,7 @@ function draw_weather_graph(){
 	if (d3.event.sourceEvent && d3.event.sourceEvent.type === "zoom") return; // ignore brush-by-zoom
 	var s = d3.event.selection || xContext.range();
 	x.domain(s.map(xContext.invert, xContext));
-	layer.attr("d", function(d) { return area(results[d+"_pu"]);});
+	layer.attr("d", area);
 	focus.select(".axis--x").call(xAxis);
 	svgGraph.select(".zoom").call(zoom.transform, d3.zoomIdentity
 				      .scale(width / (s[1] - s[0]))
@@ -1077,7 +1075,7 @@ function draw_weather_graph(){
 	if (d3.event.sourceEvent && d3.event.sourceEvent.type === "brush") return; // ignore zoom-by-brush
 	var t = d3.event.transform;
 	x.domain(t.rescaleX(xContext).domain());
-	layer.select(".area").attr("d", function(d) { return area(results[d+"_pu"]);});
+	layer.select(".area").attr("d", area);
 	focus.select(".axis--x").call(xAxis);
 	var newRange = x.range().map(t.invertX, t);
 	context.select(".brush").call(brush.move, newRange);
