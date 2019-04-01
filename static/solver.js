@@ -597,7 +597,7 @@ function draw_power_graph(){
         .on("zoom", zoomed);
 
 
-    data = [];
+    var data = [];
 
     // Custom version of d3.stack
 
@@ -622,7 +622,7 @@ function draw_power_graph(){
 	data.push(item);
     }
 
-    ymin = 0, ymax = 0;
+    var ymin = 0, ymax = 0;
     for (var k = 0; k < selection.length; k++){
 	if(data[results["positive"].columns.length-1][k][1] > ymax){ ymax = data[results["positive"].columns.length-1][k][1];};
 	if(data[results["positive"].columns.length+results["negative"].columns.length-1][k][0] < ymin){ ymin = data[results["positive"].columns.length+results["negative"].columns.length-1][k][0];};
@@ -953,14 +953,14 @@ function draw_weather_graph(){
 
     var brush = d3.brushX()
         .extent([[0, 0], [width, heightContext]])
-        .on("start brush end", brushed);
+        .on("start brush end", brushedWeather);
 
 
     var zoom = d3.zoom()
         .scaleExtent([1, Infinity])
         .translateExtent([[0, 0], [width, height]])
         .extent([[0, 0], [width, height]])
-        .on("zoom", zoomed);
+        .on("zoom", zoomedWeather);
 
     var area = d3.area()
         .curve(d3.curveMonotoneX)
@@ -989,7 +989,7 @@ function draw_weather_graph(){
         .attr("transform", "translate(" + marginContext.left + "," + marginContext.top + ")");
 
 
-    data = ["solar","onwind"];
+    var data = ["solar","onwind"];
 
     var layer = focus.selectAll(".layer")
         .data(data)
@@ -1061,7 +1061,7 @@ function draw_weather_graph(){
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
         .call(zoom);
 
-    function brushed() {
+    function brushedWeather() {
 	if (d3.event.sourceEvent && d3.event.sourceEvent.type === "zoom") return; // ignore brush-by-zoom
 	var s = d3.event.selection || xContext.range();
 	x.domain(s.map(xContext.invert, xContext));
@@ -1073,7 +1073,7 @@ function draw_weather_graph(){
 	handle.attr("transform", function(d, i) { return "translate(" + [ s[i], - heightContext / 4] + ")"; });
     }
 
-    function zoomed() {
+    function zoomedWeather() {
 	if (d3.event.sourceEvent && d3.event.sourceEvent.type === "brush") return; // ignore zoom-by-brush
 	var t = d3.event.transform;
 	x.domain(t.rescaleX(xContext).domain());
