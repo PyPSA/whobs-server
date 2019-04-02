@@ -21,6 +21,11 @@ server {
         expires 30d;
     }
 
+    location /data {
+        # handle data files directly, without forwarding to the application
+        alias /home/tom/whobs-live/data;
+        expires 30d;
+    }
 
     listen 443 ssl; # managed by Certbot
     ssl_certificate /etc/letsencrypt/live/model.energy/fullchain.pem; # managed by Certbot

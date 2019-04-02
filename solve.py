@@ -21,7 +21,7 @@ import pandas as pd
 from pyomo.environ import Constraint
 from rq import get_current_job
 
-import json
+import json, os, hashlib
 
 #required to stop wierd failures
 import netCDF4
@@ -313,6 +313,24 @@ def process_polygon(ct,year,cf_exponent):
 
     return process_shapely_polygon(polygon,year,cf_exponent)
 
+def get_weather(ct, year, cf_exponent):
+
+    if ct in country_multipolygons:
+        error_msg, pu, matrix_sum = process_shapely_polygon(country_multipolygons[ct], year, cf_exponent)
+    elif ct[:6] == "point:":
+        error_msg, pu = process_point(ct,year)
+        matrix_sum = None
+    elif ct[:8] == "polygon:":
+        error_msg, pu, matrix_sum = process_polygon(ct, year, cf_exponent)
+    else:
+        error_msg = "Location {} is not valid".format(ct)
+        pu = None
+        matrix_sum = None
+
+    if pu is not None:
+        pu["solar"] = solar_correction_factor*pu["solar"]
+
+    return pu, matrix_sum, error_msg
 
 
 def solve(assumptions):
@@ -357,30 +375,29 @@ def solve(assumptions):
 
     ct = assumptions['country']
 
+    assumptions['weather_hex'] = hashlib.md5("{}&{}&{}".format(ct, year, assumptions['cf_exponent']).encode()).hexdigest()
+    weather_csv = 'data/{}.csv'.format(assumptions['weather_hex'])
+    if os.path.isfile(weather_csv):
+        print("Using preexisting weather file:", weather_csv)
+        pu = pd.read_csv(weather_csv,
+                         index_col=0,
+                         parse_dates=True)
+    else:
+        print("Calculating weather from scratch, saving as:", weather_csv)
+        pu, matrix_sum, error_msg = get_weather(ct, year, assumptions['cf_exponent'])
+        if error_msg is not None:
+            return error(error_msg, jobid)
+        pu.round(3).to_csv(weather_csv)
+
+    #do some renaming
     if ct in country_multipolygons:
-        if assumptions['cf_exponent'] in [0.,1.,2.]:
-            error_msg = None
-            fn = "data/{}-{}-{}.csv".format(ct,year,assumptions["cf_exponent"])
-            print("Reading in precalculated data",fn)
-            pu = pd.read_csv(fn,index_col=0,parse_dates=True)
-        else:
-            error_msg, pu, matrix_sum = process_shapely_polygon(country_multipolygons[ct],year,assumptions['cf_exponent'])
         assumptions["country"] = "country " + ct
     elif ct[:6] == "point:":
-        error_msg, pu = process_point(ct,year)
         ct = "point"
         assumptions["country"] = ct
     elif ct[:8] == "polygon:":
-        error_msg, pu, matrix_sum = process_polygon(ct,year,assumptions['cf_exponent'])
         ct = "polygon"
         assumptions["country"] = ct
-    else:
-        return error("Location {} is not valid".format(ct), jobid)
-
-    if error_msg is not None:
-        return error(error_msg, jobid)
-
-    pu["solar"] = solar_correction_factor*pu["solar"]
 
     snapshots = pd.date_range("{}-01-01".format(year),"{}-12-31 23:00".format(year),freq="H")
     pu = pu.reindex(snapshots,method="nearest")

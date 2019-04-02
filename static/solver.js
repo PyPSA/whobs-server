@@ -327,7 +327,7 @@ var weatherTimer;
 var weatherTimeout;
 
 // time between status polling in milliseconds
-var poll_interval = 2000;
+var poll_interval = 1000;
 
 // time out for polling if it doesn't finish after 10 minutes
 // Shouldn't be divisible by poll_interval
@@ -509,6 +509,8 @@ function clear_results(){
 
 function clear_weather(){
     d3.select("#weather").selectAll("g").remove();
+    document.getElementById("weather-download").innerHTML = "";
+    document.getElementById("weather-download").href = "";
 };
 
 
@@ -554,6 +556,9 @@ function display_weather(){
     };
 
     draw_weather_graph();
+    document.getElementById("weather-download").innerHTML = "Download Comma-Separated-Variable (CSV) file of data";
+    document.getElementById("weather-download").href = "data/" + results.assumptions.weather_hex + ".csv";
+
 };
 
 
