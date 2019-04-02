@@ -389,15 +389,6 @@ def solve(assumptions):
             return error(error_msg, jobid)
         pu.round(3).to_csv(weather_csv)
 
-    #do some renaming
-    if ct in country_multipolygons:
-        assumptions["country"] = "country " + ct
-    elif ct[:6] == "point:":
-        ct = "point"
-        assumptions["country"] = ct
-    elif ct[:8] == "polygon:":
-        ct = "polygon"
-        assumptions["country"] = ct
 
     snapshots = pd.date_range("{}-01-01".format(year),"{}-12-31 23:00".format(year),freq="H")
     pu = pu.reindex(snapshots,method="nearest")
@@ -449,22 +440,22 @@ def solve(assumptions):
 
     network.snapshot_weightings = pd.Series(float(frequency),index=network.snapshots)
 
-    network.add("Bus",ct)
-    network.add("Load",ct,
-                bus=ct,
+    network.add("Bus","elec")
+    network.add("Load","load",
+                bus="elec",
                 p_set=assumptions["load"])
 
     if assumptions["solar"]:
-        network.add("Generator",ct+" solar",
-                    bus=ct,
+        network.add("Generator","solar",
+                    bus="elec",
                     p_max_pu = pu["solar"],
                     p_nom_extendable = True,
                     marginal_cost = 0.1, #Small cost to prefer curtailment to destroying energy in storage, solar curtails before wind
                     capital_cost = assumptions_df.at['solar','fixed'])
 
     if assumptions["wind"]:
-        network.add("Generator",ct+" wind",
-                    bus=ct,
+        network.add("Generator","wind",
+                    bus="elec",
                     p_max_pu = pu["onwind"],
                     p_nom_extendable = True,
                     marginal_cost = 0.2, #Small cost to prefer curtailment to destroying energy in storage, solar curtails before wind
@@ -473,30 +464,30 @@ def solve(assumptions):
 
     if assumptions["battery"]:
 
-        network.add("Bus",ct + " battery")
+        network.add("Bus","battery")
 
-        network.add("Store",ct + " battery_energy",
-                    bus = ct + " battery",
+        network.add("Store","battery_energy",
+                    bus = "battery",
                     e_nom_extendable = True,
                     e_cyclic=True,
                     capital_cost=assumptions_df.at['battery_energy','fixed'])
 
-        network.add("Link",ct + " battery_power",
-                    bus0 = ct,
-                    bus1 = ct + " battery",
+        network.add("Link","battery_power",
+                    bus0 = "elec",
+                    bus1 = "battery",
                     efficiency = assumptions_df.at['battery_power','efficiency'],
                     p_nom_extendable = True,
                     capital_cost=assumptions_df.at['battery_power','fixed'])
 
-        network.add("Link",ct + " battery_discharge",
-                    bus0 = ct + " battery",
-                    bus1 = ct,
+        network.add("Link","battery_discharge",
+                    bus0 = "battery",
+                    bus1 = "elec",
                     p_nom_extendable = True,
                     efficiency = assumptions_df.at['battery_power','efficiency'])
 
         def extra_functionality(network,snapshots):
             def battery(model):
-                return model.link_p_nom[ct + " battery_power"] == model.link_p_nom[ct + " battery_discharge"]*network.links.at[ct + " battery_power","efficiency"]
+                return model.link_p_nom["battery_power"] == model.link_p_nom["battery_discharge"]*network.links.at["battery_power","efficiency"]
 
             network.model.battery = Constraint(rule=battery)
     else:
@@ -506,28 +497,28 @@ def solve(assumptions):
     if assumptions["hydrogen"]:
 
         network.add("Bus",
-                     ct + " hydrogen",
+                     "hydrogen",
                      carrier="hydrogen")
 
         network.add("Link",
-                    ct + " hydrogen_electrolyser",
-                    bus1=ct + " hydrogen",
-                    bus0=ct,
+                    "hydrogen_electrolyser",
+                    bus1="hydrogen",
+                    bus0="elec",
                     p_nom_extendable=True,
                     efficiency=assumptions_df.at["hydrogen_electrolyser","efficiency"],
                     capital_cost=assumptions_df.at["hydrogen_electrolyser","fixed"])
 
         network.add("Link",
-                     ct + " hydrogen_turbine",
-                     bus0=ct + " hydrogen",
-                     bus1=ct,
+                     "hydrogen_turbine",
+                     bus0="hydrogen",
+                     bus1="elec",
                      p_nom_extendable=True,
                      efficiency=assumptions_df.at["hydrogen_turbine","efficiency"],
                      capital_cost=assumptions_df.at["hydrogen_turbine","fixed"]*assumptions_df.at["hydrogen_turbine","efficiency"])  #NB: fixed cost is per MWel
 
         network.add("Store",
-                     ct + " hydrogen_energy",
-                     bus=ct + " hydrogen",
+                     "hydrogen_energy",
+                     bus="hydrogen",
                      e_nom_extendable=True,
                      e_cyclic=True,
                      capital_cost=assumptions_df.at["hydrogen_energy","fixed"])
@@ -560,7 +551,7 @@ def solve(assumptions):
     print(network.stores.e_nom_opt)
 
     results = {"objective" : network.objective/8760,
-               "average_price" : network.buses_t.marginal_price.mean()[ct]}
+               "average_price" : network.buses_t.marginal_price.mean()["elec"]}
 
     year_weight = network.snapshot_weightings.sum()
 
@@ -573,16 +564,16 @@ def solve(assumptions):
 
 
     for g in ["wind","solar"]:
-        if assumptions[g] and network.generators.p_nom_opt[ct + " " + g] > threshold:
-            results[g+"_capacity"] = network.generators.p_nom_opt[ct + " " + g]
-            results[g+"_cost"] = (network.generators.p_nom_opt*network.generators.capital_cost)[ct + " " + g]/year_weight
-            results[g+"_available"] = network.generators.p_nom_opt[ct + " " + g]*network.generators_t.p_max_pu[ct + " " + g].mean()
-            results[g+"_used"] = network.generators_t.p[ct + " " + g].mean()
+        if assumptions[g] and network.generators.p_nom_opt[g] > threshold:
+            results[g+"_capacity"] = network.generators.p_nom_opt[g]
+            results[g+"_cost"] = (network.generators.p_nom_opt*network.generators.capital_cost)[g]/year_weight
+            results[g+"_available"] = network.generators.p_nom_opt[g]*network.generators_t.p_max_pu[g].mean()
+            results[g+"_used"] = network.generators_t.p[g].mean()
             results[g+"_curtailment"] =  (results[g+"_available"] - results[g+"_used"])/results[g+"_available"]
-            results[g+"_cf_available"] = network.generators_t.p_max_pu[ct + " " + g].mean()
-            results[g+"_cf_used"] = results[g+"_used"]/network.generators.p_nom_opt[ct + " " + g]
-            results[g+"_rmv"] = (network.buses_t.marginal_price[ct]*network.generators_t.p[ct + " " + g]).sum()/network.generators_t.p[ct + " " + g].sum()/results["average_price"]
-            power["positive"][g] = network.generators_t.p[ct + " " + g]
+            results[g+"_cf_available"] = network.generators_t.p_max_pu[g].mean()
+            results[g+"_cf_used"] = results[g+"_used"]/network.generators.p_nom_opt[g]
+            results[g+"_rmv"] = (network.buses_t.marginal_price["elec"]*network.generators_t.p[g]).sum()/network.generators_t.p[g].sum()/results["average_price"]
+            power["positive"][g] = network.generators_t.p[g]
         else:
             results[g+"_capacity"] = 0.
             results[g+"_cost"] = 0.
@@ -594,19 +585,19 @@ def solve(assumptions):
             results[g+"_rmv"] = 0.
             power["positive"][g] = 0.
 
-    if assumptions["battery"] and network.links.at[ct + " battery_power","p_nom_opt"] > threshold and network.stores.at[ct + " battery_energy","e_nom_opt"]:
-        results["battery_power_capacity"] = network.links.at[ct + " battery_power","p_nom_opt"]
-        results["battery_power_cost"] = network.links.at[ct + " battery_power","p_nom_opt"]*network.links.at[ct + " battery_power","capital_cost"]/year_weight
-        results["battery_energy_capacity"] = network.stores.at[ct + " battery_energy","e_nom_opt"]
-        results["battery_energy_cost"] = network.stores.at[ct + " battery_energy","e_nom_opt"]*network.stores.at[ct + " battery_energy","capital_cost"]/year_weight
-        results["battery_power_used"] = network.links_t.p0[ct + " battery_discharge"].mean()
-        results["battery_power_cf_used"] = results["battery_power_used"]/network.links.at[ct + " battery_power","p_nom_opt"]
-        results["battery_energy_used"] = network.stores_t.e[ct + " battery_energy"].mean()
-        results["battery_energy_cf_used"] = results["battery_energy_used"]/network.stores.at[ct + " battery_energy","e_nom_opt"]
-        results["battery_power_rmv"] = (network.buses_t.marginal_price[ct]*network.links_t.p0[ct + " battery_power"]).sum()/network.links_t.p0[ct + " battery_power"].sum()/results["average_price"]
-        results["battery_discharge_rmv"] = (network.buses_t.marginal_price[ct]*network.links_t.p0[ct + " battery_discharge"]).sum()/network.links_t.p0[ct + " battery_discharge"].sum()/results["average_price"]
-        power["positive"]["battery"] = -network.links_t.p1[ct + " battery_discharge"]
-        power["negative"]["battery"] = network.links_t.p0[ct + " battery_power"]
+    if assumptions["battery"] and network.links.at["battery_power","p_nom_opt"] > threshold and network.stores.at["battery_energy","e_nom_opt"]:
+        results["battery_power_capacity"] = network.links.at["battery_power","p_nom_opt"]
+        results["battery_power_cost"] = network.links.at["battery_power","p_nom_opt"]*network.links.at["battery_power","capital_cost"]/year_weight
+        results["battery_energy_capacity"] = network.stores.at["battery_energy","e_nom_opt"]
+        results["battery_energy_cost"] = network.stores.at["battery_energy","e_nom_opt"]*network.stores.at["battery_energy","capital_cost"]/year_weight
+        results["battery_power_used"] = network.links_t.p0["battery_discharge"].mean()
+        results["battery_power_cf_used"] = results["battery_power_used"]/network.links.at["battery_power","p_nom_opt"]
+        results["battery_energy_used"] = network.stores_t.e["battery_energy"].mean()
+        results["battery_energy_cf_used"] = results["battery_energy_used"]/network.stores.at["battery_energy","e_nom_opt"]
+        results["battery_power_rmv"] = (network.buses_t.marginal_price["elec"]*network.links_t.p0["battery_power"]).sum()/network.links_t.p0["battery_power"].sum()/results["average_price"]
+        results["battery_discharge_rmv"] = (network.buses_t.marginal_price["elec"]*network.links_t.p0["battery_discharge"]).sum()/network.links_t.p0["battery_discharge"].sum()/results["average_price"]
+        power["positive"]["battery"] = -network.links_t.p1["battery_discharge"]
+        power["negative"]["battery"] = network.links_t.p0["battery_power"]
     else:
         results["battery_power_capacity"] = 0.
         results["battery_power_cost"] = 0.
@@ -621,23 +612,23 @@ def solve(assumptions):
         power["positive"]["battery"] = 0.
         power["negative"]["battery"] = 0.
 
-    if assumptions["hydrogen"] and network.links.at[ct + " hydrogen_electrolyser","p_nom_opt"] > threshold and network.links.at[ct + " hydrogen_turbine","p_nom_opt"] > threshold and network.stores.at[ct + " hydrogen_energy","e_nom_opt"] > threshold:
-        results["hydrogen_electrolyser_capacity"] = network.links.at[ct + " hydrogen_electrolyser","p_nom_opt"]
-        results["hydrogen_electrolyser_cost"] = network.links.at[ct + " hydrogen_electrolyser","p_nom_opt"]*network.links.at[ct + " hydrogen_electrolyser","capital_cost"]/year_weight
-        results["hydrogen_turbine_capacity"] = network.links.at[ct + " hydrogen_turbine","p_nom_opt"]*network.links.at[ct + " hydrogen_turbine","efficiency"]
-        results["hydrogen_turbine_cost"] = network.links.at[ct + " hydrogen_turbine","p_nom_opt"]*network.links.at[ct + " hydrogen_turbine","capital_cost"]/year_weight
-        results["hydrogen_energy_capacity"] = network.stores.at[ct + " hydrogen_energy","e_nom_opt"]
-        results["hydrogen_energy_cost"] = network.stores.at[ct + " hydrogen_energy","e_nom_opt"]*network.stores.at[ct + " hydrogen_energy","capital_cost"]/year_weight
-        results["hydrogen_electrolyser_used"] = network.links_t.p0[ct + " hydrogen_electrolyser"].mean()
-        results["hydrogen_electrolyser_cf_used"] = results["hydrogen_electrolyser_used"]/network.links.at[ct + " hydrogen_electrolyser","p_nom_opt"]
-        results["hydrogen_turbine_used"] = network.links_t.p0[ct + " hydrogen_turbine"].mean()
-        results["hydrogen_turbine_cf_used"] = results["hydrogen_turbine_used"]/network.links.at[ct + " hydrogen_turbine","p_nom_opt"]
-        results["hydrogen_energy_used"] = network.stores_t.e[ct + " hydrogen_energy"].mean()
-        results["hydrogen_energy_cf_used"] = results["hydrogen_energy_used"]/network.stores.at[ct + " hydrogen_energy","e_nom_opt"]
-        results["hydrogen_turbine_rmv"] = (network.buses_t.marginal_price[ct]*network.links_t.p0[ct + " hydrogen_turbine"]).sum()/network.links_t.p0[ct + " hydrogen_turbine"].sum()/results["average_price"]
-        results["hydrogen_electrolyser_rmv"] = (network.buses_t.marginal_price[ct]*network.links_t.p0[ct + " hydrogen_electrolyser"]).sum()/network.links_t.p0[ct + " hydrogen_electrolyser"].sum()/results["average_price"]
-        power["positive"]["hydrogen_turbine"] = -network.links_t.p1[ct + " hydrogen_turbine"]
-        power["negative"]["hydrogen_electrolyser"] = network.links_t.p0[ct + " hydrogen_electrolyser"]
+    if assumptions["hydrogen"] and network.links.at["hydrogen_electrolyser","p_nom_opt"] > threshold and network.links.at["hydrogen_turbine","p_nom_opt"] > threshold and network.stores.at["hydrogen_energy","e_nom_opt"] > threshold:
+        results["hydrogen_electrolyser_capacity"] = network.links.at["hydrogen_electrolyser","p_nom_opt"]
+        results["hydrogen_electrolyser_cost"] = network.links.at["hydrogen_electrolyser","p_nom_opt"]*network.links.at["hydrogen_electrolyser","capital_cost"]/year_weight
+        results["hydrogen_turbine_capacity"] = network.links.at["hydrogen_turbine","p_nom_opt"]*network.links.at["hydrogen_turbine","efficiency"]
+        results["hydrogen_turbine_cost"] = network.links.at["hydrogen_turbine","p_nom_opt"]*network.links.at["hydrogen_turbine","capital_cost"]/year_weight
+        results["hydrogen_energy_capacity"] = network.stores.at["hydrogen_energy","e_nom_opt"]
+        results["hydrogen_energy_cost"] = network.stores.at["hydrogen_energy","e_nom_opt"]*network.stores.at["hydrogen_energy","capital_cost"]/year_weight
+        results["hydrogen_electrolyser_used"] = network.links_t.p0["hydrogen_electrolyser"].mean()
+        results["hydrogen_electrolyser_cf_used"] = results["hydrogen_electrolyser_used"]/network.links.at["hydrogen_electrolyser","p_nom_opt"]
+        results["hydrogen_turbine_used"] = network.links_t.p0["hydrogen_turbine"].mean()
+        results["hydrogen_turbine_cf_used"] = results["hydrogen_turbine_used"]/network.links.at["hydrogen_turbine","p_nom_opt"]
+        results["hydrogen_energy_used"] = network.stores_t.e["hydrogen_energy"].mean()
+        results["hydrogen_energy_cf_used"] = results["hydrogen_energy_used"]/network.stores.at["hydrogen_energy","e_nom_opt"]
+        results["hydrogen_turbine_rmv"] = (network.buses_t.marginal_price["elec"]*network.links_t.p0["hydrogen_turbine"]).sum()/network.links_t.p0["hydrogen_turbine"].sum()/results["average_price"]
+        results["hydrogen_electrolyser_rmv"] = (network.buses_t.marginal_price["elec"]*network.links_t.p0["hydrogen_electrolyser"]).sum()/network.links_t.p0["hydrogen_electrolyser"].sum()/results["average_price"]
+        power["positive"]["hydrogen_turbine"] = -network.links_t.p1["hydrogen_turbine"]
+        power["negative"]["hydrogen_electrolyser"] = network.links_t.p0["hydrogen_electrolyser"]
     else:
         results["hydrogen_electrolyser_capacity"] = 0.
         results["hydrogen_electrolyser_cost"] = 0.

@@ -516,7 +516,18 @@ function clear_weather(){
 
 
 function display_results(){
-    document.getElementById("results_assumptions").innerHTML=" for " + results["assumptions"]["country"] + " in year " + results["assumptions"]["year"];
+    var locationName = results["assumptions"]["country"];
+
+    // truncate name
+    if(locationName.slice(0,8) == "polygon:"){
+	locationName = "polygon";
+    };
+
+    if(locationName.length == 2){
+	locationName = "country " + locationName;
+    };
+
+    document.getElementById("results_assumptions").innerHTML=" for " + locationName + " in year " + results["assumptions"]["year"];
     document.getElementById("average_cost").innerHTML=results["average_cost"].toFixed(1);
     document.getElementById("load").innerHTML=results["assumptions"]["load"].toFixed(1);
 
