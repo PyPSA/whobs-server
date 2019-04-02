@@ -21,7 +21,7 @@ for year in years:
         for i,ct in enumerate(country_multipolygons):
             weather_hex = hashlib.md5("{}&{}&{}".format(ct, year, cf_exponent).encode()).hexdigest()
             print(ct, year, cf_exponent, weather_hex)
-            error_msg, pu, matrix_sum = solve.process_shapely_polygon(country_multipolygons[ct],year,cf_exponent)
+            pu, matrix_sum, error_msg = solve.get_weather(ct, year, cf_exponent)
 
             weather_csv = 'data/{}.csv'.format(weather_hex)
 
