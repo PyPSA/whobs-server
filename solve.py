@@ -41,6 +41,8 @@ octant_folder = "../cutouts/"
 colors = {"wind":"#3B6182",
           "solar" :"#FFFF00",
           "battery" : "#999999",
+          "battery_charge" : "#999999",
+          "battery_discharge" : "#999999",
           "battery_power" : "#999999",
           "battery_energy" : "#666666",
           "hydrogen_turbine" : "red",
@@ -111,6 +113,10 @@ floats = ["cf_exponent","load","wind_cost","solar_cost","battery_energy_cost",
           "hydrogen_turbine_cost",
           "hydrogen_turbine_efficiency",
           "discount_rate"]
+
+ints = ["year","frequency"]
+
+strings = ["country"]
 
 threshold = 0.1
 
@@ -333,88 +339,13 @@ def get_weather(ct, year, cf_exponent):
     return pu, matrix_sum, error_msg
 
 
-def solve(assumptions):
 
-    job = get_current_job()
-    jobid = job.get_id()
-
-    job.meta['status'] = "Reading in data"
-    job.save_meta()
-
-    for key in booleans:
-        try:
-            assumptions[key] = bool(assumptions[key])
-        except:
-            return error("{} could not be converted to boolean".format(key), jobid)
-
-    for key in floats:
-        try:
-            assumptions[key] = float(assumptions[key])
-        except:
-            return error("{} could not be converted to float".format(key), jobid)
-
-        if assumptions[key] < 0 or assumptions[key] > 1e5:
-            return error("{} {} was not in the valid range [0,1e5]".format(key,assumptions[key]), jobid)
+def run_optimisation(assumptions, pu):
+    """Needs cleaned-up assumptions and pu.
+    return results_overview, results_series, error_msg"""
 
 
-    print(assumptions)
-
-    try:
-        year = int(assumptions['year'])
-    except:
-        return error("Year {} could not be converted to an integer".format(assumptions['year']), jobid)
-
-
-    if year < years_available_start or year > years_available_end:
-        return error("Year {} not in valid range".format(year), jobid)
-
-    year_start = year
-    year_end = year
-
-    Nyears = year_end - year_start + 1
-
-    ct = assumptions['country']
-
-    assumptions['weather_hex'] = hashlib.md5("{}&{}&{}".format(ct, year, assumptions['cf_exponent']).encode()).hexdigest()
-    weather_csv = 'data/{}.csv'.format(assumptions['weather_hex'])
-    if os.path.isfile(weather_csv):
-        print("Using preexisting weather file:", weather_csv)
-        pu = pd.read_csv(weather_csv,
-                         index_col=0,
-                         parse_dates=True)
-    else:
-        print("Calculating weather from scratch, saving as:", weather_csv)
-        pu, matrix_sum, error_msg = get_weather(ct, year, assumptions['cf_exponent'])
-        if error_msg is not None:
-            return error(error_msg, jobid)
-        pu.round(3).to_csv(weather_csv)
-
-
-    snapshots = pd.date_range("{}-01-01".format(year),"{}-12-31 23:00".format(year),freq="H")
-    pu = pu.reindex(snapshots,method="nearest")
-
-
-    if assumptions["job_type"] == "weather":
-        print("Returning weather for {}".format(ct))
-
-        results = {}
-        results['assumptions'] = assumptions
-        results["snapshots"] = [str(s) for s in snapshots]
-
-        for v in ["onwind","solar"]:
-            results[v+'_pu'] = pu[v].round(3).values.tolist()
-
-        return results
-
-
-    try:
-        frequency = int(assumptions['frequency'])
-    except:
-        return error("Frequency {} could not be converted to an int".format(assumptions["frequency"]), jobid)
-
-    if frequency < 1 or frequency > 8760:
-        return error("Frequency {} is not in the valid range [1,8760]".format(frequency), jobid)
-
+    Nyears = 1
 
     assumptions_df["discount rate"] = assumptions["discount_rate"]/100.
 
@@ -429,16 +360,16 @@ def solve(assumptions):
     assumptions_df["investment"] *= 1000.
     assumptions_df["fixed"] = [(annuity(v["lifetime"],v["discount rate"])+v["FOM"]/100.)*v["investment"]*Nyears for i,v in assumptions_df.iterrows()]
 
-    print('Starting task for {} with assumptions {}'.format(ct,assumptions_df))
+    print('Starting task for {} with assumptions {}'.format(assumptions["country"],assumptions_df))
 
     network = pypsa.Network()
 
-    snapshots = pd.date_range("{}-01-01".format(year_start),"{}-12-31 23:00".format(year_end),
-                              freq=str(frequency)+"H")
+    snapshots = pd.date_range("{}-01-01".format(assumptions["year"]),"{}-12-31 23:00".format(assumptions["year"]),
+                              freq=str(assumptions["frequency"])+"H")
 
     network.set_snapshots(snapshots)
 
-    network.snapshot_weightings = pd.Series(float(frequency),index=network.snapshots)
+    network.snapshot_weightings = pd.Series(float(assumptions["frequency"]),index=network.snapshots)
 
     network.add("Bus","elec")
     network.add("Load","load",
@@ -525,9 +456,6 @@ def solve(assumptions):
 
     network.consistency_check()
 
-    job.meta['status'] = "Solving optimisation problem"
-    job.save_meta()
-
     solver_name = "cbc"
     formulation = "kirchhoff"
     status, termination_condition = network.lopf(solver_name=solver_name,
@@ -537,129 +465,235 @@ def solve(assumptions):
     print(status,termination_condition)
 
     if status != "ok":
-        return error("Job failed to optimise correctly", jobid)
+        return None, None, "Job failed to optimise correctly"
 
     if termination_condition == "infeasible":
-        return error("Problem was infeasible", jobid)
+        return None, None, "Problem was infeasible"
 
-    job.meta['status'] = "Finished solving, processing and sending results"
-    job.save_meta()
-
-    print(network.generators.p_nom_opt)
-
-    print(network.links.p_nom_opt)
-    print(network.stores.e_nom_opt)
-
-    results = {"objective" : network.objective/8760,
-               "average_price" : network.buses_t.marginal_price.mean()["elec"]}
+    results_overview = pd.Series(dtype=float)
+    results_overview["objective"] = network.objective/8760
+    results_overview["average_price"] = network.buses_t.marginal_price.mean()["elec"]
 
     year_weight = network.snapshot_weightings.sum()
 
-    power = {}
-
     vre = ["wind","solar"]
 
-    power["positive"] = pd.DataFrame(index=network.snapshots,columns=vre+["battery","hydrogen_turbine"])
-    power["negative"] = pd.DataFrame(index=network.snapshots,columns=["battery","hydrogen_electrolyser"])
+    results_series = pd.DataFrame(index=network.snapshots,columns=vre+["battery_discharge","hydrogen_turbine","battery_charge","hydrogen_electrolyser"],dtype=float)
 
 
-    for g in ["wind","solar"]:
+    for g in vre:
         if assumptions[g] and network.generators.p_nom_opt[g] > threshold:
-            results[g+"_capacity"] = network.generators.p_nom_opt[g]
-            results[g+"_cost"] = (network.generators.p_nom_opt*network.generators.capital_cost)[g]/year_weight
-            results[g+"_available"] = network.generators.p_nom_opt[g]*network.generators_t.p_max_pu[g].mean()
-            results[g+"_used"] = network.generators_t.p[g].mean()
-            results[g+"_curtailment"] =  (results[g+"_available"] - results[g+"_used"])/results[g+"_available"]
-            results[g+"_cf_available"] = network.generators_t.p_max_pu[g].mean()
-            results[g+"_cf_used"] = results[g+"_used"]/network.generators.p_nom_opt[g]
-            results[g+"_rmv"] = (network.buses_t.marginal_price["elec"]*network.generators_t.p[g]).sum()/network.generators_t.p[g].sum()/results["average_price"]
-            power["positive"][g] = network.generators_t.p[g]
+            results_overview[g+"_capacity"] = network.generators.p_nom_opt[g]
+            results_overview[g+"_cost"] = (network.generators.p_nom_opt*network.generators.capital_cost)[g]/year_weight
+            results_overview[g+"_available"] = network.generators.p_nom_opt[g]*network.generators_t.p_max_pu[g].mean()
+            results_overview[g+"_used"] = network.generators_t.p[g].mean()
+            results_overview[g+"_curtailment"] =  (results_overview[g+"_available"] - results_overview[g+"_used"])/results_overview[g+"_available"]
+            results_overview[g+"_cf_available"] = network.generators_t.p_max_pu[g].mean()
+            results_overview[g+"_cf_used"] = results_overview[g+"_used"]/network.generators.p_nom_opt[g]
+            results_overview[g+"_rmv"] = (network.buses_t.marginal_price["elec"]*network.generators_t.p[g]).sum()/network.generators_t.p[g].sum()/results_overview["average_price"]
+            results_series[g] = network.generators_t.p[g]
         else:
-            results[g+"_capacity"] = 0.
-            results[g+"_cost"] = 0.
-            results[g+"_curtailment"] = 0.
-            results[g+"_used"] = 0.
-            results[g+"_available"] = 0.
-            results[g+"_cf_used"] = 0.
-            results[g+"_cf_available"] = 0.
-            results[g+"_rmv"] = 0.
-            power["positive"][g] = 0.
+            results_overview[g+"_capacity"] = 0.
+            results_overview[g+"_cost"] = 0.
+            results_overview[g+"_curtailment"] = 0.
+            results_overview[g+"_used"] = 0.
+            results_overview[g+"_available"] = 0.
+            results_overview[g+"_cf_used"] = 0.
+            results_overview[g+"_cf_available"] = 0.
+            results_overview[g+"_rmv"] = 0.
+            results_series[g] = 0.
 
     if assumptions["battery"] and network.links.at["battery_power","p_nom_opt"] > threshold and network.stores.at["battery_energy","e_nom_opt"]:
-        results["battery_power_capacity"] = network.links.at["battery_power","p_nom_opt"]
-        results["battery_power_cost"] = network.links.at["battery_power","p_nom_opt"]*network.links.at["battery_power","capital_cost"]/year_weight
-        results["battery_energy_capacity"] = network.stores.at["battery_energy","e_nom_opt"]
-        results["battery_energy_cost"] = network.stores.at["battery_energy","e_nom_opt"]*network.stores.at["battery_energy","capital_cost"]/year_weight
-        results["battery_power_used"] = network.links_t.p0["battery_discharge"].mean()
-        results["battery_power_cf_used"] = results["battery_power_used"]/network.links.at["battery_power","p_nom_opt"]
-        results["battery_energy_used"] = network.stores_t.e["battery_energy"].mean()
-        results["battery_energy_cf_used"] = results["battery_energy_used"]/network.stores.at["battery_energy","e_nom_opt"]
-        results["battery_power_rmv"] = (network.buses_t.marginal_price["elec"]*network.links_t.p0["battery_power"]).sum()/network.links_t.p0["battery_power"].sum()/results["average_price"]
-        results["battery_discharge_rmv"] = (network.buses_t.marginal_price["elec"]*network.links_t.p0["battery_discharge"]).sum()/network.links_t.p0["battery_discharge"].sum()/results["average_price"]
-        power["positive"]["battery"] = -network.links_t.p1["battery_discharge"]
-        power["negative"]["battery"] = network.links_t.p0["battery_power"]
+        results_overview["battery_power_capacity"] = network.links.at["battery_power","p_nom_opt"]
+        results_overview["battery_power_cost"] = network.links.at["battery_power","p_nom_opt"]*network.links.at["battery_power","capital_cost"]/year_weight
+        results_overview["battery_energy_capacity"] = network.stores.at["battery_energy","e_nom_opt"]
+        results_overview["battery_energy_cost"] = network.stores.at["battery_energy","e_nom_opt"]*network.stores.at["battery_energy","capital_cost"]/year_weight
+        results_overview["battery_power_used"] = network.links_t.p0["battery_discharge"].mean()
+        results_overview["battery_power_cf_used"] = results_overview["battery_power_used"]/network.links.at["battery_power","p_nom_opt"]
+        results_overview["battery_energy_used"] = network.stores_t.e["battery_energy"].mean()
+        results_overview["battery_energy_cf_used"] = results_overview["battery_energy_used"]/network.stores.at["battery_energy","e_nom_opt"]
+        results_overview["battery_power_rmv"] = (network.buses_t.marginal_price["elec"]*network.links_t.p0["battery_power"]).sum()/network.links_t.p0["battery_power"].sum()/results_overview["average_price"]
+        results_overview["battery_discharge_rmv"] = (network.buses_t.marginal_price["elec"]*network.links_t.p0["battery_discharge"]).sum()/network.links_t.p0["battery_discharge"].sum()/results_overview["average_price"]
+        results_series["battery_discharge"] = -network.links_t.p1["battery_discharge"]
+        results_series["battery_charge"] = network.links_t.p0["battery_power"]
     else:
-        results["battery_power_capacity"] = 0.
-        results["battery_power_cost"] = 0.
-        results["battery_energy_capacity"] = 0.
-        results["battery_energy_cost"] = 0.
-        results["battery_power_used"] = 0.
-        results["battery_power_cf_used"] = 0.
-        results["battery_energy_used"] = 0.
-        results["battery_energy_cf_used"] = 0.
-        results["battery_power_rmv"] = 0.
-        results["battery_discharge_rmv"] = 0.
-        power["positive"]["battery"] = 0.
-        power["negative"]["battery"] = 0.
+        results_overview["battery_power_capacity"] = 0.
+        results_overview["battery_power_cost"] = 0.
+        results_overview["battery_energy_capacity"] = 0.
+        results_overview["battery_energy_cost"] = 0.
+        results_overview["battery_power_used"] = 0.
+        results_overview["battery_power_cf_used"] = 0.
+        results_overview["battery_energy_used"] = 0.
+        results_overview["battery_energy_cf_used"] = 0.
+        results_overview["battery_power_rmv"] = 0.
+        results_overview["battery_discharge_rmv"] = 0.
+        results_series["battery_discharge"] = 0.
+        results_series["battery_charge"] = 0.
 
     if assumptions["hydrogen"] and network.links.at["hydrogen_electrolyser","p_nom_opt"] > threshold and network.links.at["hydrogen_turbine","p_nom_opt"] > threshold and network.stores.at["hydrogen_energy","e_nom_opt"] > threshold:
-        results["hydrogen_electrolyser_capacity"] = network.links.at["hydrogen_electrolyser","p_nom_opt"]
-        results["hydrogen_electrolyser_cost"] = network.links.at["hydrogen_electrolyser","p_nom_opt"]*network.links.at["hydrogen_electrolyser","capital_cost"]/year_weight
-        results["hydrogen_turbine_capacity"] = network.links.at["hydrogen_turbine","p_nom_opt"]*network.links.at["hydrogen_turbine","efficiency"]
-        results["hydrogen_turbine_cost"] = network.links.at["hydrogen_turbine","p_nom_opt"]*network.links.at["hydrogen_turbine","capital_cost"]/year_weight
-        results["hydrogen_energy_capacity"] = network.stores.at["hydrogen_energy","e_nom_opt"]
-        results["hydrogen_energy_cost"] = network.stores.at["hydrogen_energy","e_nom_opt"]*network.stores.at["hydrogen_energy","capital_cost"]/year_weight
-        results["hydrogen_electrolyser_used"] = network.links_t.p0["hydrogen_electrolyser"].mean()
-        results["hydrogen_electrolyser_cf_used"] = results["hydrogen_electrolyser_used"]/network.links.at["hydrogen_electrolyser","p_nom_opt"]
-        results["hydrogen_turbine_used"] = network.links_t.p0["hydrogen_turbine"].mean()
-        results["hydrogen_turbine_cf_used"] = results["hydrogen_turbine_used"]/network.links.at["hydrogen_turbine","p_nom_opt"]
-        results["hydrogen_energy_used"] = network.stores_t.e["hydrogen_energy"].mean()
-        results["hydrogen_energy_cf_used"] = results["hydrogen_energy_used"]/network.stores.at["hydrogen_energy","e_nom_opt"]
-        results["hydrogen_turbine_rmv"] = (network.buses_t.marginal_price["elec"]*network.links_t.p0["hydrogen_turbine"]).sum()/network.links_t.p0["hydrogen_turbine"].sum()/results["average_price"]
-        results["hydrogen_electrolyser_rmv"] = (network.buses_t.marginal_price["elec"]*network.links_t.p0["hydrogen_electrolyser"]).sum()/network.links_t.p0["hydrogen_electrolyser"].sum()/results["average_price"]
-        power["positive"]["hydrogen_turbine"] = -network.links_t.p1["hydrogen_turbine"]
-        power["negative"]["hydrogen_electrolyser"] = network.links_t.p0["hydrogen_electrolyser"]
+        results_overview["hydrogen_electrolyser_capacity"] = network.links.at["hydrogen_electrolyser","p_nom_opt"]
+        results_overview["hydrogen_electrolyser_cost"] = network.links.at["hydrogen_electrolyser","p_nom_opt"]*network.links.at["hydrogen_electrolyser","capital_cost"]/year_weight
+        results_overview["hydrogen_turbine_capacity"] = network.links.at["hydrogen_turbine","p_nom_opt"]*network.links.at["hydrogen_turbine","efficiency"]
+        results_overview["hydrogen_turbine_cost"] = network.links.at["hydrogen_turbine","p_nom_opt"]*network.links.at["hydrogen_turbine","capital_cost"]/year_weight
+        results_overview["hydrogen_energy_capacity"] = network.stores.at["hydrogen_energy","e_nom_opt"]
+        results_overview["hydrogen_energy_cost"] = network.stores.at["hydrogen_energy","e_nom_opt"]*network.stores.at["hydrogen_energy","capital_cost"]/year_weight
+        results_overview["hydrogen_electrolyser_used"] = network.links_t.p0["hydrogen_electrolyser"].mean()
+        results_overview["hydrogen_electrolyser_cf_used"] = results_overview["hydrogen_electrolyser_used"]/network.links.at["hydrogen_electrolyser","p_nom_opt"]
+        results_overview["hydrogen_turbine_used"] = network.links_t.p0["hydrogen_turbine"].mean()
+        results_overview["hydrogen_turbine_cf_used"] = results_overview["hydrogen_turbine_used"]/network.links.at["hydrogen_turbine","p_nom_opt"]
+        results_overview["hydrogen_energy_used"] = network.stores_t.e["hydrogen_energy"].mean()
+        results_overview["hydrogen_energy_cf_used"] = results_overview["hydrogen_energy_used"]/network.stores.at["hydrogen_energy","e_nom_opt"]
+        results_overview["hydrogen_turbine_rmv"] = (network.buses_t.marginal_price["elec"]*network.links_t.p0["hydrogen_turbine"]).sum()/network.links_t.p0["hydrogen_turbine"].sum()/results_overview["average_price"]
+        results_overview["hydrogen_electrolyser_rmv"] = (network.buses_t.marginal_price["elec"]*network.links_t.p0["hydrogen_electrolyser"]).sum()/network.links_t.p0["hydrogen_electrolyser"].sum()/results_overview["average_price"]
+        results_series["hydrogen_turbine"] = -network.links_t.p1["hydrogen_turbine"]
+        results_series["hydrogen_electrolyser"] = network.links_t.p0["hydrogen_electrolyser"]
     else:
-        results["hydrogen_electrolyser_capacity"] = 0.
-        results["hydrogen_electrolyser_cost"] = 0.
-        results["hydrogen_turbine_capacity"] = 0.
-        results["hydrogen_turbine_cost"] = 0.
-        results["hydrogen_energy_capacity"] = 0.
-        results["hydrogen_energy_cost"] = 0.
-        results["hydrogen_electrolyser_used"] = 0.
-        results["hydrogen_electrolyser_cf_used"] = 0.
-        results["hydrogen_turbine_used"] = 0.
-        results["hydrogen_turbine_cf_used"] = 0.
-        results["hydrogen_energy_used"] = 0.
-        results["hydrogen_energy_cf_used"] = 0.
-        results["hydrogen_turbine_rmv"] = 0.
-        results["hydrogen_electrolyser_rmv"] = 0.
-        power["positive"]["hydrogen_turbine"] = 0.
-        power["negative"]["hydrogen_electrolyser"] = 0.
+        results_overview["hydrogen_electrolyser_capacity"] = 0.
+        results_overview["hydrogen_electrolyser_cost"] = 0.
+        results_overview["hydrogen_turbine_capacity"] = 0.
+        results_overview["hydrogen_turbine_cost"] = 0.
+        results_overview["hydrogen_energy_capacity"] = 0.
+        results_overview["hydrogen_energy_cost"] = 0.
+        results_overview["hydrogen_electrolyser_used"] = 0.
+        results_overview["hydrogen_electrolyser_cf_used"] = 0.
+        results_overview["hydrogen_turbine_used"] = 0.
+        results_overview["hydrogen_turbine_cf_used"] = 0.
+        results_overview["hydrogen_energy_used"] = 0.
+        results_overview["hydrogen_energy_cf_used"] = 0.
+        results_overview["hydrogen_turbine_rmv"] = 0.
+        results_overview["hydrogen_electrolyser_rmv"] = 0.
+        results_series["hydrogen_turbine"] = 0.
+        results_series["hydrogen_electrolyser"] = 0.
+
+    results_overview["average_cost"] = sum([results_overview[s] for s in results_overview.index if s[-5:] == "_cost"])/assumptions["load"]
+
+    return results_overview, results_series, None
+
+
+def solve(assumptions):
+
+    job = get_current_job()
+    jobid = job.get_id()
+
+    job.meta['status'] = "Reading in data"
+    job.save_meta()
+
+    for key in booleans:
+        try:
+            assumptions[key] = bool(assumptions[key])
+        except:
+            return error("{} {} could not be converted to boolean".format(key,assumptions[key]), jobid)
+
+    for key in floats:
+        try:
+            assumptions[key] = float(assumptions[key])
+        except:
+            return error("{} {} could not be converted to float".format(key,assumptions[key]), jobid)
+
+        if assumptions[key] < 0 or assumptions[key] > 1e5:
+            return error("{} {} was not in the valid range [0,1e5]".format(key,assumptions[key]), jobid)
+
+    for key in ints:
+        try:
+            assumptions[key] = int(assumptions[key])
+        except:
+            return error("{} {} could not be converted to an integer".format(key,assumptions[key]), jobid)
+
+    for key in strings:
+        assumptions[key] = str(assumptions[key])
+
+    if assumptions["frequency"] < 1 or assumptions["frequency"] > 8760:
+        return error("Frequency {} is not in the valid range [1,8760]".format(assumptions["frequency"]), jobid)
+
+    if assumptions["year"] < years_available_start or assumptions["year"] > years_available_end:
+        return error("Year {} not in valid range".format(assumptions["year"]), jobid)
+
+    print(assumptions)
+
+    assumptions['weather_hex'] = hashlib.md5("{}&{}&{}".format(assumptions["country"], assumptions["year"], assumptions['cf_exponent']).encode()).hexdigest()
+    weather_csv = 'data/{}.csv'.format(assumptions['weather_hex'])
+    if os.path.isfile(weather_csv):
+        print("Using preexisting weather file:", weather_csv)
+        pu = pd.read_csv(weather_csv,
+                         index_col=0,
+                         parse_dates=True)
+    else:
+        print("Calculating weather from scratch, saving as:", weather_csv)
+        pu, matrix_sum, error_msg = get_weather(assumptions["country"], assumptions["year"], assumptions['cf_exponent'])
+        if error_msg is not None:
+            return error(error_msg, jobid)
+        pu = pu.round(3)
+        pu.to_csv(weather_csv)
+
+
+    snapshots = pd.date_range("{}-01-01".format(assumptions["year"]),"{}-12-31 23:00".format(assumptions["year"]),freq="H")
+    pu = pu.reindex(snapshots,method="nearest")
+
+
+    if assumptions["job_type"] == "weather":
+        print("Returning weather for {}".format(assumptions["country"]))
+
+        results = {}
+        results['assumptions'] = assumptions
+        results["snapshots"] = [str(s) for s in snapshots]
+
+        for v in ["onwind","solar"]:
+            results[v+'_pu'] = pu[v].values.tolist()
+
+        return results
+
+    results_string = assumptions["country"]
+    for item in ints+booleans+floats:
+        results_string += "&{}".format(assumptions[item])
+
+    assumptions['results_hex'] = hashlib.md5(results_string.encode()).hexdigest()
+    print(results_string)
+    print(assumptions['results_hex'])
+    series_csv = 'data/results-series-{}.csv'.format(assumptions['results_hex'])
+    overview_csv = 'data/results-overview-{}.csv'.format(assumptions['results_hex'])
+
+    if os.path.isfile(series_csv) and os.path.isfile(overview_csv):
+        print("Using preexisting results files:", series_csv, overview_csv)
+        results_overview = pd.read_csv(overview_csv,
+                                       index_col=0,
+                                       header=None,
+                                       squeeze=True)
+        results_series = pd.read_csv(series_csv,
+                                     index_col=0,
+                                     parse_dates=True)
+    else:
+        print("Calculating results from scratch, saving as:", series_csv, overview_csv)
+        job.meta['status'] = "Solving optimisation problem"
+        job.save_meta()
+        results_overview, results_series, error_msg = run_optimisation(assumptions, pu)
+        if error_msg is not None:
+            return error(error_msg, jobid)
+        results_series = results_series.round(1)
+        results_series.to_csv(series_csv)
+        results_overview.to_csv(overview_csv,header=False)
+
+    job.meta['status'] = "Processing and sending results"
+    job.save_meta()
+
+    results = dict(results_overview)
 
     results["assumptions"] = assumptions
 
-    results["average_cost"] = sum([results[s] for s in results if s[-5:] == "_cost"])/assumptions["load"]
+    results["snapshots"] = [str(s) for s in results_series.index]
 
-    results["snapshots"] = [str(s) for s in network.snapshots]
+    columns = {"positive" : ["wind","solar","battery_discharge","hydrogen_turbine"],
+               "negative" : ["battery_charge","hydrogen_electrolyser"]}
 
-    for sign in ["negative","positive"]:
+
+    for sign, cols in columns.items():
         results[sign] = {}
-        results[sign]["columns"] = list(power[sign].columns)
-        results[sign]["data"] = power[sign].round(1).values.tolist()
-        results[sign]["color"] = [colors[c] for c in power[sign].columns]
+        results[sign]["columns"] = cols
+        results[sign]["data"] = results_series[cols].values.tolist()
+        results[sign]["color"] = [colors[c] for c in cols]
 
-    balance = power["positive"].sum(axis=1) - power["negative"].sum(axis=1)
+    balance = results_series[columns["positive"]].sum(axis=1) - results_series[columns["negative"]].sum(axis=1)
+
+    print(balance.describe())
 
     with open('results-solve/results-{}.json'.format(jobid), 'w') as fp:
         json.dump({"jobid" : jobid,
