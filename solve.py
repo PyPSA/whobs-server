@@ -641,6 +641,13 @@ def solve(assumptions):
             results[v+'_pu'] = pu[v].values.tolist()
             results[v+"_cf_available"] = pu[v].mean()
 
+        with open('results-solve/results-{}.json'.format(jobid), 'w') as fp:
+            json.dump({"jobid" : jobid,
+                       "job_type" : assumptions["job_type"],
+                       "weather_hex" : assumptions['weather_hex']
+                   },fp)
+
+
         return results
 
     results_string = assumptions["country"]
@@ -699,7 +706,9 @@ def solve(assumptions):
     with open('results-solve/results-{}.json'.format(jobid), 'w') as fp:
         json.dump({"jobid" : jobid,
                    "status" : "Finished",
-                   "average_cost" : results["average_cost"]
+                   "job_type" : assumptions["job_type"],
+                   "average_cost" : results["average_cost"],
+                   "results_hex" : assumptions['results_hex']
                    },fp)
 
     #with open('results-{}.json'.format(job.id), 'w') as fp:
