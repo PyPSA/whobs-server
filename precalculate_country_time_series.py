@@ -23,7 +23,7 @@ for year in years:
             print(ct, year, cf_exponent, weather_hex)
             pu, matrix_sum, error_msg = solve.get_weather(ct, year, cf_exponent)
 
-            weather_csv = 'data/{}.csv'.format(weather_hex)
+            weather_csv = 'data/time-series-{}.csv'.format(weather_hex)
 
             pu.round(3).to_csv(weather_csv)
 
