@@ -611,7 +611,7 @@ def solve(assumptions):
     print(assumptions)
 
     assumptions['weather_hex'] = hashlib.md5("{}&{}&{}".format(assumptions["country"], assumptions["year"], assumptions['cf_exponent']).encode()).hexdigest()
-    weather_csv = 'data/{}.csv'.format(assumptions['weather_hex'])
+    weather_csv = 'data/time-series-{}.csv'.format(assumptions['weather_hex'])
     if os.path.isfile(weather_csv):
         print("Using preexisting weather file:", weather_csv)
         pu = pd.read_csv(weather_csv,
