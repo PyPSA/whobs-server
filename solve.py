@@ -639,6 +639,7 @@ def solve(assumptions):
 
         for v in ["onwind","solar"]:
             results[v+'_pu'] = pu[v].values.tolist()
+            results[v+"_cf_available"] = pu[v].mean()
 
         return results
 

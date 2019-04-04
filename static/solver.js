@@ -14,7 +14,7 @@
 // https://github.com/PyPSA/whobs-server
 
 
-
+var licenceText = '(Licence: <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>, Attribution: <a href="https://www.ecmwf.int/en/forecasts/datasets/reanalysis-datasets/era5">ECMWF ERA5</a> via <a href="https://cds.climate.copernicus.eu/">Copernicus Climate Change Service</a> (see <a href="https://apps.ecmwf.int/datasets/licences/copernicus/">weather data licence</a>) & <a href="https://model.energy">model.energy</a>)';
 
 var parseDate = d3.timeParse("%Y-%m-%d %H:%M:00");
 
@@ -504,13 +504,17 @@ function clear_results(){
     d3.select("#energy_capacity_graph").selectAll("g").remove();
     d3.select("#energy_graph").selectAll("g").remove();
 
+    document.getElementById("results-overview-download").innerHTML = '';
+    document.getElementById("results-series-download").innerHTML = '';
+
+
 };
 
 
 function clear_weather(){
     d3.select("#weather").selectAll("g").remove();
     document.getElementById("weather-download").innerHTML = "";
-    document.getElementById("weather-download").href = "";
+    document.getElementById("capacity-factors").innerHTML = "";
 };
 
 
@@ -555,6 +559,9 @@ function display_results(){
     draw_power_capacity_stack();
     draw_energy_capacity_stack();
     draw_energy_stack();
+
+    document.getElementById("results-overview-download").innerHTML = '<a href="data/results-overview-' + results.assumptions.results_hex + '.csv">Download Comma-Separated-Variable (CSV) file of results overview</a> ' + licenceText;
+    document.getElementById("results-series-download").innerHTML = '<a href="data/results-series-' + results.assumptions.results_hex + '.csv">Download Comma-Separated-Variable (CSV) file of results time series</a> ' + licenceText;
 };
 
 
@@ -567,9 +574,8 @@ function display_weather(){
     };
 
     draw_weather_graph();
-    document.getElementById("weather-download").innerHTML = "Download Comma-Separated-Variable (CSV) file of data";
-    document.getElementById("weather-download").href = "data/" + results.assumptions.weather_hex + ".csv";
-
+    document.getElementById("capacity-factors").innerHTML = "Capacity factor onshore wind (blue): " + (results["onwind_cf_available"]*100).toFixed(1) + "%<br />Capacity factor solar PV (yellow): " + (results["solar_cf_available"]*100).toFixed(1) + "%";
+    document.getElementById("weather-download").innerHTML = '<a href="data/' + results.assumptions.weather_hex + '.csv">Download Comma-Separated-Variable (CSV) file of data</a> ' + licenceText;
 };
 
 
@@ -581,8 +587,8 @@ function draw_power_graph(){
     // Inspired by https://bl.ocks.org/mbostock/3885211
 
     var svgGraph = d3.select("#power"),
-	margin = {top: 20, right: 20, bottom: 110, left: 40},
-	marginContext = {top: 430, right: 20, bottom: 30, left: 40},
+	margin = {top: 20, right: 20, bottom: 110, left: 50},
+	marginContext = {top: 430, right: 20, bottom: 30, left: 50},
 	width = svgGraph.attr("width") - margin.left - margin.right,
 	height = svgGraph.attr("height") - margin.top - margin.bottom,
 	heightContext = svgGraph.attr("height") - marginContext.top - marginContext.bottom;
@@ -948,8 +954,8 @@ function draw_weather_graph(){
     let snapshots = results["snapshots"];
 
     var svgGraph = d3.select("#weather"),
-	margin = {top: 20, right: 20, bottom: 110, left: 40},
-	marginContext = {top: 430, right: 20, bottom: 30, left: 40},
+	margin = {top: 20, right: 20, bottom: 110, left: 50},
+	marginContext = {top: 430, right: 20, bottom: 30, left: 50},
 	width = svgGraph.attr("width") - margin.left - margin.right,
 	height = svgGraph.attr("height") - margin.top - margin.bottom,
 	heightContext = svgGraph.attr("height") - marginContext.top - marginContext.bottom;
@@ -1024,6 +1030,16 @@ function draw_weather_graph(){
         .attr("class", "axis axis--y")
         .call(yAxis);
 
+    var label = svgGraph.append("g").attr("class", "y-label");
+
+    // text label for the y axis
+    label.append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 0)
+        .attr("x",0 - (height / 2))
+        .attr("dy", "1em")
+        .style("text-anchor", "middle")
+        .text("Power of hypothetical 1.0 MW generator [MW]");
 
     var layerContext = context.selectAll(".layerContext")
         .data(data)
