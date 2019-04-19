@@ -1,9 +1,33 @@
-header {
-  padding: 100px 0 50px;
+/* Show standard navbar at the top on narrow screens */
+@media (max-width: 991.98px) {
+    header {
+        padding: 100px 0 50px;
+    }
+    .toc-col {
+        visibility: collapse;
+    }
+}
+
+/* Show scrolling navbar to the left on wide screens */
+@media (min-width: 991.98px) {
+    #mainNav {
+        visibility: hidden;
+    }
+    header {
+        padding: 50px 0 50px;
+    }
+}
+
+#toc {
+  padding-top: 50px;
+}
+
+.container-like {
+    max-width: 1140px;
 }
 
 section {
-  padding: 50px 0;
+  padding-top: 50px;
 }
 
 #mapid {
