@@ -18,13 +18,13 @@ server {
     location /static {
         # handle static files directly, without forwarding to the application
         alias /home/tom/whobs-live/static;
-        expires 30d;
+        expires 1d;
     }
 
     location /data {
         # handle data files directly, without forwarding to the application
         alias /home/tom/whobs-live/data;
-        expires 30d;
+        expires 1d;
     }
 
     listen 443 ssl; # managed by Certbot
