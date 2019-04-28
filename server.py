@@ -43,64 +43,49 @@ with(open('static/ne-countries-110m.json', 'r')) as f:
 country_names = [f['properties']['iso_a2'] for f in j['features']]
 country_names_full = [f['properties']['name'] for f in j['features']]
 
+booleans = ["wind","solar","battery","hydrogen"]
+
+float_tech_options = ["wind_cost", "solar_cost", "battery_energy_cost","battery_power_cost", "hydrogen_energy_cost", "hydrogen_electrolyser_cost", "hydrogen_electrolyser_efficiency", "hydrogen_turbine_cost", "hydrogen_turbine_efficiency"]
+
 
 @app.route('/')
 def root():
     if request.method == "GET":
+
         # Try to get settings from URL
-        country = request.args.get('country', default = 'DE', type = str)
-        year = request.args.get('year', default = 2011, type = int)
-        freq = request.args.get('freq', default = 3, type = int)
-        cf_exponent = request.args.get('cf_exponent', default = 2, type = float)
-        demand = request.args.get('demand', default = 100, type = float)
-        scenario = request.args.get('scenario', default = 2030, type = int)
-        wind = request.args.get('wind', default = 1, type = int)
-        solar = request.args.get('solar', default = 1, type = int)
-        battery = request.args.get('battery', default = 1, type = int)
-        hydrogen = request.args.get('hydrogen', default = 1, type = int)
+        assumptions = {}
+        assumptions["location"] = request.args.get('location', default = 'DE', type = str)
+        assumptions["job_type"] = request.args.get('job_type', default = 'none', type = str)
+        assumptions["year"] = request.args.get('year', default = 2011, type = int)
+        assumptions["frequency"] = request.args.get('frequency', default = 3, type = int)
+        assumptions["cf_exponent"] = request.args.get('cf_exponent', default = 2, type = float)
+        assumptions["load"] = request.args.get('load', default = 100, type = float)
+        assumptions["discount_rate"] = request.args.get('discount_rate', default = 5, type = float)
+        for boolean in booleans:
+            assumptions[boolean] = request.args.get(boolean, default = 1, type = int)
+        for float_tech_option in float_tech_options:
+            if float_tech_option in request.args:
+                assumptions[float_tech_option] = request.args.get(float_tech_option, default = 100, type = float)
 
-        # Validate settings
-        if country not in country_names:
-            country = 'GB'
-        country_name = country_names_full[country_names.index(country)]
-        if year < 1985 or year > 2015:
-            year = 2011
-        if freq < 1 or freq > 8760:
-            freq = 3
-        if demand <= 0:
-            demand = 100
-        if scenario not in [2020, 2030, 2050]:
-            scenario = 2030
-        if wind == 0:
-            wind = False
-        else:
-            wind = True
-        if solar == 0:
-            solar = False
-        else:
-            solar = True
-        if battery == 0:
-            battery = False
-        else:
-            battery = True
-        if hydrogen == 0:
-            hydrogen = False
-        else:
-            hydrogen = True
 
-        settings_dict = {
-            'country': country,
-            'year': year,
-            'cf_exponent' : cf_exponent,
-            'frequency': freq,
-            'load': demand,
-            'wind': wind,
-            'solar': solar,
-            'battery': battery,
-            'hydrogen': hydrogen,
-            'discount_rate': 5
-        }
-    return render_template('index.html', settings=settings_dict, country_name=country_name, scenario=scenario)
+        if assumptions["location"][:8] == "country:" and assumptions["location"][8:] in country_names:
+            assumptions["location_name"] = country_names_full[country_names.index(assumptions["location"][8:])]
+        elif assumptions["location"][:6] == "point:":
+            assumptions["location_name"] = assumptions["location"]
+        elif assumptions["location"][:8] == "polygon:":
+            assumptions["location_name"] = "polygon"
+        else:
+            assumptions["location"] = 'country:DE'
+            assumptions["location_name"] = country_names_full[country_names.index(assumptions["location"][8:])]
+
+        for boolean in booleans:
+            if assumptions[boolean] == 0:
+                assumptions[boolean] = False
+            else:
+                assumptions[boolean] = True
+
+    return render_template('index.html', settings=assumptions)
+
 
 @app.route('/jobs', methods=['GET','POST'])
 def jobs_api():

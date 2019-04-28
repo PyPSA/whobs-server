@@ -66,9 +66,20 @@ let tech_assumptions = {"2020" : {"wind_cost" : 1240,
 		       };
 
 
+
+assets = ["solar","wind","battery_power",
+	      "battery_energy","hydrogen_electrolyser",
+	      "hydrogen_turbine","hydrogen_energy"]
+
+vre = ["solar","wind"]
+
+let default_tech_scenario = "2030";
+
 for (let i = 0; i < Object.keys(tech_assumptions[default_tech_scenario]).length; i++){
     let key = Object.keys(tech_assumptions[default_tech_scenario])[i];
-    assumptions[key] = tech_assumptions[default_tech_scenario][key];
+    if(!(key in assumptions)){
+	assumptions[key] = tech_assumptions[default_tech_scenario][key];
+    };
 };
 
 
@@ -100,13 +111,16 @@ L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={
 
 
 
+var activeLayer = false;
+var activeLayerType = false;
+
 
 
 // See https://oramind.com/country-border-highlighting-with-leaflet-js/
 d3.json("static/ne-countries-110m.json", function (json){
     function style(feature) {
 	function getColor(f){
-	    if(feature.properties.iso_a2 == assumptions["country"]){
+	    if((feature.properties.iso_a2 == assumptions["location"].slice(8,10)) && (assumptions["location"].slice(0,8) == "country:")){
 		return "red";
 	    } else {
 		return "blue";
@@ -132,6 +146,27 @@ d3.json("static/ne-countries-110m.json", function (json){
 	    mouseout : onCountryMouseOut
 	});
     }
+
+    if(assumptions["location"].slice(0,6) == "point:"){
+	countryToLocation();
+	coordStr=assumptions["location"].slice(6).split(",");
+	coord = [parseFloat(coordStr[1]),parseFloat(coordStr[0])];
+	activeLayer = L.marker(coord).addTo(editableLayers);
+	activeLayer.bindPopup('Location: longitude: ' + Math.round(10*coord[0])/10 + ', latitude: ' + Math.round(10*coord[1])/10);
+    };
+    if(assumptions["location"].slice(0,8) == "polygon:" ){
+	countryToLocation();
+	coordsStr = assumptions["location"].slice(8).split(";");
+	let coords = [];
+	for(let i=0; i < coordsStr.length; i++) {
+	    if(coordsStr[i] === ""){
+		continue;
+	    };
+	    coordStr=coordsStr[i].split(",");
+	    coords.push([parseFloat(coordStr[1]),parseFloat(coordStr[0])]);
+	};
+	activeLayer = L.polygon(coords,{color:'red'}).addTo(editableLayers);
+    };
 });
 
 
@@ -144,9 +179,10 @@ function onCountryClick(e){
 
     //console.log(e.target.feature.properties.name,e.target.feature.properties.iso_a2);
 
-    assumptions["country"] = e.target.feature.properties.iso_a2;
-    document.getElementsByName("country")[0].value = e.target.feature.properties.name;
-    console.log("country changed to",assumptions["country"]);
+    assumptions["location"] = "country:" + e.target.feature.properties.iso_a2;
+    assumptions["location_name"] = e.target.feature.properties.name;
+    document.getElementsByName("location_name")[0].value = assumptions["location_name"];
+    console.log("country changed to",assumptions["location"]);
 
     geojson.eachLayer(function(t,i){ geojson.resetStyle(t)});
     //console.log(t.feature.properties.name)})
@@ -211,27 +247,26 @@ var options = {
 
 var drawControl = new L.Control.Draw(options);
 
-var activeLayer = false;
-var activeLayerType = false;
-
 mymap.on(L.Draw.Event.CREATED, function (e) {
     var type = e.layerType,
 	layer = e.layer;
 
     if (type === 'marker') {
-	layer.bindPopup('Location: lat: ' + Math.round(10*layer._latlng['lat'])/10 + ', lng: ' + Math.round(10*layer._latlng['lng'])/10);
-	assumptions["country"] = "point:"+Math.round(10*layer._latlng['lng'])/10 + ',' + Math.round(10*layer._latlng['lat'])/10;
-	document.getElementsByName("country")[0].value = assumptions["country"];
-	console.log("location changed to",assumptions["country"]);
+	layer.bindPopup('Location: longitude: ' + Math.round(10*layer._latlng['lng'])/10 + ', latitude: ' + Math.round(10*layer._latlng['lat'])/10);
+	assumptions["location"] = "point:"+Math.round(10*layer._latlng['lng'])/10 + ',' + Math.round(10*layer._latlng['lat'])/10;
+	assumptions["location_name"] = assumptions["location"];
+	document.getElementsByName("location_name")[0].value = assumptions["location_name"];
+	console.log("location changed to",assumptions["location"]);
     }
     else{
 	console.log(layer._latlngs);
-	assumptions["country"] = "polygon:";
+	assumptions["location"] = "polygon:";
 	for(let i=0; i < layer._latlngs[0].length; i++) {
-	    assumptions["country"] += layer._latlngs[0][i]['lng'] + ',' + layer._latlngs[0][i]['lat'] + ';';
+	    assumptions["location"] += layer._latlngs[0][i]['lng'] + ',' + layer._latlngs[0][i]['lat'] + ';';
 	};
-	document.getElementsByName("country")[0].value = type;
-	console.log("location changed to",assumptions["country"]);
+	assumptions["location_name"] = type;
+	document.getElementsByName("location_name")[0].value = assumptions["location_name"];
+	console.log("location changed to",assumptions["location"]);
     }
 
     if(activeLayer){
@@ -294,7 +329,7 @@ for (let i = 0; i < Object.keys(assumptions).length; i++){
 	    console.log(key,"changed to",assumptions[key]);
 	});
     }
-    else if(key == "country"){
+    else if(key == "job_type" || key == "location"){
     }
     else{
 	document.getElementsByName(key)[0].value = value;
@@ -334,9 +369,8 @@ var poll_interval = 1000;
 var poll_timeout = 10*60*1000 + poll_interval/2;
 
 
-solveButton.on("click", function() {
-    var button = d3.select(this);
-    if (button.text() == solveButtonText["before"]) {
+function solve() {
+    if (solveButton.text() == solveButtonText["before"]) {
 	clear_results();
 	var send_job = new XMLHttpRequest();
 	send_job.open('POST', '/jobs', true);
@@ -352,17 +386,23 @@ solveButton.on("click", function() {
 	assumptions["job_type"] = "solve";
 	send_job.send(JSON.stringify(assumptions));
 
-	button.text(solveButtonText["after"]);
-	button.attr("disabled","");
+	solveButton.text(solveButtonText["after"]);
+	solveButton.attr("disabled","");
 	document.getElementById("status").innerHTML="Sending job to solver";
     };
-});
+};
 
 
+solveButton.on("click", solve);
 
-weatherButton.on("click", function() {
-    var button = d3.select(this);
-    if (button.text() == weatherButtonText["before"]) {
+if(assumptions["job_type"] === "solve"){
+    weather();
+    solve();
+};
+
+
+function weather() {
+    if (weatherButton.text() == weatherButtonText["before"]) {
 	clear_weather();
 	var send_job = new XMLHttpRequest();
 	send_job.open('POST', '/jobs', true);
@@ -378,11 +418,20 @@ weatherButton.on("click", function() {
 	assumptions["job_type"] = "weather";
 	send_job.send(JSON.stringify(assumptions));
 
-	button.text(weatherButtonText["after"]);
-	button.attr("disabled","");
+	weatherButton.text(weatherButtonText["after"]);
+	weatherButton.attr("disabled","");
 	document.getElementById("weather-status").innerHTML="Sending job to weather database";
     };
-});
+};
+
+weatherButton.on("click", weather);
+
+
+if(assumptions["job_type"] === "weather"){
+    weather();
+};
+
+
 
 
 function poll_result() {
@@ -475,13 +524,6 @@ function poll_weather_kill() {
 
 
 
-
-assets = ["solar","wind","battery_power",
-	      "battery_energy","hydrogen_electrolyser",
-	      "hydrogen_turbine","hydrogen_energy"]
-
-vre = ["solar","wind"]
-
 function clear_results(){
     document.getElementById("results_assumptions").innerHTML="";
     document.getElementById("average_cost").innerHTML="";
@@ -506,7 +548,7 @@ function clear_results(){
 
     document.getElementById("results-overview-download").innerHTML = '';
     document.getElementById("results-series-download").innerHTML = '';
-
+    document.getElementById("results-link").innerHTML = '';
 
 };
 
@@ -514,24 +556,28 @@ function clear_results(){
 function clear_weather(){
     d3.select("#weather").selectAll("g").remove();
     document.getElementById("weather-download").innerHTML = "";
+    document.getElementById("weather-link").innerHTML = "";
     document.getElementById("capacity-factors").innerHTML = "";
+};
+
+
+function assumptions_to_url(){
+    let url = "";
+    for (let i = 0; i < Object.keys(results.assumptions).length; i++){
+	let key = Object.keys(results.assumptions)[i];
+	let value = results.assumptions[key];
+	if(value === true) value = 1;
+	if(value === false) value = 0;
+	url += "&" + key + "=" + value;
+    };
+    return url.slice(1);
 };
 
 
 
 function display_results(){
-    var locationName = results["assumptions"]["country"];
 
-    // truncate name
-    if(locationName.slice(0,8) == "polygon:"){
-	locationName = "polygon";
-    };
-
-    if(locationName.length == 2){
-	locationName = "country " + locationName;
-    };
-
-    document.getElementById("results_assumptions").innerHTML=" for " + locationName + " in year " + results["assumptions"]["year"];
+    document.getElementById("results_assumptions").innerHTML=" for " + results["assumptions"]["location_name"] + " in year " + results["assumptions"]["year"];
     document.getElementById("average_cost").innerHTML=results["average_cost"].toFixed(1);
     document.getElementById("load").innerHTML=results["assumptions"]["load"].toFixed(1);
 
@@ -562,10 +608,8 @@ function display_results(){
 
     document.getElementById("results-overview-download").innerHTML = '<a href="data/results-overview-' + results.assumptions.results_hex + '.csv">Download Comma-Separated-Variable (CSV) file of results overview</a> ' + licenceText;
     document.getElementById("results-series-download").innerHTML = '<a href="data/results-series-' + results.assumptions.results_hex + '.csv">Download Comma-Separated-Variable (CSV) file of results time series</a> ' + licenceText;
+    document.getElementById("results-link").innerHTML = '<a href="https://model.energy/?' + assumptions_to_url() +'#solve">Link to these results</a>';
 };
-
-
-
 
 function display_weather(){
 
@@ -576,6 +620,7 @@ function display_weather(){
     draw_weather_graph();
     document.getElementById("capacity-factors").innerHTML = "Capacity factor onshore wind (blue): " + (results["onwind_cf_available"]*100).toFixed(1) + "%<br />Capacity factor solar PV (yellow): " + (results["solar_cf_available"]*100).toFixed(1) + "%";
     document.getElementById("weather-download").innerHTML = '<a href="data/time-series-' + results.assumptions.weather_hex + '.csv">Download Comma-Separated-Variable (CSV) file of data</a> ' + licenceText;
+    document.getElementById("weather-link").innerHTML = '<a href="https://model.energy/?' + assumptions_to_url() +'#time-series">Link to these results</a>';
 };
 
 
