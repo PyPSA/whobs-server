@@ -75,7 +75,9 @@ vre = ["solar","wind"]
 
 for (let i = 0; i < Object.keys(tech_assumptions[default_tech_scenario]).length; i++){
     let key = Object.keys(tech_assumptions[default_tech_scenario])[i];
-    assumptions[key] = tech_assumptions[default_tech_scenario][key];
+    if(!(key in assumptions)){
+	assumptions[key] = tech_assumptions[default_tech_scenario][key];
+    };
 };
 
 
@@ -541,7 +543,7 @@ function clear_results(){
 
     document.getElementById("results-overview-download").innerHTML = '';
     document.getElementById("results-series-download").innerHTML = '';
-
+    document.getElementById("results-link").innerHTML = '';
 
 };
 
@@ -549,7 +551,21 @@ function clear_results(){
 function clear_weather(){
     d3.select("#weather").selectAll("g").remove();
     document.getElementById("weather-download").innerHTML = "";
+    document.getElementById("weather-link").innerHTML = "";
     document.getElementById("capacity-factors").innerHTML = "";
+};
+
+
+function assumptions_to_url(){
+    let url = "";
+    for (let i = 0; i < Object.keys(assumptions).length; i++){
+	let key = Object.keys(assumptions)[i];
+	let value = assumptions[key];
+	if(value === true) value = 1;
+	if(value === false) value = 0;
+	url += "&" + key + "=" + value;
+    };
+    return url;
 };
 
 
@@ -597,10 +613,8 @@ function display_results(){
 
     document.getElementById("results-overview-download").innerHTML = '<a href="data/results-overview-' + results.assumptions.results_hex + '.csv">Download Comma-Separated-Variable (CSV) file of results overview</a> ' + licenceText;
     document.getElementById("results-series-download").innerHTML = '<a href="data/results-series-' + results.assumptions.results_hex + '.csv">Download Comma-Separated-Variable (CSV) file of results time series</a> ' + licenceText;
+    document.getElementById("results-link").innerHTML = '<a href="https://model.energy/?' + assumptions_to_url().slice(1) +'">Link to these results</a>';
 };
-
-
-
 
 function display_weather(){
 
@@ -611,6 +625,7 @@ function display_weather(){
     draw_weather_graph();
     document.getElementById("capacity-factors").innerHTML = "Capacity factor onshore wind (blue): " + (results["onwind_cf_available"]*100).toFixed(1) + "%<br />Capacity factor solar PV (yellow): " + (results["solar_cf_available"]*100).toFixed(1) + "%";
     document.getElementById("weather-download").innerHTML = '<a href="data/time-series-' + results.assumptions.weather_hex + '.csv">Download Comma-Separated-Variable (CSV) file of data</a> ' + licenceText;
+    document.getElementById("weather-link").innerHTML = '<a href="https://model.energy/?' + assumptions_to_url().slice(1) +'">Link to these results</a>';
 };
 
 
