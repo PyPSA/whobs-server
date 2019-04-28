@@ -100,6 +100,9 @@ L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={
 
 
 
+var activeLayer = false;
+var activeLayerType = false;
+
 
 
 // See https://oramind.com/country-border-highlighting-with-leaflet-js/
@@ -132,6 +135,27 @@ d3.json("static/ne-countries-110m.json", function (json){
 	    mouseout : onCountryMouseOut
 	});
     }
+
+    if(assumptions["country"].slice(0,6) == "point:"){
+	countryToLocation();
+	coordStr=assumptions["country"].slice(6).split(",");
+	coord = [parseFloat(coordStr[1]),parseFloat(coordStr[0])];
+	activeLayer = L.marker(coord).addTo(editableLayers);
+	activeLayer.bindPopup('Location: longitude: ' + Math.round(10*coord[0])/10 + ', latitude: ' + Math.round(10*coord[1])/10);
+    };
+    if(assumptions["country"].slice(0,8) == "polygon:" ){
+	countryToLocation();
+	coordsStr = assumptions["country"].slice(8).split(";");
+	let coords = [];
+	for(let i=0; i < coordsStr.length; i++) {
+	    if(coordsStr[i] === ""){
+		continue;
+	    };
+	    coordStr=coordsStr[i].split(",");
+	    coords.push([parseFloat(coordStr[1]),parseFloat(coordStr[0])]);
+	};
+	activeLayer = L.polygon(coords,{color:'red'}).addTo(editableLayers);
+    };
 });
 
 
@@ -211,15 +235,12 @@ var options = {
 
 var drawControl = new L.Control.Draw(options);
 
-var activeLayer = false;
-var activeLayerType = false;
-
 mymap.on(L.Draw.Event.CREATED, function (e) {
     var type = e.layerType,
 	layer = e.layer;
 
     if (type === 'marker') {
-	layer.bindPopup('Location: lat: ' + Math.round(10*layer._latlng['lat'])/10 + ', lng: ' + Math.round(10*layer._latlng['lng'])/10);
+	layer.bindPopup('Location: longitude: ' + Math.round(10*layer._latlng['lng'])/10 + ', latitude: ' + Math.round(10*layer._latlng['lat'])/10);
 	assumptions["country"] = "point:"+Math.round(10*layer._latlng['lng'])/10 + ',' + Math.round(10*layer._latlng['lat'])/10;
 	document.getElementsByName("country")[0].value = assumptions["country"];
 	console.log("location changed to",assumptions["country"]);
@@ -297,6 +318,7 @@ for (let i = 0; i < Object.keys(assumptions).length; i++){
     else if(key == "country"){
     }
     else{
+	console.log(key,value);
 	document.getElementsByName(key)[0].value = value;
 	d3.selectAll("input[name='" + key + "']").on("change", function(){
 	    assumptions[key] = this.value;

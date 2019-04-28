@@ -47,6 +47,7 @@ country_names_full = [f['properties']['name'] for f in j['features']]
 @app.route('/')
 def root():
     if request.method == "GET":
+
         # Try to get settings from URL
         country = request.args.get('country', default = 'DE', type = str)
         year = request.args.get('year', default = 2011, type = int)
@@ -60,9 +61,16 @@ def root():
         hydrogen = request.args.get('hydrogen', default = 1, type = int)
 
         # Validate settings
-        if country not in country_names:
-            country = 'GB'
-        country_name = country_names_full[country_names.index(country)]
+        if country in country_names:
+            country_name = country_names_full[country_names.index(country)]
+        elif country[:5] == "point":
+            country_name = country
+        elif country[:7] == "polygon":
+            country_name = "polygon"
+        else:
+            country = 'DE'
+            country_name = country_names_full[country_names.index(country)]
+
         if year < 1985 or year > 2015:
             year = 2011
         if freq < 1 or freq > 8760:
@@ -87,6 +95,7 @@ def root():
             hydrogen = False
         else:
             hydrogen = True
+
 
         settings_dict = {
             'country': country,
