@@ -255,7 +255,6 @@
                 <p>
                   <button type="button" class="btn btn-lg btn-primary" id="solve-button">Solve</button>
                   &nbsp;&nbsp;Status: <span id="status">Waiting for job</span>
-                  <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#resultModal" id="demo-button">Show demo results</button>
                 </p>
 
                 <div class="accordion" id="accordionResults">
@@ -359,25 +358,6 @@
                       </div>
                     </div>
                   </div><!-- accordion-->
-                  <!-- Modal -->
-                  <div class="modal fade" id="resultModal" tabindex="-1" role="dialog" aria-labelledby="resultModalLabel" aria-hidden="true">
-                    <div class="modal-dialog modal-lg" role="document">
-                      <div class="modal-content">
-                        <div class="modal-header">
-                          <h5 class="modal-title" id="resultModalLabel">Demo results</h5>
-                          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                          </button>
-                        </div>
-                        <div class="modal-body">
-                          <a href="{{ url_for('static', filename='demo_results.png') }}"><img src="{{ url_for('static', filename='demo_results.png') }}" title="Demo results" alt="Demo results" width="100%"></a>
-                        </div>
-                        <div class="modal-footer">
-                          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                        </div>
-                      </div>
-                    </div>
-                  </div><!-- Modal -->
                 </div>
               </div>
             </div>
