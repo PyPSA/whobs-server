@@ -610,7 +610,7 @@ def solve(assumptions):
 
     print(assumptions)
 
-    assumptions['weather_hex'] = hashlib.md5("{}&{}&{}".format(assumptions["location"], assumptions["year"], assumptions['cf_exponent']).encode()).hexdigest()
+    assumptions['weather_hex'] = hashlib.md5("{}&{}&{}".format(assumptions["location"].replace("country:",""), assumptions["year"], assumptions['cf_exponent']).encode()).hexdigest()
     weather_csv = 'data/time-series-{}.csv'.format(assumptions['weather_hex'])
     if os.path.isfile(weather_csv):
         print("Using preexisting weather file:", weather_csv)
@@ -650,7 +650,7 @@ def solve(assumptions):
 
         return results
 
-    results_string = assumptions["location"]
+    results_string = assumptions["location"].replace("country:","")
     for item in ints+booleans+floats:
         results_string += "&{}".format(assumptions[item])
 
