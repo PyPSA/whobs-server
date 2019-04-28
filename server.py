@@ -54,13 +54,12 @@ def root():
 
         # Try to get settings from URL
         assumptions = {}
-        assumptions["country"] = request.args.get('country', default = 'DE', type = str)
+        assumptions["location"] = request.args.get('location', default = 'DE', type = str)
         assumptions["job_type"] = request.args.get('job_type', default = 'none', type = str)
         assumptions["year"] = request.args.get('year', default = 2011, type = int)
         assumptions["frequency"] = request.args.get('frequency', default = 3, type = int)
         assumptions["cf_exponent"] = request.args.get('cf_exponent', default = 2, type = float)
         assumptions["load"] = request.args.get('load', default = 100, type = float)
-        scenario = request.args.get('scenario', default = 2030, type = int)
         assumptions["discount_rate"] = request.args.get('discount_rate', default = 5, type = float)
         for boolean in booleans:
             assumptions[boolean] = request.args.get(boolean, default = 1, type = int)
@@ -68,32 +67,24 @@ def root():
             if float_tech_option in request.args:
                 assumptions[float_tech_option] = request.args.get(float_tech_option, default = 100, type = float)
 
-        # Validate settings
-        if assumptions["country"] in country_names:
-            country_name = country_names_full[country_names.index(assumptions["country"])]
-        elif assumptions["country"][:5] == "point":
-            country_name = country
-        elif assumptions["country"][:7] == "polygon":
-            country_name = "polygon"
-        else:
-            assumptions["country"] = 'DE'
-            country_name = country_names_full[country_names.index(assumptions["country"])]
 
-        if assumptions["year"] < 1985 or assumptions["year"] > 2015:
-            assumptions["year"] = 2011
-        if assumptions["frequency"] < 1 or assumptions["frequency"] > 8760:
-            assumptions["frequency"] = 3
-        if assumptions["load"] <= 0:
-            assumptions["load"] = 100
-        if scenario not in [2020, 2030, 2050]:
-            scenario = 2030
+        if assumptions["location"][:8] == "country:" and assumptions["location"][8:] in country_names:
+            assumptions["location_name"] = country_names_full[country_names.index(assumptions["location"][8:])]
+        elif assumptions["location"][:6] == "point:":
+            assumptions["location_name"] = assumptions["location"]
+        elif assumptions["location"][:8] == "polygon:":
+            assumptions["location_name"] = "polygon"
+        else:
+            assumptions["location"] = 'country:DE'
+            assumptions["location_name"] = country_names_full[country_names.index(assumptions["location"][8:])]
+
         for boolean in booleans:
             if assumptions[boolean] == 0:
                 assumptions[boolean] = False
             else:
                 assumptions[boolean] = True
 
-    return render_template('index.html', settings=assumptions, country_name=country_name, scenario=scenario)
+    return render_template('index.html', settings=assumptions)
 
 
 @app.route('/jobs', methods=['GET','POST'])

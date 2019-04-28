@@ -73,6 +73,8 @@ assets = ["solar","wind","battery_power",
 
 vre = ["solar","wind"]
 
+let default_tech_scenario = "2030";
+
 for (let i = 0; i < Object.keys(tech_assumptions[default_tech_scenario]).length; i++){
     let key = Object.keys(tech_assumptions[default_tech_scenario])[i];
     if(!(key in assumptions)){
@@ -118,7 +120,7 @@ var activeLayerType = false;
 d3.json("static/ne-countries-110m.json", function (json){
     function style(feature) {
 	function getColor(f){
-	    if(feature.properties.iso_a2 == assumptions["country"]){
+	    if((feature.properties.iso_a2 == assumptions["location"].slice(8,10)) && (assumptions["location"].slice(0,8) == "country:")){
 		return "red";
 	    } else {
 		return "blue";
@@ -145,16 +147,16 @@ d3.json("static/ne-countries-110m.json", function (json){
 	});
     }
 
-    if(assumptions["country"].slice(0,6) == "point:"){
+    if(assumptions["location"].slice(0,6) == "point:"){
 	countryToLocation();
-	coordStr=assumptions["country"].slice(6).split(",");
+	coordStr=assumptions["location"].slice(6).split(",");
 	coord = [parseFloat(coordStr[1]),parseFloat(coordStr[0])];
 	activeLayer = L.marker(coord).addTo(editableLayers);
 	activeLayer.bindPopup('Location: longitude: ' + Math.round(10*coord[0])/10 + ', latitude: ' + Math.round(10*coord[1])/10);
     };
-    if(assumptions["country"].slice(0,8) == "polygon:" ){
+    if(assumptions["location"].slice(0,8) == "polygon:" ){
 	countryToLocation();
-	coordsStr = assumptions["country"].slice(8).split(";");
+	coordsStr = assumptions["location"].slice(8).split(";");
 	let coords = [];
 	for(let i=0; i < coordsStr.length; i++) {
 	    if(coordsStr[i] === ""){
@@ -177,9 +179,10 @@ function onCountryClick(e){
 
     //console.log(e.target.feature.properties.name,e.target.feature.properties.iso_a2);
 
-    assumptions["country"] = e.target.feature.properties.iso_a2;
-    document.getElementsByName("country")[0].value = e.target.feature.properties.name;
-    console.log("country changed to",assumptions["country"]);
+    assumptions["location"] = "country:" + e.target.feature.properties.iso_a2;
+    assumptions["location_name"] = e.target.feature.properties.name;
+    document.getElementsByName("location_name")[0].value = assumptions["location_name"];
+    console.log("country changed to",assumptions["location"]);
 
     geojson.eachLayer(function(t,i){ geojson.resetStyle(t)});
     //console.log(t.feature.properties.name)})
@@ -250,18 +253,20 @@ mymap.on(L.Draw.Event.CREATED, function (e) {
 
     if (type === 'marker') {
 	layer.bindPopup('Location: longitude: ' + Math.round(10*layer._latlng['lng'])/10 + ', latitude: ' + Math.round(10*layer._latlng['lat'])/10);
-	assumptions["country"] = "point:"+Math.round(10*layer._latlng['lng'])/10 + ',' + Math.round(10*layer._latlng['lat'])/10;
-	document.getElementsByName("country")[0].value = assumptions["country"];
-	console.log("location changed to",assumptions["country"]);
+	assumptions["location"] = "point:"+Math.round(10*layer._latlng['lng'])/10 + ',' + Math.round(10*layer._latlng['lat'])/10;
+	assumptions["location_name"] = assumptions["location"];
+	document.getElementsByName("location_name")[0].value = assumptions["location_name"];
+	console.log("location changed to",assumptions["location"]);
     }
     else{
 	console.log(layer._latlngs);
-	assumptions["country"] = "polygon:";
+	assumptions["location"] = "polygon:";
 	for(let i=0; i < layer._latlngs[0].length; i++) {
-	    assumptions["country"] += layer._latlngs[0][i]['lng'] + ',' + layer._latlngs[0][i]['lat'] + ';';
+	    assumptions["location"] += layer._latlngs[0][i]['lng'] + ',' + layer._latlngs[0][i]['lat'] + ';';
 	};
-	document.getElementsByName("country")[0].value = type;
-	console.log("location changed to",assumptions["country"]);
+	assumptions["location_name"] = type;
+	document.getElementsByName("location_name")[0].value = assumptions["location_name"];
+	console.log("location changed to",assumptions["location"]);
     }
 
     if(activeLayer){
@@ -324,7 +329,7 @@ for (let i = 0; i < Object.keys(assumptions).length; i++){
 	    console.log(key,"changed to",assumptions[key]);
 	});
     }
-    else if(key == "country" || key == "job_type"){
+    else if(key == "job_type" || key == "location"){
     }
     else{
 	document.getElementsByName(key)[0].value = value;
@@ -571,18 +576,8 @@ function assumptions_to_url(){
 
 
 function display_results(){
-    var locationName = results["assumptions"]["country"];
 
-    // truncate name
-    if(locationName.slice(0,8) == "polygon:"){
-	locationName = "polygon";
-    };
-
-    if(locationName.length == 2){
-	locationName = "country " + locationName;
-    };
-
-    document.getElementById("results_assumptions").innerHTML=" for " + locationName + " in year " + results["assumptions"]["year"];
+    document.getElementById("results_assumptions").innerHTML=" for " + results["assumptions"]["location_name"] + " in year " + results["assumptions"]["year"];
     document.getElementById("average_cost").innerHTML=results["average_cost"].toFixed(1);
     document.getElementById("load").innerHTML=results["assumptions"]["load"].toFixed(1);
 

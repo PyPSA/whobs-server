@@ -95,7 +95,7 @@
 	      <br />
               <div class="form-group">
                 <label for="countrySelecter">Location</label>
-                <input type="text" class="form-control" id="countrySelecter" aria-describedby="countrySelect" name="country" value="{{ country_name }}" readonly>
+                <input type="text" class="form-control" id="countrySelecter" aria-describedby="countrySelect" name="location_name" readonly>
                 <small id="countrySelect" class="form-text text-muted">Select from map above.</small>
               </div>
               <div class="form-group">
@@ -151,9 +151,9 @@
               <div class="form-group">
                 <label for="tech_scenario">Technology assumption scenario</label>
                 <select class="form-control" name="tech_scenario" id="tech_scenario">
-                  <option value="2020" {% if scenario == 2020 %}selected{% endif %}>2020 scenario</option>
-                  <option value="2030" {% if scenario == 2030 %}selected{% endif %}>2030 scenario</option>
-                  <option value="2050" {% if scenario == 2050 %}selected{% endif %}>2050 scenario</option>
+                  <option value="2020">2020 scenario</option>
+                  <option value="2030" selected>2030 scenario</option>
+                  <option value="2050">2050 scenario</option>
                 </select>
                 <small class="form-text text-muted">Individual cost assumptions can be changed below under <em>advanced assumption settings</em>.</small>
               </div>
@@ -483,7 +483,6 @@
       <script src="{{ url_for('static', filename='scrolling-nav.js') }}"></script>
       <script type="text/javascript">
         var assumptions = JSON.parse('{{ settings|json }}');
-        var default_tech_scenario = '{{ scenario }}';
       </script>
       <script src="{{ url_for('static', filename='solver-190402.js') }}"></script>
     </body>

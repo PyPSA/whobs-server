@@ -116,7 +116,7 @@ floats = ["cf_exponent","load","wind_cost","solar_cost","battery_energy_cost",
 
 ints = ["year","frequency"]
 
-strings = ["country"]
+strings = ["location"]
 
 threshold = 0.1
 
@@ -321,8 +321,8 @@ def process_polygon(ct,year,cf_exponent):
 
 def get_weather(ct, year, cf_exponent):
 
-    if ct in country_multipolygons:
-        error_msg, pu, matrix_sum = process_shapely_polygon(country_multipolygons[ct], year, cf_exponent)
+    if ct[:8] == "country:" and ct[8:] in country_multipolygons:
+        error_msg, pu, matrix_sum = process_shapely_polygon(country_multipolygons[ct[8:]], year, cf_exponent)
     elif ct[:6] == "point:":
         error_msg, pu = process_point(ct,year)
         matrix_sum = None
@@ -360,7 +360,7 @@ def run_optimisation(assumptions, pu):
     assumptions_df["investment"] *= 1000.
     assumptions_df["fixed"] = [(annuity(v["lifetime"],v["discount rate"])+v["FOM"]/100.)*v["investment"]*Nyears for i,v in assumptions_df.iterrows()]
 
-    print('Starting task for {} with assumptions {}'.format(assumptions["country"],assumptions_df))
+    print('Starting task for {} with assumptions {}'.format(assumptions["location"],assumptions_df))
 
     network = pypsa.Network()
 
@@ -610,7 +610,7 @@ def solve(assumptions):
 
     print(assumptions)
 
-    assumptions['weather_hex'] = hashlib.md5("{}&{}&{}".format(assumptions["country"], assumptions["year"], assumptions['cf_exponent']).encode()).hexdigest()
+    assumptions['weather_hex'] = hashlib.md5("{}&{}&{}".format(assumptions["location"], assumptions["year"], assumptions['cf_exponent']).encode()).hexdigest()
     weather_csv = 'data/time-series-{}.csv'.format(assumptions['weather_hex'])
     if os.path.isfile(weather_csv):
         print("Using preexisting weather file:", weather_csv)
@@ -619,7 +619,7 @@ def solve(assumptions):
                          parse_dates=True)
     else:
         print("Calculating weather from scratch, saving as:", weather_csv)
-        pu, matrix_sum, error_msg = get_weather(assumptions["country"], assumptions["year"], assumptions['cf_exponent'])
+        pu, matrix_sum, error_msg = get_weather(assumptions["location"], assumptions["year"], assumptions['cf_exponent'])
         if error_msg is not None:
             return error(error_msg, jobid)
         pu = pu.round(3)
@@ -631,7 +631,7 @@ def solve(assumptions):
 
 
     if assumptions["job_type"] == "weather":
-        print("Returning weather for {}".format(assumptions["country"]))
+        print("Returning weather for {}".format(assumptions["location"]))
 
         results = {}
         results['assumptions'] = assumptions
@@ -650,7 +650,7 @@ def solve(assumptions):
 
         return results
 
-    results_string = assumptions["country"]
+    results_string = assumptions["location"]
     for item in ints+booleans+floats:
         results_string += "&{}".format(assumptions[item])
 
