@@ -563,14 +563,14 @@ function clear_weather(){
 
 function assumptions_to_url(){
     let url = "";
-    for (let i = 0; i < Object.keys(assumptions).length; i++){
-	let key = Object.keys(assumptions)[i];
-	let value = assumptions[key];
+    for (let i = 0; i < Object.keys(results.assumptions).length; i++){
+	let key = Object.keys(results.assumptions)[i];
+	let value = results.assumptions[key];
 	if(value === true) value = 1;
 	if(value === false) value = 0;
 	url += "&" + key + "=" + value;
     };
-    return url;
+    return url.slice(1);
 };
 
 
@@ -608,7 +608,7 @@ function display_results(){
 
     document.getElementById("results-overview-download").innerHTML = '<a href="data/results-overview-' + results.assumptions.results_hex + '.csv">Download Comma-Separated-Variable (CSV) file of results overview</a> ' + licenceText;
     document.getElementById("results-series-download").innerHTML = '<a href="data/results-series-' + results.assumptions.results_hex + '.csv">Download Comma-Separated-Variable (CSV) file of results time series</a> ' + licenceText;
-    document.getElementById("results-link").innerHTML = '<a href="https://model.energy/?' + assumptions_to_url().slice(1) +'">Link to these results</a>';
+    document.getElementById("results-link").innerHTML = '<a href="https://model.energy/?' + assumptions_to_url() +'">Link to these results</a>';
 };
 
 function display_weather(){
@@ -620,7 +620,7 @@ function display_weather(){
     draw_weather_graph();
     document.getElementById("capacity-factors").innerHTML = "Capacity factor onshore wind (blue): " + (results["onwind_cf_available"]*100).toFixed(1) + "%<br />Capacity factor solar PV (yellow): " + (results["solar_cf_available"]*100).toFixed(1) + "%";
     document.getElementById("weather-download").innerHTML = '<a href="data/time-series-' + results.assumptions.weather_hex + '.csv">Download Comma-Separated-Variable (CSV) file of data</a> ' + licenceText;
-    document.getElementById("weather-link").innerHTML = '<a href="https://model.energy/?' + assumptions_to_url().slice(1) +'">Link to these results</a>';
+    document.getElementById("weather-link").innerHTML = '<a href="https://model.energy/?' + assumptions_to_url() +'">Link to these results</a>';
 };
 
 
