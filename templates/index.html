@@ -3,60 +3,68 @@
   <head>
     <title>model.energy</title>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.rawgit.com/afeld/bootstrap-toc/v1.0.1/dist/bootstrap-toc.min.css"/>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.3/dist/leaflet.css"
       integrity="sha512-Rksm5RenBEKSKFjgI3a41vrjkw4EVPlJ3+OiI65vTjIdo9brlAacEuKOiQ5OFh7cOI1bkDwLqdLw3Zg0cRJAAQ==" crossorigin=""/>
-      <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.2/dist/leaflet.draw.css" />
-      <!-- Make sure you put this AFTER Leaflet's CSS -->
-      <script src="https://unpkg.com/leaflet@1.3.3/dist/leaflet.js" integrity="sha512-tAGcCfR4Sc5ZP5ZoVz0quoZDYX5aCtEm/eu1KhSLj2c9eFrylXZknQYmxUssFaVJKvvc0dJQixhGjG2yXWiV9Q==" crossorigin=""></script>
-      <script src="https://unpkg.com/leaflet-draw@1.0.2/dist/leaflet.draw.js"></script>
-      <script src="{{ url_for('static', filename='d3.v4.min.js') }}" charset="utf-8"></script>
-      <script src="{{ url_for('static', filename='d3-tip.js') }}" charset="utf-8"></script>
-      <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='solver-190331.css') }}">
-    </head>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.2/dist/leaflet.draw.css" />
+    <!-- Make sure you put this AFTER Leaflet's CSS -->
+    <script src="https://unpkg.com/leaflet@1.3.3/dist/leaflet.js" integrity="sha512-tAGcCfR4Sc5ZP5ZoVz0quoZDYX5aCtEm/eu1KhSLj2c9eFrylXZknQYmxUssFaVJKvvc0dJQixhGjG2yXWiV9Q==" crossorigin=""></script>
+    <script src="https://unpkg.com/leaflet-draw@1.0.2/dist/leaflet.draw.js"></script>
+    <script src="{{ url_for('static', filename='d3.v4.min.js') }}" charset="utf-8"></script>
+    <script src="{{ url_for('static', filename='d3-tip.js') }}" charset="utf-8"></script>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='solver.css') }}">
+  </head>
 
-    <body id="page-top">
-      <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top" id="mainNav">
-        <div class="container">
-          <a class="navbar-brand js-scroll-trigger" href="#page-top">model.energy</a>
-          <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-          </button>
-          <div class="collapse navbar-collapse" id="navbarResponsive">
-            <ul class="navbar-nav ml-auto">
-              <li class="nav-item">
-                <a class="nav-link js-scroll-trigger" href="#intro">Introduction</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link js-scroll-trigger" href="#location">Select location</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link js-scroll-trigger" href="#time-series">Fetch wind & solar</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link js-scroll-trigger" href="#assumptions">Choose technologies</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link js-scroll-trigger" href="#solve">Solve</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link js-scroll-trigger" href="#background">Background</a>
-              </li>
-            </ul>
-          </div>
+  <body id="page-top">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top" id="mainNav">
+      <div class="container">
+        <a class="navbar-brand js-scroll-trigger" href="#page-top">model.energy</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarResponsive">
+          <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+              <a class="nav-link js-scroll-trigger" href="#intro">Introduction</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link js-scroll-trigger" href="#location">Select location</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link js-scroll-trigger" href="#time-series">Fetch wind & solar</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link js-scroll-trigger" href="#assumptions">Choose technologies</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link js-scroll-trigger" href="#solve">Solve</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link js-scroll-trigger" href="#background">Background</a>
+            </li>
+          </ul>
         </div>
-      </nav>
+      </div>
+    </nav>
 
-      <header class="bg-primary text-white">
-        <div class="container text-center">
-          <h1>Build your own zero-emission electricity supply</h1>
+    <header class="bg-primary text-white">
+      <div class="container text-center">
+        <h1>Build your own zero-emission electricity supply</h1>
+      </div>
+    </header>
+
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-3 toc-col">
+          <nav id="toc" class="sticky-top"></nav>
         </div>
-      </header>
 
-      <section id="intro">
-        <div class="container">
-          <div class="row">
-            <div class="col-lg-12 mx-auto">
+        <div class="col-md-12 col-lg-9">
+          <div class="container-like">
+
+            <section id="intro">
               <h2>Introduction</h2>
               <hr>
               <p class="lead">
@@ -67,16 +75,10 @@
                 <li>remove technologies with the checkboxes, e.g. hydrogen gas storage or wind, and see system costs rise</li>
                 <li>set solar or battery costs very low, to simulate breakthroughs in manufacturing</li>
               </ul>
-            </div>
-          </div>
-        </div>
-      </section>
+            </section>
 
-      <section id="location" class="bg-light">
-        <div class="container">
-          <div class="row">
-            <div class="col-lg-12 mx-auto">
-              <h2>Step 1: Select location and weather year</h2>
+            <section id="location">
+              <h2 data-toc-text="1. Select location and weather year">Step 1: Select location and weather year</h2>
               <hr>
               <div class="form-check mb-1">
                 <input class="form-check-input" type="checkbox" name="selectByCountry" checked id="c1">
@@ -92,7 +94,7 @@
               </div>
               <div id="mapid">
               </div>
-	      <br />
+              <br />
               <div class="form-group">
                 <label for="countrySelecter">Location</label>
                 <input type="text" class="form-control" id="countrySelecter" aria-describedby="countrySelect" name="location_name" readonly>
@@ -108,41 +110,24 @@
                 <input type="number" class="form-control" id="distributionSelector" aria-describedby="distributionSelect" name="cf_exponent">
                 <small id="distributionSelect" class="form-text text-muted">If exponent is 0 generators are distributed evenly across the region, if it is 1 they are distributed proportional to capacity factor, if it is x they are distributed proportional to (capacity factor)^x.</small>
               </div>
-	    </div>
-	  </div>
-	</div>
-      </section>
-      <section id="time-series">
-        <div class="container">
-          <div class="row">
-            <div class="col-lg-12 mx-auto">
-              <h2>Step 2: Fetch available wind and solar output</h2>
+            </section>
+
+            <section id="time-series">
+              <h2 data-toc-text="2. Fetch available wind and solar output">Step 2: Fetch available wind and solar output</h2>
               <hr>
-	      <p class="lead">
-                <b>Warning:</b> It takes about 4 seconds to fetch the available wind and solar output.</p>
-              <p>
-
-                <p>
-                  <button type="button" class="btn btn-lg btn-primary" id="weather-button">Fetch wind & solar</button>
-                   &nbsp;&nbsp;Status: <span id="weather-status">Waiting for job</span>
-                </p>
-		<div class="col-xs-12 col-lg-6" id="chartArea">
-		  <svg width="1100" height="500" id="weather"></svg>
-		</div>
-	      <p><span id="capacity-factors"></span></p>
-	      <p><span id="weather-download"></span></p>
-	      <p><span id="weather-link"></span></p>
+              <p class="lead">
+                <b>Warning:</b> It takes about 4 seconds to fetch the available wind and solar output.
               </p>
-            </div>
-          </div>
-        </div>
-      </section>
+              <div class="col-xs-12 col-lg-6" id="chartArea">
+                <svg width="1100" height="500" id="weather"></svg>
+              </div>
+              <p><span id="capacity-factors"></span></p>
+              <p><span id="weather-download"></span></p>
+              <p><span id="weather-link"></span></p>
+            </section>
 
-      <section id="assumptions"  class="bg-light">
-        <div class="container">
-          <div class="row">
-            <div class="col-lg-12 mx-auto">
-              <h2>Step 3: Choose technologies, costs and other assumptions</h2>
+            <section id="assumptions">
+              <h2 data-toc-text="3. Choose technologies, costs and other assumptions">Step 3: Choose technologies, costs and other assumptions</h2>
               <hr>
               <div class="form-group">
                 <label for="samplingSelector">Constant demand [MW]</label>
@@ -157,7 +142,7 @@
                 </select>
                 <small class="form-text text-muted">Individual cost assumptions can be changed below under <em>advanced assumption settings</em>.</small>
               </div>
-              Choose which technologies should be included:
+              <p>Choose which technologies should be included:</p>
               <div class="form-check">
                 <input class="form-check-input" type="checkbox" name="wind" id="techCheck1">
                 <label class="form-check-label" for="techCheck1">
@@ -190,11 +175,11 @@
                 <div class="col">
                   <div class="collapse multi-collapse" id="advCost">
                     <div class="card card-body">
-		      <div class="form-group">
-			<label for="samplingSelector">Sampling frequency</label>
-			<input type="number" class="form-control" id="samplingSelector" aria-describedby="samplingSelect" name="frequency">
-			<small id="samplingSelect" class="form-text text-muted">n-hourly, n&lt;3 is very slow, big n solves faster (n=25 or n=49 give fast and relatively accurate results).</small>
-		      </div>
+                      <div class="form-group">
+                        <label for="samplingSelector">Sampling frequency</label>
+                        <input type="number" class="form-control" id="samplingSelector" aria-describedby="samplingSelect" name="frequency">
+                        <small id="samplingSelect" class="form-text text-muted">n-hourly, n&lt;3 is very slow, big n solves faster (n=25 or n=49 give fast and relatively accurate results).</small>
+                      </div>
                       <div class="form-group">
                         <label for="avdSel1">Wind capital cost (overnight) [EUR/kW]</label>
                         <input type="number" class="form-control" id="advSel1" name="wind_cost">
@@ -239,251 +224,258 @@
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-      </section>
+            </section>
 
-        <section id="solve">
-          <div class="container">
-            <div class="row">
-              <div class="col-lg-12 mx-auto">
-                <h2>Step 4: Solve and wait for results</h2>
-                <hr>
-                <p class="lead">
-                <b>Warning:</b> It takes about 30 seconds to solve and return a result if it hasn't been saved before, so please be patient! If there's a queue, it may take longer. We're working on improving the performance.</p>
-                <p>
-                  <button type="button" class="btn btn-lg btn-primary" id="solve-button">Solve</button>
-                  &nbsp;&nbsp;Status: <span id="status">Waiting for job</span>
-                </p>
 
-                <div class="accordion" id="accordionResults">
-                    <div id="collapseResults" class="collapse" data-parent="#accordionResults">
-                      <div class="card-body">
-
-                        <div id="results">
-                          <div id="results_summary">
-                            <h3>Results<span id="results_assumptions"></span></h3>
-                            <p>Baseload demand: <span id="load"></span> MW</p>
-                            <table id="tab_results">
-                              <tr>
-                                <th class="tab_asset" id="tabh_asset">Asset</th>
-                                <th class="tab_data" id="tabh_capacity">Capacity</th>
-                                <th class="tab_data" id="tabh_cf_used">Cap Ftr used [%]</th>
-                                <th class="tab_data" id="tabh_cf_available">Cap Ftr avail [%]</th>
-                                <th class="tab_data" id="tabh_curtailment">Curtlmt [%]</th>
-                                <th class="tab_data" id="tabh_rmv">Rel Mkt Value [%]</th>
-                              </tr>
-                              <tr>
-                                <td class="tab_asset">Solar</td>
-                                <td class="tab_data"><span id="solar_capacity"></span> MW</td>
-                                <td class="tab_data"><span id="solar_cf_used"></span></td>
-                                <td class="tab_data"><span id="solar_cf_available"></span></td>
-                                <td class="tab_data"><span id="solar_curtailment"></span></td>
-                                <td class="tab_data"><span id="solar_rmv"></span></td>
-                              </tr>
-                              <tr>
-                                <td class="tab_asset">Wind</td>
-                                <td class="tab_data"><span id="wind_capacity"></span> MW</td>
-                                <td class="tab_data"><span id="wind_cf_used"></span></td>
-                                <td class="tab_data"><span id="wind_cf_available"></span></td>
-                                <td class="tab_data"><span id="wind_curtailment"></span></td>
-                                <td class="tab_data"><span id="wind_rmv"></span></td>
-                              </tr>
-                              <tr>
-                                <td class="tab_asset">Battery power</td>
-                                <td class="tab_data"><span id="battery_power_capacity"></span> MW</td>
-                                <td class="tab_data"><span id="battery_power_cf_used"></span></td>
-                                <td class="tab_data"></td>
-                                <td class="tab_data"></td>
-                                <td class="tab_data"><span id="battery_power_rmv"></span>/<span id="battery_discharge_rmv"></span></td>
-                              </tr>
-                              <tr>
-                                <td class="tab_asset">Battery energy</td>
-                                <td class="tab_data"><span id="battery_energy_capacity"></span> MWh</td>
-                                <td class="tab_data"><span id="battery_energy_cf_used"></span></td>
-                                <td class="tab_data"></td>
-                                <td class="tab_data"></td>
-                              </tr>
-                              <tr>
-                                <td class="tab_asset">Hydrogen electrolyser</td>
-                                <td class="tab_data"><span id="hydrogen_electrolyser_capacity"></span> MW</td>
-                                <td class="tab_data"><span id="hydrogen_electrolyser_cf_used"></span></td>
-                                <td class="tab_data"></td>
-                                <td class="tab_data"></td>
-                                <td class="tab_data"><span id="hydrogen_electrolyser_rmv"></span></td>
-                              </tr>
-                              <tr>
-                                <td class="tab_asset">Hydrogen turbine</td>
-                                <td class="tab_data"><span id="hydrogen_turbine_capacity"></span> MW</td>
-                                <td class="tab_data"><span id="hydrogen_turbine_cf_used"></span></td>
-                                <td class="tab_data"></td>
-                                <td class="tab_data"></td>
-                                <td class="tab_data"><span id="hydrogen_turbine_rmv"></span></td>
-                              </tr>
-                              <tr>
-                                <td class="tab_asset">Hydrogen energy</td>
-                                <td class="tab_data"><span id="hydrogen_energy_capacity"></span> MWh</td>
-                                <td class="tab_data"><span id="hydrogen_energy_cf_used"></span></td>
-                                <td class="tab_data"></td>
-                                <td class="tab_data"></td>
-                              </tr>
-                            </table>
-                            <br />
-                            <p class="lead">Average system cost [EUR/MWh]: <span id="average_cost"></span></p>
-                          </div>
-                          <div id="average_cost_div">
-                            <svg width="110" height="400" id="average_cost_graph"></svg>
-                          </div>
-                          <div id="power_capacity">
-                            <svg width="110" height="400" id="power_capacity_graph"></svg>
-                          </div>
-                          <div id="energy_capacity">
-                           <svg width="110" height="400" id="energy_capacity_graph"></svg>
-                          </div>
-                          <div id="energy">
-                            <svg width="110" height="400" id="energy_graph"></svg>
-                          </div>
-                          <div id="legend">
-                            <h3>Legend</h3>
-                          </div>
-                        </div>
-                        <div id="graph">
-                          <svg width="1100" height="500" id="power"></svg>
-                        </div>
-			<br /><br />
-			<p><span id="results-overview-download"></span></p>
-			<p><span id="results-series-download"></span></p>
-			<p><span id="results-link"></span></p>
+            <section id="solve">
+            <h2 data-toc-text="4. Solve and wait for results">Step 4: Solve and wait for results</h2>
+            <hr>
+            <p class="lead">
+            <b>Warning:</b> It takes about 30 seconds to solve and return a result if it hasn't been saved before, please be patient! If there's a queue, it may take longer. We're working on improving the performance.</p>
+            <p>
+              <button type="button" class="btn btn-lg btn-primary" id="solve-button">Solve</button>
+              &nbsp;&nbsp;Status: <span id="status">Waiting for job</span>
+            </p>
+            <div class="accordion" id="accordionResults">
+                <div id="collapseResults" class="collapse" data-parent="#accordionResults">
+                  <div class="card-body">
+                    <div id="results">
+                      <div id="results_summary">
+                        <h3 data-toc-skip>Results<span id="results_assumptions"></span></h3>
+                        <p>Baseload demand: <span id="load"></span> MW</p>
+                        <table id="tab_results">
+                          <tr>
+                            <th class="tab_asset" id="tabh_asset">Asset</th>
+                            <th class="tab_data" id="tabh_capacity">Capacity</th>
+                            <th class="tab_data" id="tabh_cf_used">Cap Ftr used [%]</th>
+                            <th class="tab_data" id="tabh_cf_available">Cap Ftr avail [%]</th>
+                            <th class="tab_data" id="tabh_curtailment">Curtlmt [%]</th>
+                            <th class="tab_data" id="tabh_rmv">Rel Mkt Value [%]</th>
+                          </tr>
+                          <tr>
+                            <td class="tab_asset">Solar</td>
+                            <td class="tab_data"><span id="solar_capacity"></span> MW</td>
+                            <td class="tab_data"><span id="solar_cf_used"></span></td>
+                            <td class="tab_data"><span id="solar_cf_available"></span></td>
+                            <td class="tab_data"><span id="solar_curtailment"></span></td>
+                            <td class="tab_data"><span id="solar_rmv"></span></td>
+                          </tr>
+                          <tr>
+                            <td class="tab_asset">Wind</td>
+                            <td class="tab_data"><span id="wind_capacity"></span> MW</td>
+                            <td class="tab_data"><span id="wind_cf_used"></span></td>
+                            <td class="tab_data"><span id="wind_cf_available"></span></td>
+                            <td class="tab_data"><span id="wind_curtailment"></span></td>
+                            <td class="tab_data"><span id="wind_rmv"></span></td>
+                          </tr>
+                          <tr>
+                            <td class="tab_asset">Battery power</td>
+                            <td class="tab_data"><span id="battery_power_capacity"></span> MW</td>
+                            <td class="tab_data"><span id="battery_power_cf_used"></span></td>
+                            <td class="tab_data"></td>
+                            <td class="tab_data"></td>
+                            <td class="tab_data"><span id="battery_power_rmv"></span>/<span id="battery_discharge_rmv"></span></td>
+                          </tr>
+                          <tr>
+                            <td class="tab_asset">Battery energy</td>
+                            <td class="tab_data"><span id="battery_energy_capacity"></span> MWh</td>
+                            <td class="tab_data"><span id="battery_energy_cf_used"></span></td>
+                            <td class="tab_data"></td>
+                            <td class="tab_data"></td>
+                          </tr>
+                          <tr>
+                            <td class="tab_asset">Hydrogen electrolyser</td>
+                            <td class="tab_data"><span id="hydrogen_electrolyser_capacity"></span> MW</td>
+                            <td class="tab_data"><span id="hydrogen_electrolyser_cf_used"></span></td>
+                            <td class="tab_data"></td>
+                            <td class="tab_data"></td>
+                            <td class="tab_data"><span id="hydrogen_electrolyser_rmv"></span></td>
+                          </tr>
+                          <tr>
+                            <td class="tab_asset">Hydrogen turbine</td>
+                            <td class="tab_data"><span id="hydrogen_turbine_capacity"></span> MW</td>
+                            <td class="tab_data"><span id="hydrogen_turbine_cf_used"></span></td>
+                            <td class="tab_data"></td>
+                            <td class="tab_data"></td>
+                            <td class="tab_data"><span id="hydrogen_turbine_rmv"></span></td>
+                          </tr>
+                          <tr>
+                            <td class="tab_asset">Hydrogen energy</td>
+                            <td class="tab_data"><span id="hydrogen_energy_capacity"></span> MWh</td>
+                            <td class="tab_data"><span id="hydrogen_energy_cf_used"></span></td>
+                            <td class="tab_data"></td>
+                            <td class="tab_data"></td>
+                          </tr>
+                        </table>
+                        <br />
+                        <p class="lead">Average system cost [EUR/MWh]: <span id="average_cost"></span></p>
+                      </div>
+                      <div id="average_cost_div">
+                        <svg width="110" height="400" id="average_cost_graph"></svg>
+                      </div>
+                      <div id="power_capacity">
+                        <svg width="110" height="400" id="power_capacity_graph"></svg>
+                      </div>
+                      <div id="energy_capacity">
+                       <svg width="110" height="400" id="energy_capacity_graph"></svg>
+                      </div>
+                      <div id="energy">
+                        <svg width="110" height="400" id="energy_graph"></svg>
+                      </div>
+                      <div id="legend">
+                        <h3 data-toc-skip>Legend</h3>
                       </div>
                     </div>
-                  </div><!-- accordion-->
+                    <div id="graph">
+                      <svg width="1100" height="500" id="power"></svg>
+                    </div>
+                    <br /><br />
+                    <p><span id="results-overview-download"></span></p>
+                    <p><span id="results-series-download"></span></p>
+                    <p><span id="results-link"></span></p>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </div>
-        </section>
+              </div><!-- accordion-->
+            </section>
 
-        <section id="background" class="bg-light">
-          <div class="container">
-            <div class="row">
-              <div class="col-lg-12 mx-auto">
-                <h2>Background and warnings</h2>
-                <hr>
-                <p class="lead">
-                  This is a <b>toy model</b> with a <b>strongly simplified</b> setup.
-                  Please read the <a href="https://github.com/PyPSA/WHOBS#warnings">warnings</a> before interpreting the results. In particular:</p>
-                <ol>
-                  <li>
-                    Electricity systems with zero direct CO2 emissions can be
-                    built more cheaply by using additional technology options. The
-                    examples here are simply a toy model to put an upper bound on the
-                    costs for a very simple setup. Additional generation technologies
-                    which may reduce costs include using existing hydroelectric
-                    generators, biomass from sustainable resources (such as waste and
-                    agricultural/forestry residues), offshore wind, concentrating
-                    solar thermal, geothermal, ocean energy, nuclear and
-                    fossil/biomass plants with CCS. Additional storage technologies
-                    include redox flow batteries, compressed air energy storage,
+            <section id="background">
+              <h2>Background and warnings</h2>
+              <hr>
+              <p class="lead">
+                This is a <b>toy model</b> with a <b>strongly simplified</b> setup.
+                Please read the <a href="https://github.com/PyPSA/WHOBS#warnings">warnings</a> before interpreting the results. In particular:
+              </p>
+              <ol>
+                <li>
+                  Electricity systems with zero direct CO2 emissions can be
+                  built more cheaply by using additional technology options. The
+                  examples here are simply a toy model to put an upper bound on the
+                  costs for a very simple setup. Additional generation technologies
+                  which may reduce costs include using existing hydroelectric
+                  generators, biomass from sustainable resources (such as waste and
+                  agricultural/forestry residues), offshore wind, concentrating
+                  solar thermal, geothermal, ocean energy, nuclear and
+                  fossil/biomass plants with CCS. Additional storage technologies
+                  include redox flow batteries, compressed air energy storage,
                   etc. Other options include demand-side management.
-                  </li>
-                  <li>
-                    No import or export capacities with other countries are
-                    assumed, so each country must meet the baseload profile by
-                    itself. Existing and planned transmission grid connections between
-                    countries can reduce costs by up to 20% by smoothing wind over a
-                    larger area (see e.g. <a href="https://arxiv.org/abs/1704.05492">this paper</a> or <a href="https://arxiv.org/abs/1705.07617">this one</a>).
-                  </li>
-                  <li>
-                    Including energy demand sectors other than electricity, like transport, heating and non-electric industrial demand can offer additional flexibility (e.g. load-shifting by battery electric vehicles and electrified heating with thermal storage), see e.g. <a href="https://arxiv.org/abs/1801.05290">this paper</a> or <a href="https://doi.org/10.1016/j.rser.2016.02.025">this one</a>.
-                  </li>
-                  <li>
-                    Costs here are for completely decarbonised electricity systems. Reaching lower levels of decarbonisation is much cheaper and doesn't necessarily require any storage at all.
-                  </li>
-                  <li>
-                    The wind profiles used here are converted from wind speed time series assuming an existing wind turbine model (Vestas V112 3MW with a hub height of 80m). Newer and future turbines will have higher capacity factors because e.g. they're taller, capturing wind energy where resources are better.
-                  </li>
-		  <li>
-		    Solar profiles are calculated assuming that panels in the northern hemisphere face south, and that panels in the southern hemisphere face north, with a slope of 35 degrees against the horizontal in both cases.
-		  </li>
-                  <li>
-                    Because the wind and solar profiles are computed using a fixed distribution of power plants, there is no possibility to optimise the distribution of power plants within each country to reduce the costs of providing a baseload profile.
-                  </li>
-                  <li>
-                    The time series for wind and solar generation are
-                    based on the European Centre for Medium-Range
-                    Weather Forecasts
-                    (ECMWF) <a href="https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels">ERA5 reanalysis
-                    dataset</a>. Reanalysis datasets are generated by fitting numerical weather simulations to real measured data. In regions where real measurements are sparse, reanalysis data may deviate from observed weather patterns. In addition, reanalysis datasets may not always capture clouds accurately, so for PV generation it is advisable to include satellite observations in calculations, such as the <a href="https://wui.cmsaf.eu/safira/action/viewDoiDetails?acronym=SARAH_V002">CMSAF SARAH II dataset</a> (available only for Europe and Africa).
-                  </li>
-                  <li>
-                    The costs for hydrogen storage assume hydrogen gas is stored underground. The costs for underground hydrogen storage are taken from Table 3 of <a href="https://www.nrel.gov/docs/fy10osti/46719.pdf">this NREL study</a>, using the most expensive option ("rock caverns created by excavating comparatively impervious rock formations"). Where salt deposits exist, salt caverns may be cheaper. Studies on salt deposit availability are available for most countries, see e.g. <a href="https://www.researchgate.net/figure/Underground-salt-deposits-and-cavern-fields-in-Europe-225_fig5_319417820">this map</a> for Europe.
-                  </li>
-                  <li>
-                    Costs for the electricity grid inside each country and costs for ancillary services are not included.
-                  </li>
-                </ol>
-                <p>
-                  To see an animation of a 95% decarbonised European electricity system,
-                  including more renewable energy technologies and cross-border
-                  transmission connections, see:
-                </p>
-                <p><a href="https://pypsa.org/animations/pypsa-eur-30/">PyPSA-Eur-30
-                animation</a></p>
-                <p>Here asset lifetimes are all assumed to be 25
-                  years, with the exception of batteries (15 years) and hydrogen
-                  electrolysers (20 years). Battery charging and discharging
-                  efficiencies are both 90%. Fixed Operation and Maintenance (FOM)
-                  costs are set at 3% of the investment cost of the asset per
-                year.</p>
-                <p>The sources for most of the assumptions can be found
-                  in <a href="https://github.com/PyPSA/WHOBS/blob/master/assumptions.csv">this
-                  table</a>.</p>
-                  <p>Fuel cells could be used instead of combined or open cycle turbines for hydrogen to power. Fuel cells are less mature than turbines, but have better chances of cost reduction and efficiency improvement.</p>
-                <p>To avoid long job times, the default here is to run only for a single
-                  weather year sampled at most every 3 hours. You can find solved
-                  versions run against every hour over 31 weather years here at
-                  the <a href="https://github.com/PyPSA/WHOBS">WHOBS repository</a>.</p>
-                <h3>Only free software and open data</h3>
-                <p>This tool is built only with free software and open data; the
-                  code for it can be downloaded from the GitHub
-                  repository <a href="https://github.com/PyPSA/whobs-server">whobs-server</a>. In particular, it uses
-                  the <a href="https://github.com/PyPSA/PyPSA">Python for Power
-                  System Analysis (PyPSA)</a> energy optimisation framework, open
-                  weather data
-                  from the European Centre for Medium-Range Weather Forecasts (ECMWF) <a href="https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels">ERA5 reanalysis dataset</a>, the <a href="https://github.com/FRESNA/atlite">atlite library</a> for converting weather data to generation profiles,
-                  the <a href="https://projects.coin-or.org/Clp">Clp</a> solver, <a href="https://d3js.org/">D3.js</a> for graphics, <a href="https://www.mapbox.com/">Mapbox</a>, <a href="http://leafletjs.com/">Leaflet</a> and <a href="https://www.naturalearthdata.com/">Natural Earth</a> for maps,  and
-                free software for the server infrastructure (GNU/Linux, nginx, Flask, gunicorn, Redis).</p>
-                <h3>New functionality coming soon</h3>
-                <ul>
-                  <li>Deep links that pass assumptions as URL arguments so you can share simulation settings</li>
-                  <li>More generation technologies (e.g. offshore wind, dispatchable sources)</li>
-                  <li>Allow non-zero CO2 limits</li>
-		  <li>Real electricity demand profiles</li>
-		  <li>Comparison to today's electricity prices</li>
-		  <li>Other demand sectors (transport, heating and industry)</li>
-		  <li>Demand-side management</li>
-                </ul>
-                <h3>Problems/comments/feedback/help out</h3>
-                <p>If you encounter any problems please use the <a href="https://github.com/PyPSA/whobs-server/issues">GitHub issue tracker</a>. It would be helpful to note the jobid and any other error messages from your browser's JavaScript console (find the console via your browser's "Developer Tools").</p>
-                <p>If you want to help out and contribute improvements, please submit a <a href="https://github.com/PyPSA/whobs-server/pulls">pull request</a>!</p>
-                <p>Any other feedback and comments can be sent to <a href="https://nworbmot.org/">Tom Brown</a>.</p>
-                <h3>Privacy statement</h3>
-                <p>No personal information is stored on the server. There are no cookies.</p>
-                <p>Simulation assumptions and results for each job are stored on the server for statistical purposes.</p>
-              </div>
-            </div>
+                </li>
+                <li>
+                  No import or export capacities with other countries are
+                  assumed, so each country must meet the baseload profile by
+                  itself. Existing and planned transmission grid connections between
+                  countries can reduce costs by up to 20% by smoothing wind over a
+                  larger area (see e.g. <a href="https://arxiv.org/abs/1704.05492">this paper</a> or <a href="https://arxiv.org/abs/1705.07617">this one</a>).
+                </li>
+                <li>
+                  Including energy demand sectors other than electricity, like transport, heating and non-electric industrial demand can offer additional flexibility (e.g. load-shifting by battery electric vehicles and electrified heating with thermal storage), see e.g. <a href="https://arxiv.org/abs/1801.05290">this paper</a> or <a href="https://doi.org/10.1016/j.rser.2016.02.025">this one</a>.
+                </li>
+                <li>
+                  Costs here are for completely decarbonised electricity systems. Reaching lower levels of decarbonisation is much cheaper and doesn't necessarily require any storage at all.
+                </li>
+                <li>
+                  The wind profiles used here are converted from wind speed time series assuming an existing wind turbine model (Vestas V112 3MW with a hub height of 80m). Newer and future turbines will have higher capacity factors because e.g. they're taller, capturing wind energy where resources are better.
+                </li>
+                <li>
+                  Solar profiles are calculated assuming that panels in the northern hemisphere face south, and that panels in the southern hemisphere face north, with a slope of 35 degrees against the horizontal in both cases.
+                </li>
+                <li>
+                  Because the wind and solar profiles are computed using a fixed distribution of power plants, there is no possibility to optimise the distribution of power plants within each country to reduce the costs of providing a baseload profile.
+                </li>
+                <li>
+                  The time series for wind and solar generation are
+                  based on the European Centre for Medium-Range
+                  Weather Forecasts
+                  (ECMWF) <a href="https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels">ERA5 reanalysis
+                  dataset</a>. Reanalysis datasets are generated by fitting numerical weather simulations to real measured data. In regions where real measurements are sparse, reanalysis data may deviate from observed weather patterns. In addition, reanalysis datasets may not always capture clouds accurately, so for PV generation it is advisable to include satellite observations in calculations, such as the <a href="https://wui.cmsaf.eu/safira/action/viewDoiDetails?acronym=SARAH_V002">CMSAF SARAH II dataset</a> (available only for Europe and Africa).
+                </li>
+                <li>
+                  The costs for hydrogen storage assume hydrogen gas is stored underground. The costs for underground hydrogen storage are taken from Table 3 of <a href="https://www.nrel.gov/docs/fy10osti/46719.pdf">this NREL study</a>, using the most expensive option ("rock caverns created by excavating comparatively impervious rock formations"). Where salt deposits exist, salt caverns may be cheaper. Studies on salt deposit availability are available for most countries, see e.g. <a href="https://www.researchgate.net/figure/Underground-salt-deposits-and-cavern-fields-in-Europe-225_fig5_319417820">this map</a> for Europe.
+                </li>
+                <li>
+                  Costs for the electricity grid inside each country and costs for ancillary services are not included.
+                </li>
+              </ol>
+              <p>
+                To see an animation of a 95% decarbonised European electricity system,
+                including more renewable energy technologies and cross-border
+                transmission connections, see:
+              </p>
+              <p><a href="https://pypsa.org/animations/pypsa-eur-30/">PyPSA-Eur-30
+              animation</a></p>
+              <p>Here asset lifetimes are all assumed to be 25
+                years, with the exception of batteries (15 years) and hydrogen
+                electrolysers (20 years). Battery charging and discharging
+                efficiencies are both 90%. Fixed Operation and Maintenance (FOM)
+                costs are set at 3% of the investment cost of the asset per
+              year.</p>
+              <p>The sources for most of the assumptions can be found
+                in <a href="https://github.com/PyPSA/WHOBS/blob/master/assumptions.csv">this
+                table</a>.</p>
+                <p>Fuel cells could be used instead of combined or open cycle turbines for hydrogen to power. Fuel cells are less mature than turbines, but have better chances of cost reduction and efficiency improvement.</p>
+              <p>To avoid long job times, the default here is to run only for a single
+                weather year sampled at most every 3 hours. You can find solved
+                versions run against every hour over 31 weather years here at
+                the <a href="https://github.com/PyPSA/WHOBS">WHOBS repository</a>.</p>
+              <h3>Only free software and open data</h3>
+              <p>This tool is built only with free software and open data; the
+                code for it can be downloaded from the GitHub
+                repository <a href="https://github.com/PyPSA/whobs-server">whobs-server</a>. In particular, it uses
+                the <a href="https://github.com/PyPSA/PyPSA">Python for Power
+                System Analysis (PyPSA)</a> energy optimisation framework, open
+                weather data
+                from the European Centre for Medium-Range Weather Forecasts (ECMWF) <a href="https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels">ERA5 reanalysis dataset</a>, the <a href="https://github.com/FRESNA/atlite">atlite library</a> for converting weather data to generation profiles,
+                the <a href="https://projects.coin-or.org/Clp">Clp</a> solver, <a href="https://d3js.org/">D3.js</a> for graphics, <a href="https://www.mapbox.com/">Mapbox</a>, <a href="http://leafletjs.com/">Leaflet</a> and <a href="https://www.naturalearthdata.com/">Natural Earth</a> for maps,  and
+              free software for the server infrastructure (GNU/Linux, nginx, Flask, gunicorn, Redis).</p>
+              <h3>New functionality coming soon</h3>
+              <ul>
+                <li>Deep links that pass assumptions as URL arguments so you can share simulation settings</li>
+                <li>More generation technologies (e.g. offshore wind, dispatchable sources)</li>
+                <li>Allow non-zero CO2 limits</li>
+                <li>Real electricity demand profiles</li>
+                <li>Comparison to today's electricity prices</li>
+                <li>Other demand sectors (transport, heating and industry)</li>
+                <li>Demand-side management</li>
+              </ul>
+              <h3>Problems/comments/feedback/help out</h3>
+              <p>If you encounter any problems please use the <a href="https://github.com/PyPSA/whobs-server/issues">GitHub issue tracker</a>. It would be helpful to note the jobid and any other error messages from your browser's JavaScript console (find the console via your browser's "Developer Tools").</p>
+              <p>If you want to help out and contribute improvements, please submit a <a href="https://github.com/PyPSA/whobs-server/pulls">pull request</a>!</p>
+              <p>Any other feedback and comments can be sent to <a href="https://nworbmot.org/">Tom Brown</a>.</p>
+              <h3>Privacy statement</h3>
+              <p>No personal information is stored on the server. There are no cookies.</p>
+              <p>Simulation assumptions and results for each job are stored on the server for statistical purposes.</p>
+            </section>
           </div>
-        </section>
+        </div>
+      </div>
+    </div>
 
-      <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
-      <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
-      <script src="{{ url_for('static', filename='jquery.easing.min.js') }}"></script>
-      <script src="{{ url_for('static', filename='scrolling-nav.js') }}"></script>
-      <script type="text/javascript">
-        var assumptions = JSON.parse('{{ settings|json }}');
-      </script>
-      <script src="{{ url_for('static', filename='solver-190402.js') }}"></script>
-    </body>
-  </html>
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <script src="https://cdn.rawgit.com/afeld/bootstrap-toc/v1.0.1/dist/bootstrap-toc.min.js"></script>
+    <script src="{{ url_for('static', filename='jquery.easing.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='scrolling-nav.js') }}"></script>
+    <script type="text/javascript">
+      var assumptions = JSON.parse('{{ settings|json }}');
+
+      // Determine which navbar to assign scrollspy depending on window width
+      if ($(window).width() >= 992) {
+        $(function() {
+          var navSelector = "#toc";
+          var $myNav = $(navSelector);
+          Toc.init($myNav);
+          $("body").scrollspy({
+            target: navSelector
+          });
+        });
+      } else {
+        $('body').scrollspy({
+          target: '#mainNav',
+          offset: 56
+        });
+      }
+    </script>
+    <script src="{{ url_for('static', filename='solver.js') }}"></script>
+  </body>
+</html>
+
