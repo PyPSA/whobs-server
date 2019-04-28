@@ -118,6 +118,10 @@
               <p class="lead">
                 <b>Warning:</b> It takes about 4 seconds to fetch the available wind and solar output.
               </p>
+	      <p>
+		<button type="button" class="btn btn-lg btn-primary" id="weather-button">Fetch wind & solar</button>
+		&nbsp;&nbsp;Status: <span id="weather-status">Waiting for job</span>
+	      </p>
               <div class="col-xs-12 col-lg-6" id="chartArea">
                 <svg width="1100" height="500" id="weather"></svg>
               </div>
@@ -478,4 +482,3 @@
     <script src="{{ url_for('static', filename='solver.js') }}"></script>
   </body>
 </html>
-
