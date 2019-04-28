@@ -50,6 +50,7 @@ def root():
 
         # Try to get settings from URL
         country = request.args.get('country', default = 'DE', type = str)
+        job_type = request.args.get('job_type', default = 'none', type = str)
         year = request.args.get('year', default = 2011, type = int)
         freq = request.args.get('freq', default = 3, type = int)
         cf_exponent = request.args.get('cf_exponent', default = 2, type = float)
@@ -107,7 +108,8 @@ def root():
             'solar': solar,
             'battery': battery,
             'hydrogen': hydrogen,
-            'discount_rate': 5
+            'discount_rate': 5,
+            'job_type' : job_type
         }
     return render_template('index.html', settings=settings_dict, country_name=country_name, scenario=scenario)
 

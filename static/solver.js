@@ -66,6 +66,13 @@ let tech_assumptions = {"2020" : {"wind_cost" : 1240,
 		       };
 
 
+
+assets = ["solar","wind","battery_power",
+	      "battery_energy","hydrogen_electrolyser",
+	      "hydrogen_turbine","hydrogen_energy"]
+
+vre = ["solar","wind"]
+
 for (let i = 0; i < Object.keys(tech_assumptions[default_tech_scenario]).length; i++){
     let key = Object.keys(tech_assumptions[default_tech_scenario])[i];
     assumptions[key] = tech_assumptions[default_tech_scenario][key];
@@ -315,10 +322,9 @@ for (let i = 0; i < Object.keys(assumptions).length; i++){
 	    console.log(key,"changed to",assumptions[key]);
 	});
     }
-    else if(key == "country"){
+    else if(key == "country" || key == "job_type"){
     }
     else{
-	console.log(key,value);
 	document.getElementsByName(key)[0].value = value;
 	d3.selectAll("input[name='" + key + "']").on("change", function(){
 	    assumptions[key] = this.value;
@@ -356,9 +362,8 @@ var poll_interval = 1000;
 var poll_timeout = 10*60*1000 + poll_interval/2;
 
 
-solveButton.on("click", function() {
-    var button = d3.select(this);
-    if (button.text() == solveButtonText["before"]) {
+function solve() {
+    if (solveButton.text() == solveButtonText["before"]) {
 	clear_results();
 	var send_job = new XMLHttpRequest();
 	send_job.open('POST', '/jobs', true);
@@ -374,17 +379,23 @@ solveButton.on("click", function() {
 	assumptions["job_type"] = "solve";
 	send_job.send(JSON.stringify(assumptions));
 
-	button.text(solveButtonText["after"]);
-	button.attr("disabled","");
+	solveButton.text(solveButtonText["after"]);
+	solveButton.attr("disabled","");
 	document.getElementById("status").innerHTML="Sending job to solver";
     };
-});
+};
 
 
+solveButton.on("click", solve);
 
-weatherButton.on("click", function() {
-    var button = d3.select(this);
-    if (button.text() == weatherButtonText["before"]) {
+if(assumptions["job_type"] === "solve"){
+    weather();
+    solve();
+};
+
+
+function weather() {
+    if (weatherButton.text() == weatherButtonText["before"]) {
 	clear_weather();
 	var send_job = new XMLHttpRequest();
 	send_job.open('POST', '/jobs', true);
@@ -400,11 +411,20 @@ weatherButton.on("click", function() {
 	assumptions["job_type"] = "weather";
 	send_job.send(JSON.stringify(assumptions));
 
-	button.text(weatherButtonText["after"]);
-	button.attr("disabled","");
+	weatherButton.text(weatherButtonText["after"]);
+	weatherButton.attr("disabled","");
 	document.getElementById("weather-status").innerHTML="Sending job to weather database";
     };
-});
+};
+
+weatherButton.on("click", weather);
+
+
+if(assumptions["job_type"] === "weather"){
+    weather();
+};
+
+
 
 
 function poll_result() {
@@ -496,13 +516,6 @@ function poll_weather_kill() {
 };
 
 
-
-
-assets = ["solar","wind","battery_power",
-	      "battery_energy","hydrogen_electrolyser",
-	      "hydrogen_turbine","hydrogen_energy"]
-
-vre = ["solar","wind"]
 
 function clear_results(){
     document.getElementById("results_assumptions").innerHTML="";
