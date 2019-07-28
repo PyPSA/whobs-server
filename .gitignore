@@ -21,6 +21,12 @@ static/ne*
 static/solver-*.js
 static/solver-*.css
 
+static/datapackage.json
+
+static/*admin*json
+
+static/README.md
+
 *results-*.json
 
 *.nc
@@ -40,3 +46,5 @@ data/
 venv/
 
 move_weather.py
+
+*.zip

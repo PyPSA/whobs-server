@@ -43,6 +43,12 @@ with(open('static/ne-countries-110m.json', 'r')) as f:
 country_names = [f['properties']['iso_a2'] for f in j['features']]
 country_names_full = [f['properties']['name'] for f in j['features']]
 
+# Load allowed region names
+with(open('static/selected_admin1.json', 'r')) as f:
+    j = json.load(f)
+region_names = [f['properties']['name'] for f in j['features']]
+
+
 booleans = ["wind","solar","battery","hydrogen"]
 
 float_tech_options = ["wind_cost", "solar_cost", "battery_energy_cost","battery_power_cost", "hydrogen_energy_cost", "hydrogen_electrolyser_cost", "hydrogen_electrolyser_efficiency", "hydrogen_turbine_cost", "hydrogen_turbine_efficiency"]
@@ -74,6 +80,8 @@ def root():
             assumptions["location_name"] = assumptions["location"]
         elif assumptions["location"][:8] == "polygon:":
             assumptions["location_name"] = "polygon"
+        elif assumptions["location"][:7] == "region:" and assumptions["location"][7:] in region_names:
+            assumptions["location_name"] = assumptions["location"][7:]
         else:
             assumptions["location"] = 'country:DE'
             assumptions["location_name"] = country_names_full[country_names.index(assumptions["location"][8:])]

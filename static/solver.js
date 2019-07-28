@@ -109,8 +109,7 @@ L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={
     accessToken: 'pk.eyJ1IjoibndvcmJtb3QiLCJhIjoiY2prbWxibTUyMjZsMDNwcGp2bHR3OWZsaSJ9.MgSprgR6BEbBLXl5rPvXvQ'
 }).addTo(mymap);
 
-
-
+// for point/polygon/rectangle
 var activeLayer = false;
 var activeLayerType = false;
 
@@ -145,17 +144,23 @@ d3.json("static/ne-countries-110m.json", function (json){
 	    mouseover : onCountryMouseOver,
 	    mouseout : onCountryMouseOut
 	});
-    }
+    };
 
+    // activated if location specified in URL
     if(assumptions["location"].slice(0,6) == "point:"){
-	countryToLocation();
+	mymap.removeLayer(geojson);
+	mymap.addLayer(editableLayers);
+	mymap.addControl(drawControl);
+	d3.selectAll("input[id='selectByLatLon']").property('checked',true);
 	coordStr=assumptions["location"].slice(6).split(",");
 	coord = [parseFloat(coordStr[1]),parseFloat(coordStr[0])];
 	activeLayer = L.marker(coord).addTo(editableLayers);
 	activeLayer.bindPopup('Location: longitude: ' + Math.round(10*coord[0])/10 + ', latitude: ' + Math.round(10*coord[1])/10);
-    };
-    if(assumptions["location"].slice(0,8) == "polygon:" ){
-	countryToLocation();
+    } else if (assumptions["location"].slice(0,8) == "polygon:" ){
+	mymap.removeLayer(geojson);
+	mymap.addLayer(editableLayers);
+	mymap.addControl(drawControl);
+	d3.selectAll("input[id='selectByLatLon']").property('checked',true);
 	coordsStr = assumptions["location"].slice(8).split(";");
 	let coords = [];
 	for(let i=0; i < coordsStr.length; i++) {
@@ -166,6 +171,9 @@ d3.json("static/ne-countries-110m.json", function (json){
 	    coords.push([parseFloat(coordStr[1]),parseFloat(coordStr[0])]);
 	};
 	activeLayer = L.polygon(coords,{color:'red'}).addTo(editableLayers);
+    } else if (assumptions["location"].slice(0,7) == "region:"){
+	mymap.removeLayer(geojson);
+	d3.selectAll("input[id='selectByRegion']").property('checked',true);
     };
 });
 
@@ -279,42 +287,31 @@ mymap.on(L.Draw.Event.CREATED, function (e) {
 
 
 
-
-
-function locationToCountry(){
-    mymap.removeLayer(editableLayers);
-    mymap.removeControl(drawControl);
-    mymap.addLayer(geojson);
-    d3.selectAll("input[name='selectByCountry']").property('checked',true);
-    d3.selectAll("input[name='selectByLocation']").property('checked',false);
-};
-
-function countryToLocation(){
-    mymap.removeLayer(geojson);
-    mymap.addLayer(editableLayers);
-    mymap.addControl(drawControl);
-    d3.selectAll("input[name='selectByCountry']").property('checked',false);
-    d3.selectAll("input[name='selectByLocation']").property('checked',true);
-};
-
-
-
-d3.selectAll("input[name='selectByCountry']").on("change", function(){
+d3.selectAll("input[id='selectByCountry']").on("change", function(){
     if(this.checked){
-	locationToCountry();
-    }
-    else{
-	countryToLocation();
+	mymap.removeLayer(editableLayers);
+	mymap.removeControl(drawControl);
+	mymap.removeControl(geojsonRegion);
+	mymap.addLayer(geojson);
+    };
+});
+
+d3.selectAll("input[id='selectByRegion']").on("change", function(){
+    if(this.checked){
+	mymap.removeLayer(geojson);
+	mymap.removeLayer(editableLayers);
+	mymap.removeControl(drawControl);
+	mymap.addLayer(geojsonRegion);
     };
 });
 
 
-d3.selectAll("input[name='selectByLocation']").on("change", function(){
+d3.selectAll("input[id='selectByLatLon']").on("change", function(){
     if(this.checked){
-	countryToLocation();
-    }
-    else{
-	locationToCountry();
+	mymap.removeLayer(geojson);
+	mymap.removeControl(geojsonRegion);
+	mymap.addLayer(editableLayers);
+	mymap.addControl(drawControl);
     };
 });
 
@@ -1185,3 +1182,83 @@ legend.append("text")
     .attr("x",20)
     .attr("y",10)
     .text(function (d) { return d.replace("_"," ")});
+
+
+
+
+// See https://oramind.com/country-border-highlighting-with-leaflet-js/
+d3.json("static/selected_admin1.json", function (json){
+    function style(feature) {
+	function getColor(f){
+	    if((feature.properties.name == assumptions["location"].slice(7)) && (assumptions["location"].slice(0,7) == "region:")){
+		return "red";
+	    } else {
+		return "blue";
+	    };
+	};
+	return {
+	    fillColor: getColor(feature),
+	    weight: 1,
+	    opacity: 0.4,
+	    color: getColor(feature),
+	    fillOpacity: 0.3
+	};
+    };
+    geojsonRegion = L.geoJson(json, {
+	onEachFeature: onEachRegion,
+	style : style
+    });
+
+    function onEachRegion(feature, layer){
+	layer.on({
+	    click : onRegionClick,
+	    mouseover : onRegionMouseOver,
+	    mouseout : onRegionMouseOut
+	});
+    };
+
+    // activated if location specified in URL
+    if (assumptions["location"].slice(0,7) == "region:"){
+	mymap.addLayer(geojsonRegion);
+    };
+});
+
+
+
+function onRegionMouseOut(e){
+    geojsonRegion.resetStyle(e.target);
+}
+
+function onRegionClick(e){
+
+    //console.log(e.target.feature.properties.name,e.target.feature.properties.iso_a2);
+
+    assumptions["location"] = "region:" + e.target.feature.properties.name;
+    assumptions["location_name"] = e.target.feature.properties.name;
+    document.getElementsByName("location_name")[0].value = assumptions["location_name"];
+    console.log("country changed to",assumptions["location"]);
+
+    geojsonRegion.eachLayer(function(t,i){ geojsonRegion.resetStyle(t)});
+    //console.log(t.feature.properties.name)})
+}
+
+/**
+ * Callback for when a country is highlighted. Will take care of the ui aspects, and it will call
+ * other callbacks after done.
+ * @param e
+ */
+function onRegionMouseOver(e){
+
+    var layer = e.target;
+
+    layer.setStyle({
+	weight: 2,
+	color: '#666',
+	dashArray: '',
+	fillOpacity: 0.7
+    });
+
+    if (!L.Browser.ie && !L.Browser.opera) {
+	layer.bringToFront();
+    }
+};

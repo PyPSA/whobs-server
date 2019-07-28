@@ -12,11 +12,6 @@ os.makedirs('results-solve', exist_ok=True)
 os.makedirs('assumptions', exist_ok=True)
 
 # Get static files excluded from repo
-subprocess.call(['wget', '-O', 'static/d3-tip.js',
-                 'https://model.energy/static/d3-tip.js'])
-subprocess.call(['wget', '-O', 'static/d3.v4.min.js',
-                 'https://model.energy/static/d3.v4.min.js'])
-subprocess.call(['wget', '-O', 'static/ne-countries-110m.json',
-                 'https://model.energy/static/ne-countries-110m.json'])
-subprocess.call(['wget', '-O', 'static/results-initial.json',
-                 'https://model.energy/static/results-initial.json'])
+for filename in ['d3-tip.js','d3.v4.min.js','ne-countries-110m.json','results-initial.json','selected_admin1.json']:
+    subprocess.call(['wget', '-O', 'static/{}'.format(filename),
+                     'https://model.energy/static/{}'.format(filename)])
