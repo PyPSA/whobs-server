@@ -100,7 +100,7 @@ def jobs_api():
     if request.method == "POST":
         print(request.headers['Content-Type'])
         print(request.json)
-        job = queue.enqueue("solve.solve",request.json, timeout=300)
+        job = queue.enqueue("solve.solve", args=(request.json,), job_timeout=300)
         result = {"jobid" : job.get_id()}
         request.json.update({"jobid" : result["jobid"],
                              "timestamp" : str(datetime.datetime.now()),

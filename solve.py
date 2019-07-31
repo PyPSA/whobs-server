@@ -81,6 +81,27 @@ def get_country_multipolygons():
 country_multipolygons = get_country_multipolygons()
 
 
+def get_region_multipolygons():
+
+    with open('static/selected_admin1.json', 'r') as myfile:
+        data=myfile.read()
+
+        geojson = json.loads(data)
+
+    def get_multipolygon(feature):
+        if feature["geometry"]["type"] == "Polygon":
+            polys = [Polygon(feature['geometry']["coordinates"][0])]
+        else:
+            polys = []
+
+            for p in feature['geometry']["coordinates"]:
+                polys.append(Polygon(p[0]))
+
+        return MultiPolygon(polys)
+
+    return {feature["properties"]["name"] : get_multipolygon(feature) for feature in geojson["features"]}
+
+region_multipolygons = get_region_multipolygons()
 
 
 def annuity(lifetime,rate):
@@ -323,6 +344,8 @@ def get_weather(ct, year, cf_exponent):
 
     if ct[:8] == "country:" and ct[8:] in country_multipolygons:
         error_msg, pu, matrix_sum = process_shapely_polygon(country_multipolygons[ct[8:]], year, cf_exponent)
+    if ct[:7] == "region:" and ct[7:] in region_multipolygons:
+        error_msg, pu, matrix_sum = process_shapely_polygon(region_multipolygons[ct[7:]], year, cf_exponent)
     elif ct[:6] == "point:":
         error_msg, pu = process_point(ct,year)
         matrix_sum = None

@@ -4,7 +4,9 @@ import hashlib
 
 import pandas as pd
 
-country_multipolygons = solve.get_country_multipolygons()
+location_type = "region"
+
+multipolygons = getattr(solve,"get_{}_multipolygons".format(location_type))()
 
 years = range(2011,2014)
 
@@ -73,8 +75,8 @@ tech_assumptions = {"2020" : {"wind_cost" : 1240,
 
 for year in years:
     for cf_exponent in cf_exponents:
-        for ct in country_multipolygons:
-            weather_hex = hashlib.md5("{}&{}&{}".format(ct, year, cf_exponent).encode()).hexdigest()
+        for location in multipolygons:
+            weather_hex = hashlib.md5("{}&{}&{}".format((location_type + ":" + location).replace("country:",""), year, cf_exponent).encode()).hexdigest()
             weather_csv = 'data/time-series-{}.csv'.format(weather_hex)
             pu = pd.read_csv(weather_csv,
                              index_col=0,
@@ -84,8 +86,8 @@ for year in years:
                 assumptions.update(tech_assumptions[str(assumption_year)])
                 assumptions["year"] = year
                 assumptions["cf_exponent"] = cf_exponent
-                assumptions["country"] = ct
-                results_string = assumptions["country"]
+                assumptions["location"] = location_type + ":" + location
+                results_string = assumptions["location"].replace("country:","")
 
                 for item in ints+booleans:
                     results_string += "&{}".format(assumptions[item])
