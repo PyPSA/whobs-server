@@ -67,11 +67,11 @@
             <section id="intro">
               <h2>Introduction</h2>
               <hr>
-              <p class="lead">
+              <p>
                 This tool calculates the cost of meeting constant electricity demand from a combination of wind power, solar power and storage (using batteries and electrolysed hydrogen) for different regions of the world.</p>
-              <p class="lead">This is a <b>toy model</b> with a <b>strongly simplified</b> setup. Please read the <a class="js-scroll-trigger" href="#background">warnings</a> below.</p>
-              <p class="lead">Fun things to try out:</p>
-              <ul class="lead">
+              <p>This is a <b>toy model</b> with a <b>strongly simplified</b> setup. Please read the <a class="js-scroll-trigger" href="#background">warnings</a> below.</p>
+              <p>Fun things to try out:</p>
+              <ul>
                 <li>remove technologies with the checkboxes, e.g. hydrogen gas storage or wind, and see system costs rise</li>
                 <li>set solar or battery costs very low, to simulate breakthroughs in manufacturing</li>
               </ul>
@@ -80,19 +80,19 @@
             <section id="location">
               <h2 data-toc-text="1. Select location and weather year">Step 1: Select location and weather year</h2>
               <hr>
-              <div class="radio mb-1">
+              <div class="form-check">
                 <input class="form-check-input" type="radio" name="selectLocation" checked id="selectByCountry">
                 <label class="form-check-label" for="selectByCountry">
                   Select country
                 </label>
               </div>
-              <div class="radio mb-1">
+              <div class="form-check">
                 <input class="form-check-input" type="radio" name="selectLocation" id="selectByRegion">
                 <label class="form-check-label" for="selectByRegion">
 		  Select state or province (for Australia, China, Germany, India, Russia and United States)
                 </label>
               </div>
-              <div class="radio mb-3">
+              <div class="form-check mb-3">
                 <input class="form-check-input" type="radio" name="selectLocation" id="selectByLatLon">
                 <label class="form-check-label" for="selectByLatLon">
                   Select point, rectangle or polygon, using the toolbox that appears at top-right
@@ -121,7 +121,7 @@
             <section id="time-series">
               <h2 data-toc-text="2. Fetch available wind and solar output">Step 2: Fetch available wind and solar output</h2>
               <hr>
-              <p class="lead">
+              <p>
                 <b>Warning:</b> It takes about 4 seconds to fetch the available wind and solar output.
               </p>
 	      <p>
@@ -240,7 +240,7 @@
             <section id="solve">
             <h2 data-toc-text="4. Solve and wait for results">Step 4: Solve and wait for results</h2>
             <hr>
-            <p class="lead">
+            <p>
             <b>Warning:</b> It takes about 30 seconds to solve and return a result if it hasn't been saved before, please be patient! If there's a queue, it may take longer. We're working on improving the performance.</p>
             <p>
               <button type="button" class="btn btn-lg btn-primary" id="solve-button">Solve</button>
@@ -318,7 +318,7 @@
                           </tr>
                         </table>
                         <br />
-                        <p class="lead">Average system cost [EUR/MWh]: <span id="average_cost"></span></p>
+                        <p>Average system cost [EUR/MWh]: <span id="average_cost"></span></p>
                       </div>
                       <div id="average_cost_div">
                         <svg width="110" height="400" id="average_cost_graph"></svg>
@@ -351,7 +351,7 @@
             <section id="background">
               <h2>Background and warnings</h2>
               <hr>
-              <p class="lead">
+              <p>
                 This is a <b>toy model</b> with a <b>strongly simplified</b> setup.
                 Please read the <a href="https://github.com/PyPSA/WHOBS#warnings">warnings</a> before interpreting the results. In particular:
               </p>
