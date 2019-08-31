@@ -354,6 +354,8 @@ var weatherJobid = "";
 
 var timer;
 var timeout;
+var timerStart;
+var timerExpected = 20;
 
 var weatherTimer;
 var weatherTimeout;
@@ -377,6 +379,8 @@ function solve() {
 	    jobid = data["jobid"];
 	    console.log("Jobid:",jobid);
 	    timer = setInterval(poll_result, poll_interval);
+	    timerStart = new Date().getTime();
+	    document.getElementById("countdown").innerHTML="Ready in " + timerExpected + " seconds";
 	    console.log("timer",timer,"polling every",poll_interval,"milliseconds");
 	    timeout = setTimeout(poll_kill, poll_timeout);
 	};
@@ -443,9 +447,12 @@ function poll_result() {
 	document.getElementById("status").innerHTML=status;
 	console.log("status is",status);
 
+	document.getElementById("countdown").innerHTML = "Ready in " + Math.round(timerExpected - (new Date().getTime() - timerStart)/1000.) + " seconds";
+
 	if(status == "Error"){
 	    clearInterval(timer);
 	    clearTimeout(timeout);
+	    document.getElementById("countdown").innerHTML = "Ready in " + timerExpected + " seconds";
 	    console.log("results:",results);
 	    document.getElementById("status").innerHTML=status + ": " + results["error"];
 	    solveButton.text(solveButtonText["before"]);
@@ -454,6 +461,7 @@ function poll_result() {
 	if(status == "Finished"){
 	    clearInterval(timer);
 	    clearTimeout(timeout);
+	    document.getElementById("countdown").innerHTML = "Solved in " + Math.round((new Date().getTime() - timerStart)/1000.) + " seconds";
 	    console.log("results:",results);
 	    solveButton.text(solveButtonText["before"]);
 	    $('#solve-button').removeAttr("disabled");
@@ -845,7 +853,7 @@ function draw_cost_stack(){
 	labels.push(assets[i].replace("_"," "));
     };
 
-    draw_stack(data, labels, color, "Breakdown of average system cost [EUR/MWh]", "#average_cost_graph");
+    draw_stack(data, labels, color, "Breakdown of avg. system cost [EUR/MWh]", "#average_cost_graph");
 }
 
 
@@ -978,7 +986,7 @@ function draw_stack(data, labels, color, ylabel, svgName){
 
     // text label for the y axis
     label.append("text")
-        .attr("y", y(totals[totals.length-1])-20)
+        .attr("y", y(totals[totals.length-1])-25)
         .attr("x",x(0.5))
         .attr("dy", "1em")
         .style("text-anchor", "middle")

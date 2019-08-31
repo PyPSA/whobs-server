@@ -241,10 +241,8 @@
             <h2 data-toc-text="4. Solve and wait for results">Step 4: Solve and wait for results</h2>
             <hr>
             <p>
-            <b>Warning:</b> It takes about 30 seconds to solve and return a result if it hasn't been saved before, please be patient! If there's a queue, it may take longer. We're working on improving the performance.</p>
-            <p>
               <button type="button" class="btn btn-lg btn-primary" id="solve-button">Solve</button>
-              &nbsp;&nbsp;Status: <span id="status">Waiting for job</span>
+              &nbsp;&nbsp;<span id="countdown">Ready in 20 seconds</span>, status: <span id="status">Waiting for job</span>
             </p>
             <div class="accordion" id="accordionResults">
                 <div id="collapseResults" class="collapse" data-parent="#accordionResults">
@@ -318,7 +316,7 @@
                           </tr>
                         </table>
                         <br />
-                        <p>Average system cost [EUR/MWh]: <span id="average_cost"></span></p>
+                        <p><b>Average system cost [EUR/MWh]: <span id="average_cost"></span></b></p>
                       </div>
                       <div id="average_cost_div">
                         <svg width="110" height="400" id="average_cost_graph"></svg>
