@@ -36,6 +36,8 @@ import numpy as np
 
 from shapely.geometry import box, Point, Polygon, MultiPolygon
 
+import nomopyomo
+
 octant_folder = "../cutouts/"
 
 colors = {"wind":"#3B6182",
@@ -440,10 +442,17 @@ def run_optimisation(assumptions, pu):
                     efficiency = assumptions_df.at['battery_power','efficiency'])
 
         def extra_functionality(network,snapshots):
-            def battery(model):
-                return model.link_p_nom["battery_power"] == model.link_p_nom["battery_discharge"]*network.links.at["battery_power","efficiency"]
+            group = "battery"
+            nomopyomo.add_group(network,"constraint",group,1)
+            start = network.constraint_positions.at[group,"start"]
 
-            network.model.battery = Constraint(rule=battery)
+            # charge-power = efficiency * discharge-power
+            constraint_matrix = {}
+            i_battery_power = network.variable_positions.at["Link-p_nom","start"] + network.links.index.get_loc("battery_power")
+            i_battery_discharge = network.variable_positions.at["Link-p_nom","start"] + network.links.index.get_loc("battery_discharge")
+            constraint_matrix[i_battery_power] = 1.
+            constraint_matrix[i_battery_discharge] = -network.links.at["battery_power","efficiency"]
+            nomopyomo.write_constraint(network,constraint_matrix,"==",0.,start)
     else:
         def extra_functionality(network,snapshots):
             pass
@@ -481,9 +490,10 @@ def run_optimisation(assumptions, pu):
 
     solver_name = "cbc"
     formulation = "kirchhoff"
-    status, termination_condition = network.lopf(solver_name=solver_name,
-                                                 formulation=formulation,
-                                                 extra_functionality=extra_functionality)
+    status, termination_condition = nomopyomo.network_lopf(network,
+                                                           solver_name=solver_name,
+                                                           formulation=formulation,
+                                                           extra_functionality=extra_functionality)
 
     print(status,termination_condition)
 
