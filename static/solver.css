@@ -24,6 +24,8 @@
 
 .container-like {
     max-width: 1140px;
+    font-size: 1.25rem;
+    font-weight: 300;
 }
 
 section {
