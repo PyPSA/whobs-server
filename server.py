@@ -49,9 +49,10 @@ with(open('static/selected_admin1.json', 'r')) as f:
 region_names = [f['properties']['name'] for f in j['features']]
 
 
-booleans = ["wind","solar","battery","hydrogen"]
+tbooleans = ["wind","solar","battery","hydrogen"]
+fbooleans = ["dispatchable1","dispatchable2","co2_limit"]
 
-float_tech_options = ["wind_cost", "solar_cost", "battery_energy_cost","battery_power_cost", "hydrogen_energy_cost", "hydrogen_electrolyser_cost", "hydrogen_electrolyser_efficiency", "hydrogen_turbine_cost", "hydrogen_turbine_efficiency"]
+float_tech_options = ["wind_cost", "solar_cost", "battery_energy_cost","battery_power_cost", "hydrogen_energy_cost", "hydrogen_electrolyser_cost", "hydrogen_electrolyser_efficiency", "hydrogen_turbine_cost", "hydrogen_turbine_efficiency","co2_emissions"]
 
 
 @app.route('/')
@@ -67,8 +68,11 @@ def root():
         assumptions["cf_exponent"] = request.args.get('cf_exponent', default = 2, type = float)
         assumptions["load"] = request.args.get('load', default = 100, type = float)
         assumptions["discount_rate"] = request.args.get('discount_rate', default = 5, type = float)
-        for boolean in booleans:
+        assumptions["co2_emissions"] = request.args.get('co2_emissions', default = 100, type = float)
+        for boolean in tbooleans:
             assumptions[boolean] = request.args.get(boolean, default = 1, type = int)
+        for boolean in fbooleans:
+            assumptions[boolean] = request.args.get(boolean, default = 0, type = int)
         for float_tech_option in float_tech_options:
             if float_tech_option in request.args:
                 assumptions[float_tech_option] = request.args.get(float_tech_option, default = 100, type = float)
@@ -86,7 +90,7 @@ def root():
             assumptions["location"] = 'country:DE'
             assumptions["location_name"] = country_names_full[country_names.index(assumptions["location"][8:])]
 
-        for boolean in booleans:
+        for boolean in tbooleans + fbooleans:
             if assumptions[boolean] == 0:
                 assumptions[boolean] = False
             else:

@@ -29,6 +29,8 @@ var colors = {"wind":"#3B6182",
               "hydrogen_turbine" : "red",
               "hydrogen_electrolyser" : "cyan",
               "hydrogen_energy" : "magenta",
+	      "dispatchable1" : "orange",
+	      "dispatchable2" : "lime",
              };
 
 
@@ -41,7 +43,14 @@ let tech_assumptions = {"2020" : {"wind_cost" : 1240,
 				  "hydrogen_electrolyser_efficiency" : 75,
 				  "hydrogen_turbine_cost" : 800,
 				  "hydrogen_turbine_efficiency" : 60,
-
+				  "dispatchable1_cost" : 400,
+				  "dispatchable1_marginal_cost" : 50,
+				  "dispatchable1_emissions" : 500,
+				  "dispatchable1_discount" : 10,
+				  "dispatchable2_cost" : 6000,
+				  "dispatchable2_marginal_cost" : 10,
+				  "dispatchable2_emissions" : 0,
+				  "dispatchable2_discount" : 10,
 				 },
 			"2030" : {"wind_cost" : 1182,
 				  "solar_cost" : 600,
@@ -52,6 +61,14 @@ let tech_assumptions = {"2020" : {"wind_cost" : 1240,
 				  "hydrogen_electrolyser_efficiency" : 80,
 				  "hydrogen_turbine_cost" : 800,
 				  "hydrogen_turbine_efficiency" : 60,
+				  "dispatchable1_cost" : 400,
+				  "dispatchable1_marginal_cost" : 50,
+				  "dispatchable1_emissions" : 500,
+				  "dispatchable1_discount" : 10,
+				  "dispatchable2_cost" : 6000,
+				  "dispatchable2_marginal_cost" : 10,
+				  "dispatchable2_emissions" : 0,
+				  "dispatchable2_discount" : 10,
 				 },
 			"2050" : {"wind_cost" : 1075,
 				  "solar_cost" : 425,
@@ -62,14 +79,23 @@ let tech_assumptions = {"2020" : {"wind_cost" : 1240,
 				  "hydrogen_electrolyser_efficiency" : 80,
 				  "hydrogen_turbine_cost" : 800,
 				  "hydrogen_turbine_efficiency" : 60,
+				  "dispatchable1_cost" : 400,
+				  "dispatchable1_marginal_cost" : 50,
+				  "dispatchable1_emissions" : 500,
+				  "dispatchable1_discount" : 10,
+				  "dispatchable2_cost" : 6000,
+				  "dispatchable2_marginal_cost" : 10,
+				  "dispatchable2_emissions" : 0,
+				  "dispatchable2_discount" : 10,
 				 }
 		       };
 
 
 
 assets = ["solar","wind","battery_power",
-	      "battery_energy","hydrogen_electrolyser",
-	      "hydrogen_turbine","hydrogen_energy"]
+	  "battery_energy","hydrogen_electrolyser",
+	  "hydrogen_turbine","hydrogen_energy",
+	  "dispatchable1","dispatchable2"]
 
 vre = ["solar","wind"]
 
@@ -319,7 +345,7 @@ d3.selectAll("input[id='selectByLatLon']").on("change", function(){
 for (let i = 0; i < Object.keys(assumptions).length; i++){
     let key = Object.keys(assumptions)[i];
     let value = assumptions[key];
-    if(value === true){
+    if(typeof value === "boolean"){
 	document.getElementsByName(key)[0].checked = value;
 	d3.selectAll("input[name='" + key + "']").on("change", function(){
 	    assumptions[key] = this.checked;
@@ -542,8 +568,8 @@ function clear_results(){
     };
     document.getElementById("battery_discharge_rmv").innerHTML="";
     for (let i = 0; i < vre.length; i++){
-	document.getElementById(assets[i] + "_cf_available").innerHTML="";
-	document.getElementById(assets[i] + "_curtailment").innerHTML="";
+	document.getElementById(vre[i] + "_cf_available").innerHTML="";
+	document.getElementById(vre[i] + "_curtailment").innerHTML="";
     };
     d3.select("#power").selectAll("g").remove();
     d3.select("#average_cost_graph").selectAll("g").remove();
@@ -595,8 +621,8 @@ function display_results(){
     };
     document.getElementById("battery_discharge_rmv").innerHTML=Math.abs((results["battery_discharge_rmv"]*100)).toFixed(1);
     for (let i = 0; i < vre.length; i++){
-	document.getElementById(assets[i] + "_cf_available").innerHTML=Math.abs((results[assets[i] + "_cf_available"]*100)).toFixed(1);
-	document.getElementById(assets[i] + "_curtailment").innerHTML=Math.abs((results[assets[i] + "_curtailment"]*100)).toFixed(1);
+	document.getElementById(vre[i] + "_cf_available").innerHTML=Math.abs((results[vre[i] + "_cf_available"]*100)).toFixed(1);
+	document.getElementById(vre[i] + "_curtailment").innerHTML=Math.abs((results[vre[i] + "_curtailment"]*100)).toFixed(1);
     };
 
 

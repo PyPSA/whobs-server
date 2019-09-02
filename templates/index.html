@@ -231,6 +231,60 @@
                         <label for="avdSel10">Cost of capital / interest rate [percent]</label>
                         <input type="number" class="form-control" id="advSel10" name="discount_rate">
                       </div>
+		      <div class="form-check">
+			<input class="form-check-input" type="checkbox" name="dispatchable1" id="techCheck5">
+			<label class="form-check-label" for="techCheck5">
+			  Dispatchable technology 1
+			</label>
+		      </div>
+                      <div class="form-group">
+                        <label for="avdSel11">Dispatchable technology 1 capital cost (overnight) [EUR/kW]</label>
+                        <input type="number" class="form-control" id="advSel11" name="dispatchable1_cost">
+                      </div>
+                      <div class="form-group">
+                        <label for="avdSel12">Dispatchable technology 1 marginal cost (including fuel) [EUR/MWhel]</label>
+                        <input type="number" class="form-control" id="advSel12" name="dispatchable1_marginal_cost">
+                      </div>
+                      <div class="form-group">
+                        <label for="avdSel13">Dispatchable technology 1 emissions factor [gCO2eq/kWhel]</label>
+                        <input type="number" class="form-control" id="advSel13" name="dispatchable1_emissions">
+                      </div>
+                      <div class="form-group">
+                        <label for="avdSel14">Dispatchable technology 1 discount rate [percent]</label>
+                        <input type="number" class="form-control" id="advSel14" name="dispatchable1_discount">
+                      </div>
+		      <div class="form-check">
+			<input class="form-check-input" type="checkbox" name="dispatchable2" id="techCheck6">
+			<label class="form-check-label" for="techCheck6">
+			  Dispatchable technology 2
+			</label>
+		      </div>
+                      <div class="form-group">
+                        <label for="avdSel15">Dispatchable technology 2 capital cost (overnight) [EUR/kW]</label>
+                        <input type="number" class="form-control" id="advSel15" name="dispatchable2_cost">
+                      </div>
+                      <div class="form-group">
+                        <label for="avdSel16">Dispatchable technology 2 marginal cost (including fuel) [EUR/MWhel]</label>
+                        <input type="number" class="form-control" id="advSel16" name="dispatchable2_marginal_cost">
+                      </div>
+                      <div class="form-group">
+                        <label for="avdSel17">Dispatchable technology 2 emissions factor [gCO2eq/kWhel]</label>
+                        <input type="number" class="form-control" id="advSel17" name="dispatchable2_emissions">
+                      </div>
+                      <div class="form-group">
+                        <label for="avdSel18">Dispatchable technology 2 discount rate [percent]</label>
+                        <input type="number" class="form-control" id="advSel18" name="dispatchable2_discount">
+                      </div>
+		      <div class="form-check">
+			<input class="form-check-input" type="checkbox" name="co2_limit" id="co2_limit">
+			<label class="form-check-label" for="co2_limit">
+			  Limit on CO2 emissions
+			</label>
+		      </div>
+                      <div class="form-group">
+                        <label for="avdSel19">Maximum average system emissions [gCO2eq/kWhel]</label>
+                        <input type="number" class="form-control" id="avdSel19" name="co2_emissions">
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -314,6 +368,22 @@
                             <td class="tab_data"><span id="hydrogen_energy_cf_used"></span></td>
                             <td class="tab_data"></td>
                             <td class="tab_data"></td>
+                          </tr>
+                          <tr>
+                            <td class="tab_asset">Dispatchable1</td>
+                            <td class="tab_data"><span id="dispatchable1_capacity"></span> MW</td>
+                            <td class="tab_data"><span id="dispatchable1_cf_used"></span></td>
+                            <td class="tab_data"></td>
+                            <td class="tab_data"></td>
+                            <td class="tab_data"><span id="dispatchable1_rmv"></span></td>
+                          </tr>
+                          <tr>
+                            <td class="tab_asset">Dispatchable2</td>
+                            <td class="tab_data"><span id="dispatchable2_capacity"></span> MW</td>
+                            <td class="tab_data"><span id="dispatchable2_cf_used"></span></td>
+                            <td class="tab_data"></td>
+                            <td class="tab_data"></td>
+                            <td class="tab_data"><span id="dispatchable2_rmv"></span></td>
                           </tr>
                         </table>
                         <br />
@@ -437,9 +507,6 @@
               free software for the server infrastructure (GNU/Linux, nginx, Flask, gunicorn, Redis).</p>
               <h3>New functionality coming soon</h3>
               <ul>
-                <li>Deep links that pass assumptions as URL arguments so you can share simulation settings</li>
-                <li>More generation technologies (e.g. offshore wind, dispatchable sources)</li>
-                <li>Allow non-zero CO2 limits</li>
                 <li>Real electricity demand profiles</li>
                 <li>Comparison to today's electricity prices</li>
                 <li>Other demand sectors (transport, heating and industry)</li>

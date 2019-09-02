@@ -50,6 +50,8 @@ colors = {"wind":"#3B6182",
           "hydrogen_turbine" : "red",
           "hydrogen_electrolyser" : "cyan",
           "hydrogen_energy" : "magenta",
+          "dispatchable1" : "orange",
+          "dispatchable2" : "lime",
 }
 
 years_available_start = 2011
@@ -115,7 +117,7 @@ def annuity(lifetime,rate):
 
 assumptions_df = pd.DataFrame(columns=["FOM","fixed","discount rate","lifetime","investment","efficiency"],
                               index=["wind","solar","hydrogen_electrolyser","hydrogen_turbine","hydrogen_energy",
-                                     "battery_power","battery_energy"],
+                                     "battery_power","battery_energy","dispatchable1","dispatchable2"],
                               dtype=float)
 
 assumptions_df["lifetime"] = 25.
@@ -127,7 +129,7 @@ assumptions_df["FOM"] = 3.
 assumptions_df["efficiency"] = 1.
 assumptions_df.at["battery_power","efficiency"] = 0.9
 
-booleans = ["wind","solar","battery","hydrogen"]
+booleans = ["wind","solar","battery","hydrogen","dispatchable1","dispatchable2","co2_limit"]
 
 floats = ["cf_exponent","load","wind_cost","solar_cost","battery_energy_cost",
           "battery_power_cost","hydrogen_electrolyser_cost",
@@ -135,7 +137,16 @@ floats = ["cf_exponent","load","wind_cost","solar_cost","battery_energy_cost",
           "hydrogen_electrolyser_efficiency",
           "hydrogen_turbine_cost",
           "hydrogen_turbine_efficiency",
-          "discount_rate"]
+          "discount_rate",
+          "dispatchable1_cost",
+          "dispatchable1_marginal_cost",
+          "dispatchable1_emissions",
+          "dispatchable1_discount",
+          "dispatchable2_cost",
+          "dispatchable2_marginal_cost",
+          "dispatchable2_emissions",
+          "dispatchable2_discount",
+          "co2_emissions"]
 
 ints = ["year","frequency"]
 
@@ -373,8 +384,10 @@ def run_optimisation(assumptions, pu):
     Nyears = 1
 
     assumptions_df["discount rate"] = assumptions["discount_rate"]/100.
+    for item in ["dispatchable1","dispatchable2"]:
+        assumptions_df.at[item,"discount rate"] = assumptions[item + "_discount"]/100.
 
-    for item in ["wind","solar","battery_energy","battery_power","hydrogen_electrolyser","hydrogen_energy","hydrogen_turbine"]:
+    for item in ["wind","solar","battery_energy","battery_power","hydrogen_electrolyser","hydrogen_energy","hydrogen_turbine","dispatchable1","dispatchable2"]:
         assumptions_df.at[item,"investment"] = assumptions[item + "_cost"]
 
     for item in ["hydrogen_electrolyser","hydrogen_turbine"]:
@@ -417,6 +430,17 @@ def run_optimisation(assumptions, pu):
                     marginal_cost = 0.2, #Small cost to prefer curtailment to destroying energy in storage, solar curtails before wind
                     capital_cost = assumptions_df.at['wind','fixed'])
 
+    for i in range(1,3):
+        name = "dispatchable" + str(i)
+        if assumptions[name]:
+            network.add("Carrier",name,
+                        co2_emissions=assumptions[name+"_emissions"])
+            network.add("Generator",name,
+                        bus="elec",
+                        carrier=name,
+                        p_nom_extendable=True,
+                        marginal_cost=assumptions[name+"_marginal_cost"],
+                        capital_cost=assumptions_df.at[name,'fixed'])
 
     if assumptions["battery"]:
 
@@ -486,6 +510,11 @@ def run_optimisation(assumptions, pu):
                      e_cyclic=True,
                      capital_cost=assumptions_df.at["hydrogen_energy","fixed"])
 
+    if assumptions["co2_limit"]:
+        network.add("GlobalConstraint","co2_limit",
+                    sense="<=",
+                    constant=assumptions["co2_emissions"]*assumptions["load"]*network.snapshot_weightings.sum())
+
     network.consistency_check()
 
     solver_name = "cbc"
@@ -511,7 +540,7 @@ def run_optimisation(assumptions, pu):
 
     vre = ["wind","solar"]
 
-    results_series = pd.DataFrame(index=network.snapshots,columns=vre+["battery_discharge","hydrogen_turbine","battery_charge","hydrogen_electrolyser"],dtype=float)
+    results_series = pd.DataFrame(index=network.snapshots,columns=vre+["battery_discharge","hydrogen_turbine","battery_charge","hydrogen_electrolyser","dispatchable1","dispatchable2"],dtype=float)
 
 
     for g in vre:
@@ -533,6 +562,25 @@ def run_optimisation(assumptions, pu):
             results_overview[g+"_available"] = 0.
             results_overview[g+"_cf_used"] = 0.
             results_overview[g+"_cf_available"] = 0.
+            results_overview[g+"_rmv"] = 0.
+            results_series[g] = 0.
+
+    for i in range(1,3):
+        g = "dispatchable" + str(i)
+        if assumptions[g] and network.generators.p_nom_opt[g] > threshold:
+            results_overview[g+"_capacity"] = network.generators.p_nom_opt[g]
+            results_overview[g+"_cost"] = (network.generators.p_nom_opt*network.generators.capital_cost)[g]/year_weight
+            results_overview[g+"_marginal_cost"] = (network.generators_t.p[g].multiply(network.snapshot_weightings)).sum()*network.generators.at[g,"marginal_cost"]/year_weight
+            results_overview[g+"_used"] = network.generators_t.p[g].mean()
+            results_overview[g+"_cf_used"] = results_overview[g+"_used"]/network.generators.p_nom_opt[g]
+            results_overview[g+"_rmv"] = (network.buses_t.marginal_price["elec"]*network.generators_t.p[g]).sum()/network.generators_t.p[g].sum()/results_overview["average_price"]
+            results_series[g] = network.generators_t.p[g]
+        else:
+            results_overview[g+"_capacity"] = 0.
+            results_overview[g+"_cost"] = 0.
+            results_overview[g+"_marginal_cost"] = 0.
+            results_overview[g+"_used"] = 0.
+            results_overview[g+"_cf_used"] = 0.
             results_overview[g+"_rmv"] = 0.
             results_series[g] = 0.
 
@@ -722,7 +770,7 @@ def solve(assumptions):
 
     results["snapshots"] = [str(s) for s in results_series.index]
 
-    columns = {"positive" : ["wind","solar","battery_discharge","hydrogen_turbine"],
+    columns = {"positive" : ["wind","solar","battery_discharge","hydrogen_turbine","dispatchable1","dispatchable2"],
                "negative" : ["battery_charge","hydrogen_electrolyser"]}
 
 
