@@ -874,7 +874,11 @@ function draw_cost_stack(){
     let labels = [];
 
     for(let i=0; i < assets.length; i++){
-	data.push(results[assets[i]+"_cost"]/results["assumptions"]["load"]);
+	let cost = results[assets[i]+"_cost"];
+	if(results.hasOwnProperty(assets[i]+"_marginal_cost")){
+	    cost += results[assets[i]+"_marginal_cost"];
+	};
+	data.push(cost/results["assumptions"]["load"]);
 	color.push(colors[assets[i]]);
 	labels.push(assets[i].replace("_"," "));
     };
