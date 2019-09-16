@@ -733,6 +733,12 @@ def solve(assumptions):
 
     results_string = assumptions["location"].replace("country:","")
     for item in ints+booleans+floats:
+        if "dispatchable1" in item and not assumptions["dispatchable1"]:
+            continue
+        if "dispatchable2" in item and not assumptions["dispatchable2"]:
+            continue
+        if "co2" in item and not assumptions["co2_limit"]:
+            continue
         results_string += "&{}".format(assumptions[item])
 
     assumptions['results_hex'] = hashlib.md5(results_string.encode()).hexdigest()
@@ -750,6 +756,17 @@ def solve(assumptions):
         results_series = pd.read_csv(series_csv,
                                      index_col=0,
                                      parse_dates=True)
+        #fill in old results before dispatchable
+        for i in range(1,3):
+            g = "dispatchable" + str(i)
+            if not assumptions[g]:
+                results_overview[g+"_capacity"] = 0.
+                results_overview[g+"_cost"] = 0.
+                results_overview[g+"_marginal_cost"] = 0.
+                results_overview[g+"_used"] = 0.
+                results_overview[g+"_cf_used"] = 0.
+                results_overview[g+"_rmv"] = 0.
+                results_series[g] = 0.
     else:
         print("Calculating results from scratch, saving as:", series_csv, overview_csv)
         job.meta['status'] = "Solving optimisation problem"
