@@ -124,10 +124,12 @@ assumptions_df["lifetime"] = 25.
 assumptions_df.at["hydrogen_electrolyser","lifetime"] = 20.
 assumptions_df.at["battery_power","lifetime"] = 15.
 assumptions_df.at["battery_energy","lifetime"] = 15.
-assumptions_df["discount rate"] = 0.05
 assumptions_df["FOM"] = 3.
+#From Welder et al (2018) https://doi.org/10.1016/j.energy.2018.05.059
+assumptions_df.at["hydrogen_energy","FOM"] = 14.
 assumptions_df["efficiency"] = 1.
-assumptions_df.at["battery_power","efficiency"] = 0.9
+#Approximates DEA AC round-trip efficiency of 91% in 2020
+assumptions_df.at["battery_power","efficiency"] = 0.95
 
 booleans = ["wind","solar","battery","hydrogen","dispatchable1","dispatchable2","co2_limit"]
 
@@ -620,8 +622,8 @@ def run_optimisation(assumptions, pu):
         results_overview["hydrogen_energy_cost"] = network.stores.at["hydrogen_energy","e_nom_opt"]*network.stores.at["hydrogen_energy","capital_cost"]/year_weight
         results_overview["hydrogen_electrolyser_used"] = network.links_t.p0["hydrogen_electrolyser"].mean()
         results_overview["hydrogen_electrolyser_cf_used"] = results_overview["hydrogen_electrolyser_used"]/network.links.at["hydrogen_electrolyser","p_nom_opt"]
-        results_overview["hydrogen_turbine_used"] = network.links_t.p0["hydrogen_turbine"].mean()
-        results_overview["hydrogen_turbine_cf_used"] = results_overview["hydrogen_turbine_used"]/network.links.at["hydrogen_turbine","p_nom_opt"]
+        results_overview["hydrogen_turbine_used"] = network.links_t.p0["hydrogen_turbine"].mean()*network.links.at["hydrogen_turbine","efficiency"]
+        results_overview["hydrogen_turbine_cf_used"] = results_overview["hydrogen_turbine_used"]/results_overview["hydrogen_turbine_capacity"]
         results_overview["hydrogen_energy_used"] = network.stores_t.e["hydrogen_energy"].mean()
         results_overview["hydrogen_energy_cf_used"] = results_overview["hydrogen_energy_used"]/network.stores.at["hydrogen_energy","e_nom_opt"]
         results_overview["hydrogen_turbine_rmv"] = (network.buses_t.marginal_price["elec"]*network.links_t.p0["hydrogen_turbine"]).sum()/network.links_t.p0["hydrogen_turbine"].sum()/results_overview["average_price"]
