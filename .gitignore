@@ -50,3 +50,5 @@ move_weather.py
 *.zip
 
 nomopyomo.py
+
+symlink_weather.py

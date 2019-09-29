@@ -143,6 +143,7 @@
               <div class="form-group">
                 <label for="samplingSelector">Constant demand [MW]</label>
                 <input type="number" class="form-control" id="samplingSelector" name="load">
+                <small class="form-text text-muted">Demand is large enough for utility-scale assets but small enough to neglect land constraints.</small>
               </div>
               <div class="form-group">
                 <label for="tech_scenario">Technology assumption scenario</label>
@@ -192,40 +193,49 @@
                         <small id="samplingSelect" class="form-text text-muted">n-hourly, n&lt;3 is very slow, big n solves faster (n=25 or n=49 give fast and relatively accurate results).</small>
                       </div>
                       <div class="form-group">
-                        <label for="avdSel1">Wind capital cost (overnight) [EUR/kW]</label>
+                        <label for="avdSel1">Wind capital cost (overnight) [EUR/kWp]</label>
                         <input type="number" class="form-control" id="advSel1" name="wind_cost">
+			<small class="form-text text-muted">Default assumption from Danish Energy Agency; includes grid connection costs.</small>
                       </div>
                       <div class="form-group">
-                        <label for="avdSel2">Solar capital cost (overnight) [EUR/kW]</label>
+                        <label for="avdSel2">Solar capital cost (overnight) [EUR/kWp]</label>
                         <input type="number" class="form-control" id="advSel2" name="solar_cost">
+			<small class="form-text text-muted">Default assumption from Danish Energy Agency; cost assumes panel:inverter output ratio of 1.35.</small>
                       </div>
                       <div class="form-group">
                         <label for="avdSel3">Battery energy capital cost (overnight) [EUR/kWh]</label>
                         <input type="number" class="form-control" id="advSel3" name="battery_energy_cost">
+			<small class="form-text text-muted">Default assumption from Danish Energy Agency.</small>
                       </div>
                       <div class="form-group">
                         <label for="avdSel4">Battery power capital cost (overnight) [EUR/kW]</label>
                         <input type="number" class="form-control" id="advSel4" name="battery_power_cost">
+			<small class="form-text text-muted">Default assumption from Danish Energy Agency; power costs include e.g. inverter.</small>
                       </div>
                       <div class="form-group">
                         <label for="avdSel5">Hydrogen energy capital cost (overnight) [EUR/kWh]</label>
                         <input type="number" class="form-control" id="advSel5" name="hydrogen_energy_cost">
+			<small class="form-text text-muted">Default assumption from Welder et al 2018; costs assume salt caverns in suitable underground salt deposits. For aboveground steel talks, replace with 11 EUR/kWh.</small>
                       </div>
                       <div class="form-group">
                         <label for="avdSel6">Hydrogen electrolyser capital cost (overnight) [EUR/kW]</label>
                         <input type="number" class="form-control" id="advSel6" name="hydrogen_electrolyser_cost">
+			<small class="form-text text-muted">Default assumption from Danish Energy Agency.</small>
                       </div>
                       <div class="form-group">
-                        <label for="avdSel7">Hydrogen electrolyser efficiency [percent, HHV]</label>
+                        <label for="avdSel7">Hydrogen electrolyser efficiency [percent, LHV]</label>
                         <input type="number" class="form-control" id="advSel7" name="hydrogen_electrolyser_efficiency">
+			<small class="form-text text-muted">Default assumption from Danish Energy Agency.</small>
                       </div>
                       <div class="form-group">
-                        <label for="avdSel8">Hydrogen turbine (or fuel cell - see below) capital cost (overnight) [EUR/kW]</label>
+                        <label for="avdSel8">Hydrogen combined cycle turbine (or fuel cell - see below) capital cost (overnight) [EUR/kW]</label>
                         <input type="number" class="form-control" id="advSel8" name="hydrogen_turbine_cost">
+			<small class="form-text text-muted">Default assumption from Danish Energy Agency; assumption taken from that for natural gas CCGT.</small>
                       </div>
                       <div class="form-group">
-                        <label for="avdSel9">Hydrogen turbine efficiency [percent, HHV]</label>
+                        <label for="avdSel9">Hydrogen turbine efficiency [percent, LHV]</label>
                         <input type="number" class="form-control" id="advSel9" name="hydrogen_turbine_efficiency">
+			<small class="form-text text-muted">Default assumption from Danish Energy Agency; assumption taken from that for natural gas CCGT.</small>
                       </div>
                       <div class="form-group">
                         <label for="avdSel10">Cost of capital / interest rate [percent]</label>
@@ -236,6 +246,7 @@
 			<label class="form-check-label" for="techCheck5">
 			  Dispatchable technology 1
 			</label>
+			<small class="form-text text-muted">Default assumption is based on open cycle natural gas turbine (OCGT).</small>
 		      </div>
                       <div class="form-group">
                         <label for="avdSel11">Dispatchable technology 1 capital cost (overnight) [EUR/kW]</label>
@@ -258,6 +269,7 @@
 			<label class="form-check-label" for="techCheck6">
 			  Dispatchable technology 2
 			</label>
+			<small class="form-text text-muted">Default assumption is based on new nuclear EPR reactor in Europe.</small>
 		      </div>
                       <div class="form-group">
                         <label for="avdSel15">Dispatchable technology 2 capital cost (overnight) [EUR/kW]</label>
@@ -558,6 +570,6 @@
         });
       }
     </script>
-    <script src="{{ url_for('static', filename='solver-190916.js') }}"></script>
+    <script src="{{ url_for('static', filename='solver-190929.js') }}"></script>
   </body>
 </html>
