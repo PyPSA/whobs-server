@@ -38,6 +38,8 @@ from shapely.geometry import box, Point, Polygon, MultiPolygon
 
 import nomopyomo
 
+current_version = 190929
+
 octant_folder = "../cutouts/"
 
 colors = {"wind":"#3B6182",
@@ -150,7 +152,7 @@ floats = ["cf_exponent","load","wind_cost","solar_cost","battery_energy_cost",
           "dispatchable2_discount",
           "co2_emissions"]
 
-ints = ["year","frequency"]
+ints = ["year","frequency","version"]
 
 strings = ["location"]
 
@@ -359,7 +361,7 @@ def get_weather(ct, year, cf_exponent):
 
     if ct[:8] == "country:" and ct[8:] in country_multipolygons:
         error_msg, pu, matrix_sum = process_shapely_polygon(country_multipolygons[ct[8:]], year, cf_exponent)
-    if ct[:7] == "region:" and ct[7:] in region_multipolygons:
+    elif ct[:7] == "region:" and ct[7:] in region_multipolygons:
         error_msg, pu, matrix_sum = process_shapely_polygon(region_multipolygons[ct[7:]], year, cf_exponent)
     elif ct[:6] == "point:":
         error_msg, pu = process_point(ct,year)
@@ -693,7 +695,11 @@ def solve(assumptions):
 
     print(assumptions)
 
-    assumptions['weather_hex'] = hashlib.md5("{}&{}&{}".format(assumptions["location"].replace("country:",""), assumptions["year"], assumptions['cf_exponent']).encode()).hexdigest()
+    if assumptions["version"] == 0:
+        assumptions['weather_hex'] = hashlib.md5("{}&{}&{}".format(assumptions["location"].replace("country:",""), assumptions["year"], assumptions['cf_exponent']).encode()).hexdigest()
+    else:
+        assumptions['weather_hex'] = hashlib.md5("{}&{}&{}&{}".format(assumptions["location"].replace("country:",""), assumptions["year"], assumptions['cf_exponent'], assumptions["version"]).encode()).hexdigest()
+
     weather_csv = 'data/time-series-{}.csv'.format(assumptions['weather_hex'])
     if os.path.isfile(weather_csv):
         print("Using preexisting weather file:", weather_csv)
@@ -701,6 +707,9 @@ def solve(assumptions):
                          index_col=0,
                          parse_dates=True)
     else:
+        if assumptions["version"] != current_version:
+            return error(f'Outdated version {assumptions["version"]} can no longer be calculated; please use version {current_version} instead', jobid)
+
         print("Calculating weather from scratch, saving as:", weather_csv)
         pu, matrix_sum, error_msg = get_weather(assumptions["location"], assumptions["year"], assumptions['cf_exponent'])
         if error_msg is not None:
@@ -741,6 +750,8 @@ def solve(assumptions):
             continue
         if "co2" in item and not assumptions["co2_limit"]:
             continue
+        if item == "version" and assumptions["version"] == 0:
+            continue
         results_string += "&{}".format(assumptions[item])
 
     assumptions['results_hex'] = hashlib.md5(results_string.encode()).hexdigest()
@@ -770,6 +781,9 @@ def solve(assumptions):
                 results_overview[g+"_rmv"] = 0.
                 results_series[g] = 0.
     else:
+        if assumptions["version"] != current_version:
+            return error(f'Outdated version {assumptions["version"]} can no longer be calculated; please use version {current_version} instead', jobid)
+
         print("Calculating results from scratch, saving as:", series_csv, overview_csv)
         job.meta['status'] = "Solving optimisation problem"
         job.save_meta()

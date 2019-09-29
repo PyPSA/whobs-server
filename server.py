@@ -29,6 +29,8 @@ import time, datetime
 
 import json
 
+current_version = 190929
+
 conn = Redis.from_url('redis://')
 
 queue = Queue('whobs', connection=conn)
@@ -95,6 +97,12 @@ def root():
                 assumptions[boolean] = False
             else:
                 assumptions[boolean] = True
+
+        #if a real job is requested without a version, assume it's the old original version
+        if assumptions["job_type"] == "none":
+            assumptions["version"] = request.args.get('version', default=current_version, type=int)
+        else:
+            assumptions["version"] = request.args.get('version', default=0, type=int)
 
     return render_template('index.html', settings=assumptions)
 
