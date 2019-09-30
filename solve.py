@@ -539,13 +539,16 @@ def run_optimisation(assumptions, pu):
     results_overview = pd.Series(dtype=float)
     results_overview["objective"] = network.objective/8760
     results_overview["average_price"] = network.buses_t.marginal_price.mean()["elec"]
+    if assumptions["hydrogen"]:
+        results_overview["average_hydrogen_price"] = network.buses_t.marginal_price.mean()["hydrogen"]
 
     year_weight = network.snapshot_weightings.sum()
 
     vre = ["wind","solar"]
 
-    results_series = pd.DataFrame(index=network.snapshots,columns=vre+["battery_discharge","hydrogen_turbine","battery_charge","hydrogen_electrolyser","dispatchable1","dispatchable2"],dtype=float)
+    results_series = pd.DataFrame(index=network.snapshots,columns=vre+["battery_discharge","hydrogen_turbine","battery_charge","hydrogen_electrolyser","dispatchable1","dispatchable2","electricity_price","hydrogen_price","battery_energy","hydrogen_energy"],dtype=float)
 
+    results_series["electricity_price"] = network.buses_t.marginal_price["elec"]
 
     for g in vre:
         if assumptions[g] and network.generators.p_nom_opt[g] > threshold:
@@ -601,6 +604,7 @@ def run_optimisation(assumptions, pu):
         results_overview["battery_discharge_rmv"] = (network.buses_t.marginal_price["elec"]*network.links_t.p0["battery_discharge"]).sum()/network.links_t.p0["battery_discharge"].sum()/results_overview["average_price"]
         results_series["battery_discharge"] = -network.links_t.p1["battery_discharge"]
         results_series["battery_charge"] = network.links_t.p0["battery_power"]
+        results_series["battery_energy"] = network.stores_t.e["battery_energy"]
     else:
         results_overview["battery_power_capacity"] = 0.
         results_overview["battery_power_cost"] = 0.
@@ -614,6 +618,7 @@ def run_optimisation(assumptions, pu):
         results_overview["battery_discharge_rmv"] = 0.
         results_series["battery_discharge"] = 0.
         results_series["battery_charge"] = 0.
+        results_series["battery_energy"] = 0.
 
     if assumptions["hydrogen"] and network.links.at["hydrogen_electrolyser","p_nom_opt"] > threshold and network.links.at["hydrogen_turbine","p_nom_opt"] > threshold and network.stores.at["hydrogen_energy","e_nom_opt"] > threshold:
         results_overview["hydrogen_electrolyser_capacity"] = network.links.at["hydrogen_electrolyser","p_nom_opt"]
@@ -632,6 +637,8 @@ def run_optimisation(assumptions, pu):
         results_overview["hydrogen_electrolyser_rmv"] = (network.buses_t.marginal_price["elec"]*network.links_t.p0["hydrogen_electrolyser"]).sum()/network.links_t.p0["hydrogen_electrolyser"].sum()/results_overview["average_price"]
         results_series["hydrogen_turbine"] = -network.links_t.p1["hydrogen_turbine"]
         results_series["hydrogen_electrolyser"] = network.links_t.p0["hydrogen_electrolyser"]
+        results_series["hydrogen_energy"] = network.stores_t.e["hydrogen_energy"]
+        results_series["hydrogen_price"] = network.buses_t.marginal_price["hydrogen"]
     else:
         results_overview["hydrogen_electrolyser_capacity"] = 0.
         results_overview["hydrogen_electrolyser_cost"] = 0.
@@ -649,6 +656,8 @@ def run_optimisation(assumptions, pu):
         results_overview["hydrogen_electrolyser_rmv"] = 0.
         results_series["hydrogen_turbine"] = 0.
         results_series["hydrogen_electrolyser"] = 0.
+        results_series["hydrogen_energy"] = 0.
+        results_series["hydrogen_price"] = 0.
 
     results_overview["average_cost"] = sum([results_overview[s] for s in results_overview.index if s[-5:] == "_cost"])/assumptions["load"]
 

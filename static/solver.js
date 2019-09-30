@@ -559,6 +559,7 @@ function poll_weather_kill() {
 function clear_results(){
     document.getElementById("results_assumptions").innerHTML="";
     document.getElementById("average_cost").innerHTML="";
+    document.getElementById("average_hydrogen_price").innerHTML="";
     document.getElementById("load").innerHTML="";
     for (let i = 0; i < assets.length; i++){
 	document.getElementById(assets[i] + "_capacity").innerHTML="";
@@ -611,6 +612,11 @@ function display_results(){
 
     document.getElementById("results_assumptions").innerHTML=" for " + results["assumptions"]["location_name"] + " in year " + results["assumptions"]["year"];
     document.getElementById("average_cost").innerHTML=results["average_cost"].toFixed(1);
+    if("average_hydrogen_price" in results){
+	// 33 kWh/kg is LHV, 39 kWh/kg is HHV
+	document.getElementById("average_hydrogen_price").innerHTML="<b>Average marginal price of hydrogen [EUR/kg]: " + (results["average_hydrogen_price"]*0.033).toFixed(2);
+    };
+
     document.getElementById("load").innerHTML=results["assumptions"]["load"].toFixed(1);
 
     for (let i = 0; i < assets.length; i++){
