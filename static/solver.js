@@ -766,6 +766,21 @@ function draw_power_graph(){
         .style("fill", function(d, i) {if(i < results["positive"].color.length){ return results["positive"].color[i];} else{return results["negative"].color[i-results["positive"].color.length];} })
         .attr("d", area);
 
+    // add demand curve
+
+    var lineFunction = d3.line()
+	.x(function(d) { return x(d[0]) })
+	.y(function(d) { return y(d[1]) })
+	.curve(d3.curveLinear);
+
+    var demand = focus.append("g");
+
+    demand.append("path")
+        .attr("d", lineFunction([[snapshots[0],assumptions["load"]],[snapshots[snapshots.length-1],assumptions["load"]]]))
+        .attr("id", "indicator")
+        .attr("stroke", "#000000")
+        .attr("stroke-width", 3);
+
 
     focus.append("g")
         .attr("class", "axis axis--x")
@@ -1202,7 +1217,7 @@ function draw_weather_graph(){
 let legendSVG = d3.select("#legend")
     .append("svg")
     .attr("width",180)
-    .attr("height",assets.length*20);
+    .attr("height",assets.length*20+40);
 
 let legend = legendSVG.selectAll("g")
     .data(assets)
@@ -1222,6 +1237,15 @@ legend.append("text")
     .attr("y",10)
     .text(function (d) { return d.replace("_"," ")});
 
+
+var lineFunction = d3.line()
+    .x(function(d) { return d[0] })
+    .y(function(d) { return d[1] })
+    .curve(d3.curveLinear);
+
+legendSVG.append("path").attr("d",lineFunction([[0,20*assets.length+10],[15,20*assets.length+10]])).attr("stroke", "#000000").attr("stroke-width",3);
+
+legendSVG.append("text").attr("x",20).attr("y",20*assets.length+15).text("demand");
 
 
 
