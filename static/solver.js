@@ -382,13 +382,13 @@ var weatherJobid = "";
 var timer;
 var timeout;
 var timerStart;
-var timerExpected = 20;
+var timerExpected = 10;
 
 var weatherTimer;
 var weatherTimeout;
 
 // time between status polling in milliseconds
-var poll_interval = 1000;
+var poll_interval = 500;
 
 // time out for polling if it doesn't finish after 10 minutes
 // Shouldn't be divisible by poll_interval
@@ -407,7 +407,7 @@ function solve() {
 	    console.log("Jobid:",jobid);
 	    timer = setInterval(poll_result, poll_interval);
 	    timerStart = new Date().getTime();
-	    document.getElementById("countdown").innerHTML="Ready in " + timerExpected + " seconds";
+	    document.getElementById("countdown").innerHTML="Ready in around " + timerExpected + " seconds";
 	    console.log("timer",timer,"polling every",poll_interval,"milliseconds");
 	    timeout = setTimeout(poll_kill, poll_timeout);
 	};
@@ -474,12 +474,12 @@ function poll_result() {
 	document.getElementById("status").innerHTML=status;
 	console.log("status is",status);
 
-	document.getElementById("countdown").innerHTML = "Ready in " + Math.round(timerExpected - (new Date().getTime() - timerStart)/1000.) + " seconds";
+	document.getElementById("countdown").innerHTML = "Ready in around " + Math.round(timerExpected - (new Date().getTime() - timerStart)/1000.) + " seconds";
 
 	if(status == "Error"){
 	    clearInterval(timer);
 	    clearTimeout(timeout);
-	    document.getElementById("countdown").innerHTML = "Ready in " + timerExpected + " seconds";
+	    document.getElementById("countdown").innerHTML = "Ready in around " + timerExpected + " seconds";
 	    console.log("results:",results);
 	    document.getElementById("status").innerHTML=status + ": " + results["error"];
 	    solveButton.text(solveButtonText["before"]);

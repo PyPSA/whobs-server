@@ -521,10 +521,18 @@ def run_optimisation(assumptions, pu):
 
     network.consistency_check()
 
-    solver_name = "cbc"
+    solver_name = "gurobi"
+    solver_options = {"method": 2, # barrier
+                      "crossover": 0}
+                      #"BarConvTol": 1.e-5,
+                      #"AggFill": 0,
+                      #"PreDual": 0,
+                      #"GURO_PAR_BARDENSETHRESH": 200}
+
     formulation = "kirchhoff"
     status, termination_condition = nomopyomo.network_lopf(network,
                                                            solver_name=solver_name,
+                                                           solver_options=solver_options,
                                                            formulation=formulation,
                                                            extra_functionality=extra_functionality)
 

@@ -12,6 +12,10 @@ flask-by-example
 
 *.lp
 
+*.log
+
+*.pdf
+
 *~
 
 static/d3*.js
