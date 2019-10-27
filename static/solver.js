@@ -1259,7 +1259,7 @@ var lineFunction = d3.line()
 
 legendSVG.append("path").attr("d",lineFunction([[0,20*assets.length+10],[15,20*assets.length+10]])).attr("stroke", "#000000").attr("stroke-width",3);
 
-legendSVG.append("text").attr("x",20).attr("y",20*assets.length+15).text("demand");
+legendSVG.append("text").attr("x",20).attr("y",20*assets.length+15).text("electricity demand");
 
 
 
