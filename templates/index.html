@@ -68,7 +68,7 @@
               <h2>Introduction</h2>
               <hr>
               <p>
-                This tool calculates the cost of meeting constant electricity demand from a combination of wind power, solar power and storage (using batteries and electrolysed hydrogen) for different regions of the world.</p>
+                This tool calculates the cost of meeting constant electricity demand from a combination of wind power, solar power and storage (using batteries and hydrogen from electrolysis of water) for different regions of the world.</p>
 	      <p>First choose your location to determine the weather data for the wind and solar generation. Then choose your cost and technology assumptions to find the solution with least cost.</p>
               <p>Fun things to try out:</p>
               <ul>
@@ -191,6 +191,10 @@
                         <label for="samplingSelector">Sampling frequency</label>
                         <input type="number" class="form-control" id="samplingSelector" aria-describedby="samplingSelect" name="frequency">
                         <small id="samplingSelect" class="form-text text-muted">n-hourly, n&lt;3 is very slow, big n solves faster (n=25 or n=49 give fast and relatively accurate results).</small>
+                      </div>
+                      <div class="form-group">
+                        <label for="avdSel1">Constant hydrogen demand [MW LHV]</label>
+                        <input type="number" class="form-control" id="advSel0" name="hydrogen_load">
                       </div>
                       <div class="form-group">
                         <label for="avdSel1">Wind capital cost (overnight) [EUR/kWp]</label>
@@ -317,7 +321,8 @@
                     <div id="results">
                       <div id="results_summary">
                         <h3 data-toc-skip>Results<span id="results_assumptions"></span></h3>
-                        <p>Baseload demand: <span id="load"></span> MW</p>
+                        <p>Baseload electricity demand: <span id="load"></span> MW</p>
+                        <p>Baseload hydrogen demand: <span id="hydrogen_load"></span> MW</p>
                         <table id="tab_results">
                           <tr>
                             <th class="tab_asset" id="tabh_asset">Asset</th>
@@ -400,7 +405,9 @@
                         </table>
                         <br />
                         <p><b>Average system cost [EUR/MWh]: <span id="average_cost"></span></b></p>
-                        <p><span id="average_hydrogen_price"></span></p>
+                        <p><span id="average_electricity_price"></span></p>
+                        <p><span id="average_hydrogen_price_mwh"></span></p>
+                        <p><span id="average_hydrogen_price_kg"></span></p>
                       </div>
                       <div id="average_cost_div">
                         <svg width="110" height="400" id="average_cost_graph"></svg>
@@ -577,6 +584,6 @@
         });
       }
     </script>
-    <script src="{{ url_for('static', filename='solver-191024.js') }}"></script>
+    <script src="{{ url_for('static', filename='solver-191025.js') }}"></script>
   </body>
 </html>

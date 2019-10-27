@@ -559,8 +559,11 @@ function poll_weather_kill() {
 function clear_results(){
     document.getElementById("results_assumptions").innerHTML="";
     document.getElementById("average_cost").innerHTML="";
-    document.getElementById("average_hydrogen_price").innerHTML="";
+    document.getElementById("average_electricity_price").innerHTML="";
+    document.getElementById("average_hydrogen_price_mwh").innerHTML="";
+    document.getElementById("average_hydrogen_price_kg").innerHTML="";
     document.getElementById("load").innerHTML="";
+    document.getElementById("hydrogen_load").innerHTML="";
     for (let i = 0; i < assets.length; i++){
 	document.getElementById(assets[i] + "_capacity").innerHTML="";
 	document.getElementById(assets[i] + "_cf_used").innerHTML="";
@@ -612,12 +615,17 @@ function display_results(){
 
     document.getElementById("results_assumptions").innerHTML=" for " + results["assumptions"]["location_name"] + " in year " + results["assumptions"]["year"];
     document.getElementById("average_cost").innerHTML=results["average_cost"].toFixed(1);
+    if(results["assumptions"]["hydrogen_load"] > 0.){
+	document.getElementById("average_electricity_price").innerHTML="<b>Average marginal price of electricity [EUR/MWh]: " + (results["average_price"]).toFixed(1);
+    };
     if("average_hydrogen_price" in results){
+	document.getElementById("average_hydrogen_price_mwh").innerHTML="<b>Average marginal price of hydrogen [EUR/MWh LHV]: " + (results["average_hydrogen_price"]).toFixed(1);
 	// 33 kWh/kg is LHV, 39 kWh/kg is HHV
-	document.getElementById("average_hydrogen_price").innerHTML="<b>Average marginal price of hydrogen [EUR/kg]: " + (results["average_hydrogen_price"]*0.033).toFixed(2);
+	document.getElementById("average_hydrogen_price_kg").innerHTML="<b>Average marginal price of hydrogen [EUR/kg]: " + (results["average_hydrogen_price"]*0.033).toFixed(2);
     };
 
     document.getElementById("load").innerHTML=results["assumptions"]["load"].toFixed(1);
+    document.getElementById("hydrogen_load").innerHTML=results["assumptions"]["hydrogen_load"].toFixed(1);
 
     for (let i = 0; i < assets.length; i++){
 	document.getElementById(assets[i] + "_capacity").innerHTML=Math.abs(results[assets[i] + "_capacity"].toFixed(1));
@@ -900,7 +908,7 @@ function draw_cost_stack(){
 	if(results.hasOwnProperty(assets[i]+"_marginal_cost")){
 	    cost += results[assets[i]+"_marginal_cost"];
 	};
-	data.push(cost/results["assumptions"]["load"]);
+	data.push(cost/(results["assumptions"]["load"]+results["assumptions"]["hydrogen_load"]));
 	color.push(colors[assets[i]]);
 	labels.push(assets[i].replace("_"," "));
     };

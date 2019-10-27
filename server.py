@@ -69,6 +69,7 @@ def root():
         assumptions["frequency"] = request.args.get('frequency', default = 3, type = int)
         assumptions["cf_exponent"] = request.args.get('cf_exponent', default = 2, type = float)
         assumptions["load"] = request.args.get('load', default = 100, type = float)
+        assumptions["hydrogen_load"] = request.args.get('load', default = 0, type = float)
         assumptions["discount_rate"] = request.args.get('discount_rate', default = 5, type = float)
         assumptions["co2_emissions"] = request.args.get('co2_emissions', default = 100, type = float)
         for boolean in tbooleans:
