@@ -562,8 +562,6 @@ function clear_results(){
     document.getElementById("average_electricity_price").innerHTML="";
     document.getElementById("average_hydrogen_price_mwh").innerHTML="";
     document.getElementById("average_hydrogen_price_kg").innerHTML="";
-    document.getElementById("load").innerHTML="";
-    document.getElementById("hydrogen_load").innerHTML="";
     for (let i = 0; i < assets.length; i++){
 	document.getElementById(assets[i] + "_capacity").innerHTML="";
 	document.getElementById(assets[i] + "_cf_used").innerHTML="";
@@ -623,9 +621,6 @@ function display_results(){
 	// 33 kWh/kg is LHV, 39 kWh/kg is HHV
 	document.getElementById("average_hydrogen_price_kg").innerHTML="<b>Average marginal price of hydrogen [EUR/kg]: " + (results["average_hydrogen_price"]*0.033).toFixed(2);
     };
-
-    document.getElementById("load").innerHTML=results["assumptions"]["load"].toFixed(1);
-    document.getElementById("hydrogen_load").innerHTML=results["assumptions"]["hydrogen_load"].toFixed(1);
 
     for (let i = 0; i < assets.length; i++){
 	document.getElementById(assets[i] + "_capacity").innerHTML=Math.abs(results[assets[i] + "_capacity"].toFixed(1));

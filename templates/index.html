@@ -68,8 +68,8 @@
               <h2>Introduction</h2>
               <hr>
               <p>
-                This tool calculates the cost of meeting constant electricity demand from a combination of wind power, solar power and storage (using batteries and hydrogen from electrolysis of water) for different regions of the world.</p>
-	      <p>First choose your location to determine the weather data for the wind and solar generation. Then choose your cost and technology assumptions to find the solution with least cost.</p>
+                This tool calculates the cost of meeting a constant electricity demand from a combination of wind power, solar power and storage for different regions of the world.</p>
+	      <p>First choose your location to determine the weather data for the wind and solar generation. Then choose your cost and technology assumptions to find the solution with least cost. Storage options are batteries and hydrogen from electrolysis of water.</p>
               <p>Fun things to try out:</p>
               <ul>
                 <li>remove technologies with the checkboxes, e.g. hydrogen gas storage or wind, and see system costs rise</li>
@@ -143,7 +143,7 @@
               <div class="form-group">
                 <label for="samplingSelector">Constant electricity demand [MW]</label>
                 <input type="number" class="form-control" id="samplingSelector" name="load">
-                <small class="form-text text-muted">Demand is large enough for utility-scale assets but small enough to neglect land constraints.</small>
+                <small class="form-text text-muted">Demand should be large enough for utility-scale assets but small enough to neglect land availability constraints.</small>
               </div>
               <div class="form-group">
                 <label for="tech_scenario">Technology assumption scenario</label>
@@ -152,7 +152,7 @@
                   <option value="2030" selected>2030 scenario</option>
                   <option value="2050">2050 scenario</option>
                 </select>
-                <small class="form-text text-muted">Individual cost assumptions can be changed below under <em>advanced assumption settings</em>.</small>
+                <small class="form-text text-muted">Individual cost assumptions can be changed below under "advanced assumption settings".</small>
               </div>
               <p>Choose which technologies should be included:</p>
               <div class="form-check">
@@ -199,47 +199,47 @@
                       <div class="form-group">
                         <label for="avdSel1">Wind capital cost (overnight) [EUR/kWp]</label>
                         <input type="number" class="form-control" id="advSel1" name="wind_cost">
-			<small class="form-text text-muted">Default assumption from Danish Energy Agency; includes grid connection costs.</small>
+			<small class="form-text text-muted">Default assumption from <a href="https://ens.dk/en/our-services/projections-and-models/technology-data">Danish Energy Agency, 2019</a>; includes grid connection costs.</small>
                       </div>
                       <div class="form-group">
                         <label for="avdSel2">Solar capital cost (overnight) [EUR/kWp]</label>
                         <input type="number" class="form-control" id="advSel2" name="solar_cost">
-			<small class="form-text text-muted">Default assumption from Danish Energy Agency; cost assumes panel:inverter output ratio of 1.35.</small>
+			<small class="form-text text-muted">Default assumption from <a href="https://ens.dk/en/our-services/projections-and-models/technology-data">Danish Energy Agency, 2019</a>; cost assumes panel:inverter output ratio of 1.35.</small>
                       </div>
                       <div class="form-group">
                         <label for="avdSel3">Battery energy capital cost (overnight) [EUR/kWh]</label>
                         <input type="number" class="form-control" id="advSel3" name="battery_energy_cost">
-			<small class="form-text text-muted">Default assumption from Danish Energy Agency.</small>
+			<small class="form-text text-muted">Default assumption from <a href="https://ens.dk/en/our-services/projections-and-models/technology-data">Danish Energy Agency, 2019</a>.</small>
                       </div>
                       <div class="form-group">
                         <label for="avdSel4">Battery power capital cost (overnight) [EUR/kW]</label>
                         <input type="number" class="form-control" id="advSel4" name="battery_power_cost">
-			<small class="form-text text-muted">Default assumption from Danish Energy Agency; power costs include e.g. inverter.</small>
+			<small class="form-text text-muted">Default assumption from <a href="https://ens.dk/en/our-services/projections-and-models/technology-data">Danish Energy Agency, 2019</a>; power costs include e.g. inverter.</small>
                       </div>
                       <div class="form-group">
                         <label for="avdSel5">Hydrogen energy capital cost (overnight) [EUR/kWh]</label>
                         <input type="number" class="form-control" id="advSel5" name="hydrogen_energy_cost">
-			<small class="form-text text-muted">Default assumption from Welder et al 2018; costs assume salt caverns in suitable underground salt deposits. For aboveground steel talks, replace with 11 EUR/kWh.</small>
+			<small class="form-text text-muted">Default assumption from <a href="https://doi.org/10.1016/j.energy.2018.05.059">Welder et al 2018</a> assumes salt caverns in suitable underground salt deposits. For aboveground steel talks, replace with 11 EUR/kWh.</small>
                       </div>
                       <div class="form-group">
                         <label for="avdSel6">Hydrogen electrolyser capital cost (overnight) [EUR/kW]</label>
                         <input type="number" class="form-control" id="advSel6" name="hydrogen_electrolyser_cost">
-			<small class="form-text text-muted">Default assumption from Danish Energy Agency.</small>
+			<small class="form-text text-muted">Default assumption from <a href="https://ens.dk/en/our-services/projections-and-models/technology-data">Danish Energy Agency, 2019</a>.</small>
                       </div>
                       <div class="form-group">
                         <label for="avdSel7">Hydrogen electrolyser efficiency [percent, LHV]</label>
                         <input type="number" class="form-control" id="advSel7" name="hydrogen_electrolyser_efficiency">
-			<small class="form-text text-muted">Default assumption from Danish Energy Agency.</small>
+			<small class="form-text text-muted">Default assumption from <a href="https://ens.dk/en/our-services/projections-and-models/technology-data">Danish Energy Agency, 2019</a>.</small>
                       </div>
                       <div class="form-group">
                         <label for="avdSel8">Hydrogen combined cycle turbine (or fuel cell - see below) capital cost (overnight) [EUR/kW]</label>
                         <input type="number" class="form-control" id="advSel8" name="hydrogen_turbine_cost">
-			<small class="form-text text-muted">Default assumption from Danish Energy Agency; assumption taken from that for natural gas CCGT.</small>
+			<small class="form-text text-muted">Default assumption from <a href="https://ens.dk/en/our-services/projections-and-models/technology-data">Danish Energy Agency, 2019</a>; assumption taken from that for natural gas CCGT.</small>
                       </div>
                       <div class="form-group">
                         <label for="avdSel9">Hydrogen turbine efficiency [percent, LHV]</label>
                         <input type="number" class="form-control" id="advSel9" name="hydrogen_turbine_efficiency">
-			<small class="form-text text-muted">Default assumption from Danish Energy Agency; assumption taken from that for natural gas CCGT.</small>
+			<small class="form-text text-muted">Default assumption from <a href="https://ens.dk/en/our-services/projections-and-models/technology-data">Danish Energy Agency, 2019</a>; assumption taken from that for natural gas CCGT.</small>
                       </div>
                       <div class="form-group">
                         <label for="avdSel10">Cost of capital / interest rate [percent]</label>
@@ -319,10 +319,14 @@
                 <div id="collapseResults" class="collapse" data-parent="#accordionResults">
                   <div class="card-body">
                     <div id="results">
-                      <div id="results_summary">
                         <h3 data-toc-skip>Results<span id="results_assumptions"></span></h3>
-                        <p>Baseload electricity demand: <span id="load"></span> MW</p>
-                        <p>Baseload hydrogen demand: <span id="hydrogen_load"></span> MW</p>
+                        <br />
+                        <p><b>Average system cost [EUR/MWh]: <span id="average_cost"></span></b></p>
+			<small class="form-text text-muted">For comparison, household electricity (including taxes and grid charges) averaged 211 EUR/MWh in the <a href="https://ec.europa.eu/eurostat/statistics-explained/index.php/Electricity_price_statistics">European Union in 2018</a> & 132 USD/MWh in the <a href="https://www.electricchoice.com/electricity-prices-by-state/">United States in 2019</a></small>
+			<p><span id="average_electricity_price"></span></p>
+                        <p><span id="average_hydrogen_price_mwh"></span></p>
+                        <p><span id="average_hydrogen_price_kg"></span></p>
+                      <div id="results_summary">
                         <table id="tab_results">
                           <tr>
                             <th class="tab_asset" id="tabh_asset">Asset</th>
@@ -403,11 +407,6 @@
                             <td class="tab_data"><span id="dispatchable2_rmv"></span></td>
                           </tr>
                         </table>
-                        <br />
-                        <p><b>Average system cost [EUR/MWh]: <span id="average_cost"></span></b></p>
-                        <p><span id="average_electricity_price"></span></p>
-                        <p><span id="average_hydrogen_price_mwh"></span></p>
-                        <p><span id="average_hydrogen_price_kg"></span></p>
                       </div>
                       <div id="average_cost_div">
                         <svg width="110" height="400" id="average_cost_graph"></svg>
@@ -426,6 +425,8 @@
                       </div>
                     </div>
                     <div id="graph">
+		      <br />
+		      <p><b>Dispatch over a year to meet the constant demand (electricity demand is the black line; you can zoom and pan to see the details; negative values correspond to storage consuming electricity):</b></p>
                       <svg width="1100" height="500" id="power"></svg>
                     </div>
                     <br /><br />
@@ -454,22 +455,29 @@
                   generators, biomass from sustainable resources (such as waste and
                   agricultural/forestry residues), offshore wind, concentrating
                   solar thermal, geothermal, ocean energy, nuclear and
-                  fossil/biomass plants with CCS. Additional storage technologies
+                  fossil/biomass plants with CCS. Two additional dispatchable technologies are provided under "advanced assumption settings". Additional storage technologies
                   include redox flow batteries, compressed air energy storage,
-                  etc. Other options include demand-side management.
+                  etc. Other options include allowing demand to adapt to renewable profiles (demand-side management).
                 </li>
                 <li>
-                  No import or export capacities with other countries are
-                  assumed, so each country must meet the baseload profile by
+                  No import or export capacities with other regions are
+                  assumed, so each region must meet the baseload profile by
                   itself. Existing and planned transmission grid connections between
-                  countries can reduce costs by up to 20% by smoothing wind over a
-                  larger area (see e.g. <a href="https://arxiv.org/abs/1704.05492">this paper</a> or <a href="https://arxiv.org/abs/1705.07617">this one</a>).
+                  regions can reduce costs by up to 20% by smoothing wind over a
+                  continent-sized area (see e.g. <a href="https://arxiv.org/abs/1704.05492">this paper</a> or <a href="https://arxiv.org/abs/1705.07617">this one</a>).
                 </li>
                 <li>
-                  Including energy demand sectors other than electricity, like transport, heating and non-electric industrial demand can offer additional flexibility (e.g. load-shifting by battery electric vehicles and electrified heating with thermal storage), see e.g. <a href="https://arxiv.org/abs/1801.05290">this paper</a> or <a href="https://doi.org/10.1016/j.rser.2016.02.025">this one</a>.
+                  Including energy demand sectors other than electricity, like transport, heating and non-electric industrial demand can offer additional flexibility (e.g. load-shifting by battery electric vehicles and thermal storage for electrified heating), see e.g. <a href="https://arxiv.org/abs/1801.05290">this paper</a> or <a href="https://doi.org/10.1016/j.rser.2016.02.025">this one</a>.
                 </li>
                 <li>
-                  Costs here are for completely decarbonised electricity systems. Reaching lower levels of decarbonisation is much cheaper and doesn't necessarily require any storage at all.
+                  Costs here are for completely decarbonised electricity systems. Reaching lower levels of decarbonisation is much cheaper and doesn't necessarily require any storage at all. A non-zero carbon dioxide emission target and options for fossil-fuelled generators can be set under "advanced assumption settings".
+                </li>
+                <li>
+                  The time series for wind and solar generation are
+                  based on weather data from the European Centre for Medium-Range
+                  Weather Forecasts
+                  (ECMWF) <a href="https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels">ERA5 reanalysis
+                  dataset</a>. Reanalysis datasets are generated by fitting numerical weather simulations to real measured data. In regions where real measurements are sparse, reanalysis data may deviate from observed weather patterns. In addition, reanalysis datasets may not always capture clouds accurately, so for PV generation it is advisable to include satellite observations in calculations, such as the <a href="https://wui.cmsaf.eu/safira/action/viewDoiDetails?acronym=SARAH_V002">CMSAF SARAH II dataset</a> (available only for Europe and Africa). Weather data is converted to power generation using the <a href="https://github.com/FRESNA/atlite">atlite library</a>. No further corrections are applied, except a 7% linear scaling down of solar generation time series to fit measured European capacity factors for 2011-2013.
                 </li>
                 <li>
                   The wind profiles used here are converted from wind speed time series assuming an existing wind turbine model (Vestas V112 3MW with a hub height of 80m). Newer and future turbines will have higher capacity factors because e.g. they're taller, capturing wind energy where resources are better.
@@ -478,20 +486,13 @@
                   Solar profiles are calculated assuming that panels in the northern hemisphere face south, and that panels in the southern hemisphere face north, with a slope of 35 degrees against the horizontal in both cases.
                 </li>
                 <li>
-                  Because the wind and solar profiles are computed using a fixed distribution of power plants, there is no possibility to optimise the distribution of power plants within each country to reduce the costs of providing a baseload profile.
+                  Because the wind and solar profiles are computed using a fixed distribution of power plants, there is no possibility to optimise the distribution of power plants within each region to reduce the costs of providing a baseload profile.
                 </li>
                 <li>
-                  The time series for wind and solar generation are
-                  based on the European Centre for Medium-Range
-                  Weather Forecasts
-                  (ECMWF) <a href="https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels">ERA5 reanalysis
-                  dataset</a>. Reanalysis datasets are generated by fitting numerical weather simulations to real measured data. In regions where real measurements are sparse, reanalysis data may deviate from observed weather patterns. In addition, reanalysis datasets may not always capture clouds accurately, so for PV generation it is advisable to include satellite observations in calculations, such as the <a href="https://wui.cmsaf.eu/safira/action/viewDoiDetails?acronym=SARAH_V002">CMSAF SARAH II dataset</a> (available only for Europe and Africa).
+                  The costs for hydrogen storage (0.7 EUR/kWh) assume hydrogen gas is stored in salt caverns in suitable underground salt deposits based on assumptions from <a href="https://doi.org/10.1016/j.energy.2018.05.059">Welder et al 2018</a>. These costs are higher than assumed in e.g. Table 3 of <a href="https://www.nrel.gov/docs/fy10osti/46719.pdf">NREL 2009</a> (0.49 USD/kWh) using the most expensive option ("rock caverns created by excavating comparatively impervious rock formations"). Studies on salt deposit availability are available for most countries, see e.g. <a href="https://www.researchgate.net/figure/Underground-salt-deposits-and-cavern-fields-in-Europe-225_fig5_319417820">this map</a> for Europe or Figure 2 of <a href="https://www.nrel.gov/docs/fy10osti/46719.pdf">NREL 2009</a> for the United States. Where suitable salt deposits are not available, hydrogen can be stored in aboveground steel tanks for 11 EUR/kWh.
                 </li>
                 <li>
-                  The costs for hydrogen storage assume hydrogen gas is stored underground. The costs for underground hydrogen storage are taken from Table 3 of <a href="https://www.nrel.gov/docs/fy10osti/46719.pdf">this NREL study</a>, using the most expensive option ("rock caverns created by excavating comparatively impervious rock formations"). Where salt deposits exist, salt caverns may be cheaper. Studies on salt deposit availability are available for most countries, see e.g. <a href="https://www.researchgate.net/figure/Underground-salt-deposits-and-cavern-fields-in-Europe-225_fig5_319417820">this map</a> for Europe.
-                </li>
-                <li>
-                  Costs for the electricity grid inside each country and costs for ancillary services are not included.
+                  Costs for the electricity grid inside each region and costs for ancillary services are not included.
                 </li>
               </ol>
               <p>
@@ -504,12 +505,9 @@
               <p>Here asset lifetimes are all assumed to be 25
                 years, with the exception of batteries (15 years) and hydrogen
                 electrolysers (20 years). Battery charging and discharging
-                efficiencies are both 90%. Fixed Operation and Maintenance (FOM)
+                efficiencies are both 95%. Fixed Operation and Maintenance (FOM)
                 costs are set at 3% of the investment cost of the asset per
               year.</p>
-              <p>The sources for most of the assumptions can be found
-                in <a href="https://github.com/PyPSA/WHOBS/blob/master/assumptions.csv">this
-                table</a>.</p>
                 <p>Fuel cells could be used instead of combined or open cycle turbines for hydrogen to power. Fuel cells are less mature than turbines, but have better chances of cost reduction and efficiency improvement.</p>
               <p>To avoid long job times, the default here is to run only for a single
                 weather year sampled at most every 3 hours. You can find solved
@@ -526,17 +524,12 @@
                 the <a href="https://github.com/PyPSA/PyPSA">Python for Power
                 System Analysis (PyPSA)</a> energy optimisation framework, open
                 weather data
-                from the European Centre for Medium-Range Weather Forecasts (ECMWF) <a href="https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels">ERA5 reanalysis dataset</a>, the <a href="https://github.com/FRESNA/atlite">atlite library</a> for converting weather data to generation profiles,
+                from the European Centre for Medium-Range Weather Forecasts (ECMWF) <a href="https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels">ERA5 reanalysis dataset</a>, the <a href="https://github.com/PyPSA/atlite">atlite library</a> for converting weather data to generation profiles,
                 the <a href="https://projects.coin-or.org/Clp">Clp</a> solver, <a href="https://d3js.org/">D3.js</a> for graphics, <a href="https://www.mapbox.com/">Mapbox</a>, <a href="http://leafletjs.com/">Leaflet</a> and <a href="https://www.naturalearthdata.com/">Natural Earth</a> for maps,  and
               free software for the server infrastructure (GNU/Linux, nginx, Flask, gunicorn, Redis).</p>
               <h3>New functionality coming soon</h3>
-              <ul>
-                <li>Real electricity demand profiles</li>
-                <li>Comparison to today's electricity prices</li>
-                <li>Other demand sectors (transport, heating and industry)</li>
-                <li>Demand-side management</li>
-              </ul>
-              <h3>Problems/comments/feedback/help out</h3>
+              <p>See the <a href="https://github.com/PyPSA/whobs-server/issues">GitHub issue tracker</a>.</p>
+	      <h3>Problems/comments/feedback/help out</h3>
               <p>If you encounter any problems please use the <a href="https://github.com/PyPSA/whobs-server/issues">GitHub issue tracker</a>. It would be helpful to note the jobid and any other error messages from your browser's JavaScript console (find the console via your browser's "Developer Tools").</p>
               <p>If you want to help out and contribute improvements, please submit a <a href="https://github.com/PyPSA/whobs-server/pulls">pull request</a>!</p>
               <p>Any other feedback and comments can be sent to <a href="https://nworbmot.org/">Tom Brown</a>.</p>
