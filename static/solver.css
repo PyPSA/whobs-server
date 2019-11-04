@@ -72,14 +72,19 @@ section {
 }
 
 
-#results_summary {
-    float: left;
-    width: 500px;
-}
-
 #average_cost_div {
     float: left;
-    width: 111px;
+    width: 200px;
+}
+
+#power_capacity_bar_div {
+    float: left;
+    width: 550px;
+}
+
+#energy_capacity_bar_div {
+    float: left;
+    width: 350px;
 }
 
 #energy {
@@ -139,38 +144,10 @@ section {
     text-align: right;
 }
 
-#tab_results {
-    width: 470px;
-}
-
-#tab_results th {
+#tab_results th, td {
     font-size: 85%;
+    padding: 5px;
 }
-
-#tabh_asset {
-    width: 25%;
-}
-
-#tabh_capacity {
-    width:19%;
-}
-
-#tabh_cf_available {
-    width:14%;
-}
-
-#tabh_cf_used {
-    width:14%;
-}
-
-#tabh_curtailment {
-    width:14%;
-}
-
-#tabh_rmv {
-    width:14%;
-}
-
 
 .d3-tip {
     line-height: 1;
@@ -178,6 +155,10 @@ section {
     background: rgba(0, 0, 0, 0.8);
     color: #fff;
     border-radius: 4px;
+    font-size: 12px;
+}
+
+.bar-label {
     font-size: 12px;
 }
 
