@@ -602,6 +602,7 @@ function clear_results(){
 
 function clear_weather(){
     d3.select("#weather").selectAll("g").remove();
+    document.getElementById("weather-instructions").innerHTML = "";
     document.getElementById("weather-download").innerHTML = "";
     document.getElementById("weather-link").innerHTML = "";
     document.getElementById("capacity-factors").innerHTML = "";
@@ -647,7 +648,7 @@ function display_results(){
     };
 
     for (let i = 0; i < electricity.length; i++){
-	if(results[electricity[i] + "_capacity"] > 0){
+	if(results[electricity[i] + "_capacity"] > 0.1){
 	    var cost = results[electricity[i]+"_cost"];
 	    if(results.hasOwnProperty(electricity[i]+"_marginal_cost")){
 		cost += results[electricity[i]+"_marginal_cost"];
@@ -657,15 +658,14 @@ function display_results(){
     };
 
     // all per hour
-    if (results["battery_power_capacity"] > 0){
+    if (results["battery_power_capacity"] > 0.1){
 	let battery_fedin = results["battery_power_capacity"]*results["battery_power_cf_used"];
 	let battery_charged = battery_fedin/0.95**2;
 	document.getElementById("battery_lcos").innerHTML=Math.abs((results["battery_power_cost"]+results["battery_energy_cost"]+battery_charged*results["battery_power_rmv"]*results["average_price"])/battery_fedin).toFixed(1);
     };
-    if (results["hydrogen_turbine_capacity"] > 0){
+    if (results["hydrogen_turbine_capacity"] > 0.1){
 	let hydrogen_fedin = results["hydrogen_turbine_capacity"]*results["hydrogen_turbine_cf_used"];
 	let hydrogen_charged = hydrogen_fedin/(results["assumptions"]["hydrogen_turbine_efficiency"]/100)/(results["assumptions"]["hydrogen_electrolyser_efficiency"]/100);
-	console.log("hydrogen fedin " + hydrogen_fedin + "hydrogen charged " + hydrogen_charged);
 	document.getElementById("hydrogen_lcos").innerHTML=Math.abs((results["hydrogen_turbine_cost"]+results["hydrogen_energy_cost"]+results["hydrogen_electrolyser_cost"]+hydrogen_charged*results["hydrogen_electrolyser_rmv"]*results["average_price"])/hydrogen_fedin).toFixed(1);
     };
 
@@ -690,9 +690,10 @@ function display_weather(){
     };
 
     draw_weather_graph();
-    document.getElementById("capacity-factors").innerHTML = "Capacity factor onshore wind (blue): " + (results["onwind_cf_available"]*100).toFixed(1) + "%<br />Capacity factor solar PV (yellow): " + (results["solar_cf_available"]*100).toFixed(1) + "%";
+    document.getElementById("capacity-factors").innerHTML = "Capacity factor onshore wind (blue): " + (results["onwind_cf_available"]*100).toFixed(1) + "%<br />Capacity factor solar PV (DC side) (yellow): " + (results["solar_cf_available"]*100).toFixed(1) + "%";
     document.getElementById("weather-download").innerHTML = '<a href="data/time-series-' + results.assumptions.weather_hex + '.csv">Download Comma-Separated-Variable (CSV) file of data</a> ' + licenceText;
     document.getElementById("weather-link").innerHTML = '<a href="https://model.energy/?' + assumptions_to_url() +'#time-series">Link to these results</a>';
+    document.getElementById("weather-instructions").innerHTML = "<b>Zoom and pan to see the details:</b>";
 };
 
 
@@ -940,7 +941,7 @@ function draw_cost_stack(){
     };
 
     draw_stack(data, labels, color, "Breakdown of avg. sys. cost [EUR/MWh]", "#average_cost_graph", " EUR/MWh");
-}
+};
 
 
 function draw_power_capacity_stack(){
@@ -958,7 +959,7 @@ function draw_power_capacity_stack(){
     };
 
     draw_stack(data, labels, color, "Power capacity [MW]", "#power_capacity_graph", " MW");
-}
+};
 
 
 function draw_power_capacity_bar(){
@@ -970,25 +971,25 @@ function draw_power_capacity_bar(){
     if(results["assumptions"]["load"] > 0.){
 	data.push(results["assumptions"]["load"]);
 	color.push(colors["load"]);
-	labels.push("electricity demand");
+	labels.push("elec. demand");
     };
 
     if(results["assumptions"]["hydrogen_load"] > 0.){
 	data.push(results["assumptions"]["hydrogen_load"]);
 	color.push(colors["hydrogen_load"]);
-	labels.push("hydrogen demand");
+	labels.push("H2 demand");
     };
 
     for(let i=0; i < assets.length; i++){
 	if(!assets[i].includes("energy") && results[assets[i]+"_capacity"] >= 0.1){
 	    data.push(results[assets[i]+"_capacity"]);
 	    color.push(colors[assets[i]]);
-	    labels.push(assets[i].replace("_"," "));
+	    labels.push(assets[i].replace("_"," ").replace("hydrogen","H2"));
 	};
     };
 
     draw_bar(data, labels, color, "Power capacity [MW]", "#power_capacity_bar", " MW");
-}
+};
 
 
 
@@ -1007,7 +1008,7 @@ function draw_energy_capacity_stack(){
     };
 
     draw_stack(data, labels, color, "Energy storage capacity [GWh]", "#energy_capacity_graph", " GWh");
-}
+};
 
 
 
@@ -1020,25 +1021,25 @@ function draw_energy_capacity_bar(){
     if(results["assumptions"]["load"] > 0.){
 	data.push(results["assumptions"]["load"]*24/1000.);
 	color.push(colors["load"]);
-	labels.push("daily elec. demand");
+	labels.push("24h elec. demand");
     };
 
     if(results["assumptions"]["hydrogen_load"] > 0.){
 	data.push(results["assumptions"]["hydrogen_load"]*24/1000.);
 	color.push(colors["hydrogen_load"]);
-	labels.push("daily H2 demand");
+	labels.push("24h H2 demand");
     };
 
     for(let i=0; i < assets.length; i++){
 	if(assets[i].includes("energy") && results[assets[i]+"_capacity"] >= 10){
 	    data.push(results[assets[i]+"_capacity"]/1000.);
 	    color.push(colors[assets[i]]);
-	    labels.push(assets[i].replace("energy","storage").replace("_"," "));
+	    labels.push(assets[i].replace("energy","storage").replace("_"," ").replace("hydrogen","H2"));
 	};
     };
 
     draw_bar(data, labels, color, "Energy capacity [GWh]", "#energy_capacity_bar", " GWh");
-}
+};
 
 
 
@@ -1057,7 +1058,7 @@ function draw_energy_stack(){
     };
 
     draw_stack(data, labels, color, "Average power dispatch [MW]", "#energy_graph", " MW");
-}
+};
 
 
 

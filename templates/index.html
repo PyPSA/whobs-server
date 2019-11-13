@@ -14,7 +14,7 @@
     <script src="https://unpkg.com/leaflet-draw@1.0.2/dist/leaflet.draw.js"></script>
     <script src="{{ url_for('static', filename='d3.v4.min.js') }}" charset="utf-8"></script>
     <script src="{{ url_for('static', filename='d3-tip.js') }}" charset="utf-8"></script>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='solver.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='solver-191103.css') }}">
   </head>
 
   <body id="page-top">
@@ -129,6 +129,7 @@
 		<button type="button" class="btn btn-lg btn-primary" id="weather-button">Fetch wind & solar</button>
 		&nbsp;&nbsp;Status: <span id="weather-status">Waiting for job</span>
 	      </p>
+              <p><span id="weather-instructions"></span></p>
               <div class="col-xs-12 col-lg-6" id="chartArea">
                 <svg width="1100" height="500" id="weather"></svg>
               </div>
@@ -204,7 +205,7 @@
                       <div class="form-group">
                         <label for="avdSel2">Solar capital cost (overnight) [EUR/kWp]</label>
                         <input type="number" class="form-control" id="advSel2" name="solar_cost">
-			<small class="form-text text-muted">Default assumption from <a href="https://ens.dk/en/our-services/projections-and-models/technology-data">Danish Energy Agency, 2019</a>; cost assumes panel:inverter output ratio of 1.35.</small>
+			<small class="form-text text-muted">Default assumption from <a href="https://ens.dk/en/our-services/projections-and-models/technology-data">Danish Energy Agency, 2019</a>; cost for DC capacity, assumes panel:inverter output ratio of 1.35.</small>
                       </div>
                       <div class="form-group">
                         <label for="avdSel3">Battery energy capital cost (overnight) [EUR/kWh]</label>
@@ -322,7 +323,7 @@
                     <h3 data-toc-skip>Results<span id="results_assumptions"></span></h3>
                     <br />
                     <p><b>Average system cost [EUR/MWh]: <span id="average_cost"></span></b></p>
-		    <small class="form-text text-muted">For comparison, household electricity (including taxes and grid charges) averaged 211 EUR/MWh in the <a href="https://ec.europa.eu/eurostat/statistics-explained/index.php/Electricity_price_statistics">European Union in 2018</a> & 132 USD/MWh in the <a href="https://www.electricchoice.com/electricity-prices-by-state/">United States in 2019</a></small>
+		    <small class="form-text text-muted">For comparison, household electricity rates (including taxes and grid charges) averaged 211 EUR/MWh in the <a href="https://ec.europa.eu/eurostat/statistics-explained/index.php/Electricity_price_statistics">European Union in 2018</a> & 132 USD/MWh in the <a href="https://www.electricchoice.com/electricity-prices-by-state/">United States in 2019</a></small>
 		    <p><span id="average_electricity_price"></span></p>
                     <p><span id="average_hydrogen_price"></span></p>
                     <div id="average_cost_div">
@@ -582,6 +583,6 @@
         });
       }
     </script>
-    <script src="{{ url_for('static', filename='solver-191025.js') }}"></script>
+    <script src="{{ url_for('static', filename='solver-191104.js') }}"></script>
   </body>
 </html>
