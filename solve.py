@@ -725,6 +725,9 @@ def solve(assumptions):
     if assumptions["year"] < years_available_start or assumptions["year"] > years_available_end:
         return error("Year {} not in valid range".format(assumptions["year"]), jobid)
 
+    if assumptions["load"] == 0 and assumptions["hydrogen_load"] == 0:
+        return error("No load", jobid)
+
     print(assumptions)
 
     if assumptions["version"] == 0:
