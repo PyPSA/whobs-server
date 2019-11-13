@@ -707,8 +707,8 @@ def solve(assumptions):
         except:
             return error("{} {} could not be converted to float".format(key,assumptions[key]), jobid)
 
-        if assumptions[key] < 0 or assumptions[key] > 1e5:
-            return error("{} {} was not in the valid range [0,1e5]".format(key,assumptions[key]), jobid)
+        if assumptions[key] < 0 or assumptions[key] > 1e6:
+            return error("{} {} was not in the valid range [0,1e6]".format(key,assumptions[key]), jobid)
 
     for key in ints:
         try:
