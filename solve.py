@@ -17,6 +17,8 @@
 
 import pypsa
 
+from pypsa.linopt import get_var, linexpr, define_constraints
+
 import pandas as pd
 from pyomo.environ import Constraint
 from rq import get_current_job
@@ -35,8 +37,6 @@ import scipy as sp
 import numpy as np
 
 from shapely.geometry import box, Point, Polygon, MultiPolygon
-
-import nomopyomo
 
 current_version = 190929
 
@@ -470,17 +470,13 @@ def run_optimisation(assumptions, pu):
                     efficiency = assumptions_df.at['battery_power','efficiency'])
 
         def extra_functionality(network,snapshots):
-            group = "battery"
-            nomopyomo.add_group(network,"constraint",group,1)
-            start = network.constraint_positions.at[group,"start"]
 
-            # charge-power = efficiency * discharge-power
-            constraint_matrix = {}
-            i_battery_power = network.variable_positions.at["Link-p_nom","start"] + network.links.index.get_loc("battery_power")
-            i_battery_discharge = network.variable_positions.at["Link-p_nom","start"] + network.links.index.get_loc("battery_discharge")
-            constraint_matrix[i_battery_power] = 1.
-            constraint_matrix[i_battery_discharge] = -network.links.at["battery_power","efficiency"]
-            nomopyomo.write_constraint(network,constraint_matrix,"==",0.,start)
+            link_p_nom = get_var(network, "Link", "p_nom")
+
+            lhs = linexpr((1,link_p_nom["battery_power"]),
+                          (-network.links.loc["battery_discharge", "efficiency"],
+                           link_p_nom["battery_discharge"]))
+            define_constraints(network, lhs, "=", 0, 'Link', 'charger_ratio')
     else:
         def extra_functionality(network,snapshots):
             pass
@@ -534,11 +530,11 @@ def run_optimisation(assumptions, pu):
                       #"GURO_PAR_BARDENSETHRESH": 200}
 
     formulation = "kirchhoff"
-    status, termination_condition = nomopyomo.network_lopf(network,
-                                                           solver_name=solver_name,
-                                                           solver_options=solver_options,
-                                                           formulation=formulation,
-                                                           extra_functionality=extra_functionality)
+    status, termination_condition = network.lopf(pyomo=False,
+                                                 solver_name=solver_name,
+                                                 solver_options=solver_options,
+                                                 formulation=formulation,
+                                                 extra_functionality=extra_functionality)
 
     print(status,termination_condition)
 
@@ -547,6 +543,11 @@ def run_optimisation(assumptions, pu):
 
     if termination_condition == "infeasible":
         return None, None, "Problem was infeasible"
+
+    #correction
+    if pypsa.__version__ == "0.16.0":
+        network.buses_t.marginal_price.loc[network.snapshots] = network.buses_t.marginal_price.loc[network.snapshots].divide(network.snapshot_weightings.loc[network.snapshots],axis=0)
+
 
     results_overview = pd.Series(dtype=float)
     results_overview["objective"] = network.objective/8760

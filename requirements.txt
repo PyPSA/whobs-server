@@ -6,4 +6,4 @@ rq
 Flask
 xarray
 netcdf4
-git+https://github.com/PyPSA/PyPSA.git
+pypsa>=0.16.0
