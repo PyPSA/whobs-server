@@ -54,7 +54,7 @@ region_names = [f['properties']['name'] for f in j['features']]
 tbooleans = ["wind","solar","battery","hydrogen"]
 fbooleans = ["dispatchable1","dispatchable2","co2_limit"]
 
-float_tech_options = ["wind_cost", "solar_cost", "battery_energy_cost","battery_power_cost", "hydrogen_energy_cost", "hydrogen_electrolyser_cost", "hydrogen_electrolyser_efficiency", "hydrogen_turbine_cost", "hydrogen_turbine_efficiency","co2_emissions"]
+float_tech_options = ["wind_cost", "solar_cost", "battery_energy_cost","battery_power_cost", "hydrogen_energy_cost", "hydrogen_electrolyser_cost", "hydrogen_electrolyser_efficiency", "hydrogen_turbine_cost", "hydrogen_turbine_efficiency", "dispatchable1_cost", "dispatchable1_marginal_cost", "dispatchable1_emissions", "dispatchable1_discount", "dispatchable2_cost", "dispatchable2_marginal_cost", "dispatchable2_emissions", "dispatchable2_discount", "co2_emissions"]
 
 
 @app.route('/')
