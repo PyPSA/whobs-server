@@ -538,11 +538,15 @@ def run_optimisation(assumptions, pu):
 
     print(status,termination_condition)
 
-    if status != "ok":
+    if termination_condition in ["infeasible","infeasible or unbounded"]:
+        return None, None, "Problem was infeasible"
+    elif status == "ok" and termination_condition == "optimal":
+        pass
+    elif status == "warning" and termination_condition == "suboptimal":
+        pass
+    else:
         return None, None, "Job failed to optimise correctly"
 
-    if termination_condition == "infeasible":
-        return None, None, "Problem was infeasible"
 
     #correction
     if pypsa.__version__ == "0.16.0":
