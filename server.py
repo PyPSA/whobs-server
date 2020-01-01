@@ -57,53 +57,52 @@ fbooleans = ["dispatchable1","dispatchable2","co2_limit"]
 float_tech_options = ["wind_cost", "solar_cost", "battery_energy_cost","battery_power_cost", "hydrogen_energy_cost", "hydrogen_electrolyser_cost", "hydrogen_electrolyser_efficiency", "hydrogen_turbine_cost", "hydrogen_turbine_efficiency", "dispatchable1_cost", "dispatchable1_marginal_cost", "dispatchable1_emissions", "dispatchable1_discount", "dispatchable2_cost", "dispatchable2_marginal_cost", "dispatchable2_emissions", "dispatchable2_discount", "co2_emissions"]
 
 
+#defaults to only listen to GET and HEAD
 @app.route('/')
 def root():
-    if request.method == "GET":
-
-        # Try to get settings from URL
-        assumptions = {}
-        assumptions["location"] = request.args.get('location', default = 'DE', type = str)
-        assumptions["job_type"] = request.args.get('job_type', default = 'none', type = str)
-        assumptions["year"] = request.args.get('year', default = 2011, type = int)
-        assumptions["frequency"] = request.args.get('frequency', default = 3, type = int)
-        assumptions["cf_exponent"] = request.args.get('cf_exponent', default = 2, type = float)
-        assumptions["load"] = request.args.get('load', default = 100, type = float)
-        assumptions["hydrogen_load"] = request.args.get('hydrogen_load', default = 0, type = float)
-        assumptions["discount_rate"] = request.args.get('discount_rate', default = 5, type = float)
-        assumptions["co2_emissions"] = request.args.get('co2_emissions', default = 100, type = float)
-        for boolean in tbooleans:
-            assumptions[boolean] = request.args.get(boolean, default = 1, type = int)
-        for boolean in fbooleans:
-            assumptions[boolean] = request.args.get(boolean, default = 0, type = int)
-        for float_tech_option in float_tech_options:
-            if float_tech_option in request.args:
-                assumptions[float_tech_option] = request.args.get(float_tech_option, default = 100, type = float)
+    # Try to get settings from URL
+    assumptions = {}
+    assumptions["location"] = request.args.get('location', default = 'DE', type = str)
+    assumptions["job_type"] = request.args.get('job_type', default = 'none', type = str)
+    assumptions["year"] = request.args.get('year', default = 2011, type = int)
+    assumptions["frequency"] = request.args.get('frequency', default = 3, type = int)
+    assumptions["cf_exponent"] = request.args.get('cf_exponent', default = 2, type = float)
+    assumptions["load"] = request.args.get('load', default = 100, type = float)
+    assumptions["hydrogen_load"] = request.args.get('hydrogen_load', default = 0, type = float)
+    assumptions["discount_rate"] = request.args.get('discount_rate', default = 5, type = float)
+    assumptions["co2_emissions"] = request.args.get('co2_emissions', default = 100, type = float)
+    for boolean in tbooleans:
+        assumptions[boolean] = request.args.get(boolean, default = 1, type = int)
+    for boolean in fbooleans:
+        assumptions[boolean] = request.args.get(boolean, default = 0, type = int)
+    for float_tech_option in float_tech_options:
+        if float_tech_option in request.args:
+            assumptions[float_tech_option] = request.args.get(float_tech_option, default = 100, type = float)
 
 
-        if assumptions["location"][:8] == "country:" and assumptions["location"][8:] in country_names:
-            assumptions["location_name"] = country_names_full[country_names.index(assumptions["location"][8:])]
-        elif assumptions["location"][:6] == "point:":
-            assumptions["location_name"] = assumptions["location"]
-        elif assumptions["location"][:8] == "polygon:":
-            assumptions["location_name"] = "polygon"
-        elif assumptions["location"][:7] == "region:" and assumptions["location"][7:] in region_names:
-            assumptions["location_name"] = assumptions["location"][7:]
+    if assumptions["location"][:8] == "country:" and assumptions["location"][8:] in country_names:
+        assumptions["location_name"] = country_names_full[country_names.index(assumptions["location"][8:])]
+    elif assumptions["location"][:6] == "point:":
+        assumptions["location_name"] = assumptions["location"]
+    elif assumptions["location"][:8] == "polygon:":
+        assumptions["location_name"] = "polygon"
+    elif assumptions["location"][:7] == "region:" and assumptions["location"][7:] in region_names:
+        assumptions["location_name"] = assumptions["location"][7:]
+    else:
+        assumptions["location"] = 'country:DE'
+        assumptions["location_name"] = country_names_full[country_names.index(assumptions["location"][8:])]
+
+    for boolean in tbooleans + fbooleans:
+        if assumptions[boolean] == 0:
+            assumptions[boolean] = False
         else:
-            assumptions["location"] = 'country:DE'
-            assumptions["location_name"] = country_names_full[country_names.index(assumptions["location"][8:])]
+            assumptions[boolean] = True
 
-        for boolean in tbooleans + fbooleans:
-            if assumptions[boolean] == 0:
-                assumptions[boolean] = False
-            else:
-                assumptions[boolean] = True
-
-        #if a real job is requested without a version, assume it's the old original version
-        if assumptions["job_type"] == "none":
-            assumptions["version"] = request.args.get('version', default=current_version, type=int)
-        else:
-            assumptions["version"] = request.args.get('version', default=0, type=int)
+    #if a real job is requested without a version, assume it's the old original version
+    if assumptions["job_type"] == "none":
+        assumptions["version"] = request.args.get('version', default=current_version, type=int)
+    else:
+        assumptions["version"] = request.args.get('version', default=0, type=int)
 
     return render_template('index.html', settings=assumptions)
 
