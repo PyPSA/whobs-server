@@ -154,7 +154,7 @@
                   <option value="2030" selected>2030 scenario</option>
                   <option value="2050">2050 scenario</option>
                 </select>
-                <small class="form-text text-muted">Individual cost assumptions can be changed below under "advanced assumption settings".</small>
+                <small class="form-text text-muted">Individual cost assumptions can be changed below under "advanced assumption settings". 2030 is the default year for technology assumptions because this is the earliest reasonable time when most regions could have zero emissions.</small>
               </div>
               <p>Choose which technologies should be included:</p>
               <div class="form-check">
@@ -189,6 +189,7 @@
                 <div class="col">
                   <div class="collapse multi-collapse" id="advCost">
                     <div class="card card-body">
+		      <p>All costs are in 2015 euros, following the <a href="https://ens.dk/en/our-services/projections-and-models/technology-data">Danish Energy Agency Technology Data Catalogue<a>.</p>
                       <div class="form-group">
                         <label for="samplingSelector">Sampling frequency</label>
                         <input type="number" class="form-control" id="samplingSelector" aria-describedby="samplingSelect" name="frequency">
@@ -201,22 +202,22 @@
                       <div class="form-group">
                         <label for="avdSel1">Wind capital cost (overnight) [EUR/kWp]</label>
                         <input type="number" class="form-control" id="advSel1" name="wind_cost">
-			<small class="form-text text-muted">Default assumption from <a href="https://ens.dk/en/our-services/projections-and-models/technology-data">Danish Energy Agency, 2019</a>; includes grid connection costs.</small>
+			<small class="form-text text-muted">Default assumption from <a href="https://ens.dk/en/our-services/projections-and-models/technology-data">Danish Energy Agency Technology Data for Generation of Electricity and District Heating, November 2019</a>; includes grid connection costs.</small>
                       </div>
                       <div class="form-group">
                         <label for="avdSel2">Solar capital cost (overnight) [EUR/kWp]</label>
                         <input type="number" class="form-control" id="advSel2" name="solar_cost">
-			<small class="form-text text-muted">Default assumption from <a href="https://ens.dk/en/our-services/projections-and-models/technology-data">Danish Energy Agency, 2019</a>; cost for DC capacity, assumes panel:inverter output ratio of 1.35.</small>
+			<small class="form-text text-muted">Default assumption from <a href="https://ens.dk/en/our-services/projections-and-models/technology-data">Danish Energy Agency Technology Data for Generation of Electricity and District Heating, November 2019</a>; cost for DC capacity, assumes panel:inverter output ratio of 1.35.</small>
                       </div>
                       <div class="form-group">
                         <label for="avdSel3">Battery energy capital cost (overnight) [EUR/kWh]</label>
                         <input type="number" class="form-control" id="advSel3" name="battery_energy_cost">
-			<small class="form-text text-muted">Default assumption from <a href="https://ens.dk/en/our-services/projections-and-models/technology-data">Danish Energy Agency, 2019</a>.</small>
+			<small class="form-text text-muted">Default assumption from <a href="https://ens.dk/en/our-services/projections-and-models/technology-data">Danish Energy Agency Technology Data for Energy Storage, January 2020</a>.</small>
                       </div>
                       <div class="form-group">
                         <label for="avdSel4">Battery power capital cost (overnight) [EUR/kW]</label>
                         <input type="number" class="form-control" id="advSel4" name="battery_power_cost">
-			<small class="form-text text-muted">Default assumption from <a href="https://ens.dk/en/our-services/projections-and-models/technology-data">Danish Energy Agency, 2019</a>; power costs include e.g. inverter.</small>
+			<small class="form-text text-muted">Default assumption from <a href="https://ens.dk/en/our-services/projections-and-models/technology-data">Danish Energy Agency Technology Data for Energy Storage, January 2020</a>; power costs include e.g. inverter.</small>
                       </div>
                       <div class="form-group">
                         <label for="avdSel5">Hydrogen energy capital cost (overnight) [EUR/kWh]</label>
@@ -226,22 +227,22 @@
                       <div class="form-group">
                         <label for="avdSel6">Hydrogen electrolyser capital cost (overnight) [EUR/kW]</label>
                         <input type="number" class="form-control" id="advSel6" name="hydrogen_electrolyser_cost">
-			<small class="form-text text-muted">Default assumption from <a href="https://ens.dk/en/our-services/projections-and-models/technology-data">Danish Energy Agency, 2019</a>.</small>
+			<small class="form-text text-muted">Default assumption from <a href="https://ens.dk/en/our-services/projections-and-models/technology-data">Danish Energy Agency Technology Data for Renewable Fuels, February 2019</a>.</small>
                       </div>
                       <div class="form-group">
                         <label for="avdSel7">Hydrogen electrolyser efficiency [percent, LHV]</label>
                         <input type="number" class="form-control" id="advSel7" name="hydrogen_electrolyser_efficiency">
-			<small class="form-text text-muted">Default assumption from <a href="https://ens.dk/en/our-services/projections-and-models/technology-data">Danish Energy Agency, 2019</a>.</small>
+			<small class="form-text text-muted">Default assumption from <a href="https://ens.dk/en/our-services/projections-and-models/technology-data">Danish Energy Agency Technology Data for Renewable Fuels, February 2019</a>.</small>
                       </div>
                       <div class="form-group">
                         <label for="avdSel8">Hydrogen combined cycle turbine (or fuel cell - see below) capital cost (overnight) [EUR/kW]</label>
                         <input type="number" class="form-control" id="advSel8" name="hydrogen_turbine_cost">
-			<small class="form-text text-muted">Default assumption from <a href="https://ens.dk/en/our-services/projections-and-models/technology-data">Danish Energy Agency, 2019</a>; assumption taken from that for natural gas CCGT.</small>
+			<small class="form-text text-muted">Default assumption from <a href="https://ens.dk/en/our-services/projections-and-models/technology-data">Danish Energy Agency Technology Data for Generation of Electricity and District Heating, November 2019</a>; assumption taken from that for natural gas CCGT.</small>
                       </div>
                       <div class="form-group">
                         <label for="avdSel9">Hydrogen turbine efficiency [percent, LHV]</label>
                         <input type="number" class="form-control" id="advSel9" name="hydrogen_turbine_efficiency">
-			<small class="form-text text-muted">Default assumption from <a href="https://ens.dk/en/our-services/projections-and-models/technology-data">Danish Energy Agency, 2019</a>; assumption taken from that for natural gas CCGT.</small>
+			<small class="form-text text-muted">Default assumption from <a href="https://ens.dk/en/our-services/projections-and-models/technology-data">Danish Energy Agency Technology Data for Generation of Electricity and District Heating, November 2019</a>; assumption taken from that for natural gas CCGT.</small>
                       </div>
                       <div class="form-group">
                         <label for="avdSel10">Cost of capital / interest rate [percent]</label>
@@ -324,7 +325,7 @@
                     <h3 data-toc-skip>Results<span id="results_assumptions"></span></h3>
                     <br />
                     <p><b>Average system cost [EUR/MWh]: <span id="average_cost"></span></b></p>
-		    <small class="form-text text-muted">Cost is per unit of energy delivered. For comparison, household electricity rates (including taxes and grid charges) averaged 211 EUR/MWh in the <a href="https://ec.europa.eu/eurostat/statistics-explained/index.php/Electricity_price_statistics">European Union in 2018</a> & 132 USD/MWh in the <a href="https://www.electricchoice.com/electricity-prices-by-state/">United States in 2019</a></small>
+		    <small class="form-text text-muted">Cost is per unit of energy delivered in 2015 euros. For comparison, household electricity rates (including taxes and grid charges) averaged 211 EUR/MWh in the <a href="https://ec.europa.eu/eurostat/statistics-explained/index.php/Electricity_price_statistics">European Union in 2018</a> & 132 USD/MWh in the <a href="https://www.electricchoice.com/electricity-prices-by-state/">United States in 2019</a></small>
 		    <p><span id="average_electricity_price"></span></p>
                     <p><span id="average_hydrogen_price"></span></p>
                     <div id="average_cost_div">
@@ -584,6 +585,6 @@
         });
       }
     </script>
-    <script src="{{ url_for('static', filename='solver-191104.js') }}"></script>
+    <script src="{{ url_for('static', filename='solver-200127.js') }}"></script>
   </body>
 </html>

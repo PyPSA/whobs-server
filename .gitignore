@@ -49,7 +49,7 @@ data/
 
 venv/
 
-move_weather.py
+move_*
 
 *.zip
 

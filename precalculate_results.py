@@ -35,6 +35,7 @@ base_assumptions = {"wind" : True,
        	            "dispatchable2_discount" : 10,
                     "co2_emissions" : 0,
                     "load" : 100.0,
+                    "hydrogen_load" : 0.0,
                     "frequency" : 3,
                     "discount_rate" : 5.0,
                     "version" : solve.current_version}
@@ -42,9 +43,9 @@ base_assumptions = {"wind" : True,
 
 #copied from static/solver.js
 tech_assumptions = {"2020" : {"wind_cost" : 1120,
-			      "solar_cost" : 620,
+			      "solar_cost" : 420,
 			      "battery_energy_cost" : 232,
-			      "battery_power_cost" : 90,
+			      "battery_power_cost" : 270,
 			      "hydrogen_energy_cost" : 0.7,
 			      "hydrogen_electrolyser_cost" : 1100,
 			      "hydrogen_electrolyser_efficiency" : 58,
@@ -52,9 +53,9 @@ tech_assumptions = {"2020" : {"wind_cost" : 1120,
 			      "hydrogen_turbine_efficiency" : 56,
 				 },
 		    "2030" : {"wind_cost" : 1040,
-			      "solar_cost" : 510,
+			      "solar_cost" : 300,
 			      "battery_energy_cost" : 142,
-			      "battery_power_cost" : 53,
+			      "battery_power_cost" : 160,
 			      "hydrogen_energy_cost" : 0.7,
 			      "hydrogen_electrolyser_cost" : 600,
 			      "hydrogen_electrolyser_efficiency" : 62,
@@ -62,9 +63,9 @@ tech_assumptions = {"2020" : {"wind_cost" : 1120,
 			      "hydrogen_turbine_efficiency" : 58,
 		    },
 		    "2050" : {"wind_cost" : 960,
-			      "solar_cost" : 410,
+			      "solar_cost" : 240,
 			      "battery_energy_cost" : 75,
-			      "battery_power_cost" : 20,
+			      "battery_power_cost" : 60,
 			      "hydrogen_energy_cost" : 0.7,
 			      "hydrogen_electrolyser_cost" : 400,
 			      "hydrogen_electrolyser_efficiency" : 67,
@@ -104,6 +105,8 @@ for cf_exponent in cf_exponents:
                     if "co2" in item and not assumptions["co2_limit"]:
                         continue
                     if item == "version" and assumptions["version"] == 0:
+                        continue
+                    if item == "hydrogen_load" and assumptions["hydrogen_load"] == 0:
                         continue
                     results_string += "&{}".format(assumptions[item])
 
