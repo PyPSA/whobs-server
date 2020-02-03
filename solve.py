@@ -414,7 +414,7 @@ def run_optimisation(assumptions, pu):
     network.snapshot_weightings = pd.Series(float(assumptions["frequency"]),index=network.snapshots)
 
     #bug-fix until PyPSA 0.16.2
-    n.snapshot_weightings.name = "weightings"
+    network.snapshot_weightings.name = "weightings"
 
     network.add("Bus","elec")
     network.add("Load","load",
