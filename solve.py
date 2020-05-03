@@ -42,24 +42,6 @@ current_version = 190929
 
 octant_folder = "../cutouts/"
 
-colors = {"wind":"#3B6182",
-          "solar" :"#FFFF00",
-          "battery" : "#999999",
-          "battery_charge" : "#999999",
-          "battery_discharge" : "#999999",
-          "battery_power" : "#999999",
-          "battery_energy" : "#666666",
-          "hydrogen_turbine" : "red",
-          "hydrogen_electrolyser" : "cyan",
-          "hydrogen_energy" : "magenta",
-          "dispatchable1" : "orange",
-          "dispatchable2" : "lime",
-}
-
-years_available_start = 2011
-years_available_end = 2013
-
-
 #based on mean deviation against renewables.ninja capacity factors for European countries for 2011-2013
 solar_correction_factor = 0.926328
 
@@ -695,6 +677,43 @@ def run_optimisation(assumptions, pu):
     return results_overview, results_series, None
 
 
+def sanitise_assumptions(assumptions):
+    """Returns error_message and clean type-safe assumptions"""
+    for key in booleans:
+        try:
+            assumptions[key] = bool(assumptions[key])
+        except:
+            return "{} {} could not be converted to boolean".format(key,assumptions[key]), None
+
+    for key in floats:
+        try:
+            assumptions[key] = float(assumptions[key])
+        except:
+            return "{} {} could not be converted to float".format(key,assumptions[key]), None
+
+        if assumptions[key] < 0 or assumptions[key] > 1e6:
+            return "{} {} was not in the valid range [0,1e6]".format(key,assumptions[key]), None
+
+    for key in ints:
+        try:
+            assumptions[key] = int(assumptions[key])
+        except:
+            return "{} {} could not be converted to an integer".format(key,assumptions[key]), None
+
+    for key in strings:
+        assumptions[key] = str(assumptions[key])
+
+    if assumptions["frequency"] < 1 or assumptions["frequency"] > 8760:
+        return "Frequency {} is not in the valid range [1,8760]".format(assumptions["frequency"]), None
+
+    if assumptions["year"] < years_available_start or assumptions["year"] > years_available_end:
+        return "Year {} not in valid range".format(assumptions["year"]), None
+
+    if assumptions["load"] == 0 and assumptions["hydrogen_load"] == 0:
+        return "No load", None
+
+    return None, assumptions
+
 def solve(assumptions):
 
     job = get_current_job()
@@ -703,46 +722,7 @@ def solve(assumptions):
     job.meta['status'] = "Reading in data"
     job.save_meta()
 
-    for key in booleans:
-        try:
-            assumptions[key] = bool(assumptions[key])
-        except:
-            return error("{} {} could not be converted to boolean".format(key,assumptions[key]), jobid)
-
-    for key in floats:
-        try:
-            assumptions[key] = float(assumptions[key])
-        except:
-            return error("{} {} could not be converted to float".format(key,assumptions[key]), jobid)
-
-        if assumptions[key] < 0 or assumptions[key] > 1e6:
-            return error("{} {} was not in the valid range [0,1e6]".format(key,assumptions[key]), jobid)
-
-    for key in ints:
-        try:
-            assumptions[key] = int(assumptions[key])
-        except:
-            return error("{} {} could not be converted to an integer".format(key,assumptions[key]), jobid)
-
-    for key in strings:
-        assumptions[key] = str(assumptions[key])
-
-    if assumptions["frequency"] < 1 or assumptions["frequency"] > 8760:
-        return error("Frequency {} is not in the valid range [1,8760]".format(assumptions["frequency"]), jobid)
-
-    if assumptions["year"] < years_available_start or assumptions["year"] > years_available_end:
-        return error("Year {} not in valid range".format(assumptions["year"]), jobid)
-
-    if assumptions["load"] == 0 and assumptions["hydrogen_load"] == 0:
-        return error("No load", jobid)
-
-    print(assumptions)
-
-    if assumptions["version"] == 0:
-        assumptions['weather_hex'] = hashlib.md5("{}&{}&{}".format(assumptions["location"].replace("country:",""), assumptions["year"], assumptions['cf_exponent']).encode()).hexdigest()
-    else:
-        assumptions['weather_hex'] = hashlib.md5("{}&{}&{}&{}".format(assumptions["location"].replace("country:",""), assumptions["year"], assumptions['cf_exponent'], assumptions["version"]).encode()).hexdigest()
-
+    # it could be that for a solve job, the weather data already exists
     weather_csv = 'data/time-series-{}.csv'.format(assumptions['weather_hex'])
     if os.path.isfile(weather_csv):
         print("Using preexisting weather file:", weather_csv)
@@ -759,22 +739,11 @@ def solve(assumptions):
             return error(error_msg, jobid)
         pu = pu.round(3)
         pu.to_csv(weather_csv)
-
-
-    snapshots = pd.date_range("{}-01-01".format(assumptions["year"]),"{}-12-31 23:00".format(assumptions["year"]),freq="H")
-    pu = pu.reindex(snapshots,method="nearest")
-
+        with open('assumptions-hash/weather-{}.json'.format(assumptions['weather_hex']), 'w') as fp:
+            json.dump(assumptions,fp)
 
     if assumptions["job_type"] == "weather":
         print("Returning weather for {}".format(assumptions["location"]))
-
-        results = {}
-        results['assumptions'] = assumptions
-        results["snapshots"] = [str(s) for s in snapshots]
-
-        for v in ["onwind","solar"]:
-            results[v+'_pu'] = pu[v].values.tolist()
-            results[v+"_cf_available"] = pu[v].mean()
 
         with open('results-solve/results-{}.json'.format(jobid), 'w') as fp:
             json.dump({"jobid" : jobid,
@@ -782,95 +751,44 @@ def solve(assumptions):
                        "weather_hex" : assumptions['weather_hex']
                    },fp)
 
+        return {"job_type" : "weather", "weather_hex" : assumptions['weather_hex']}
 
-        return results
 
-    results_string = assumptions["location"].replace("country:","")
-    for item in ints+booleans+floats:
-        if "dispatchable1" in item and not assumptions["dispatchable1"]:
-            continue
-        if "dispatchable2" in item and not assumptions["dispatchable2"]:
-            continue
-        if "co2" in item and not assumptions["co2_limit"]:
-            continue
-        if item == "version" and assumptions["version"] == 0:
-            continue
-        if item == "hydrogen_load" and assumptions["hydrogen_load"] == 0:
-            continue
-        results_string += "&{}".format(assumptions[item])
+    #for test data stored monthly, make hourly again
+    snapshots = pd.date_range("{}-01-01".format(assumptions["year"]),"{}-12-31 23:00".format(assumptions["year"]),freq="H")
+    pu = pu.reindex(snapshots,method="nearest")
 
-    assumptions['results_hex'] = hashlib.md5(results_string.encode()).hexdigest()
-    print(results_string)
-    print(assumptions['results_hex'])
+    if assumptions["version"] != current_version:
+        return error(f'Outdated version {assumptions["version"]} can no longer be calculated; please use version {current_version} instead', jobid)
+
     series_csv = 'data/results-series-{}.csv'.format(assumptions['results_hex'])
     overview_csv = 'data/results-overview-{}.csv'.format(assumptions['results_hex'])
 
-    if os.path.isfile(series_csv) and os.path.isfile(overview_csv):
-        print("Using preexisting results files:", series_csv, overview_csv)
-        results_overview = pd.read_csv(overview_csv,
-                                       index_col=0,
-                                       header=None,
-                                       squeeze=True)
-        results_series = pd.read_csv(series_csv,
-                                     index_col=0,
-                                     parse_dates=True)
-        #fill in old results before dispatchable
-        for i in range(1,3):
-            g = "dispatchable" + str(i)
-            if not assumptions[g]:
-                results_overview[g+"_capacity"] = 0.
-                results_overview[g+"_cost"] = 0.
-                results_overview[g+"_marginal_cost"] = 0.
-                results_overview[g+"_used"] = 0.
-                results_overview[g+"_cf_used"] = 0.
-                results_overview[g+"_rmv"] = 0.
-                results_series[g] = 0.
-    else:
-        if assumptions["version"] != current_version:
-            return error(f'Outdated version {assumptions["version"]} can no longer be calculated; please use version {current_version} instead', jobid)
+    print("Calculating results from scratch, saving as:", series_csv, overview_csv)
+    job.meta['status'] = "Solving optimisation problem"
+    job.save_meta()
+    results_overview, results_series, error_msg = run_optimisation(assumptions, pu)
+    if error_msg is not None:
+        return error(error_msg, jobid)
+    results_series = results_series.round(1)
 
-        print("Calculating results from scratch, saving as:", series_csv, overview_csv)
-        job.meta['status'] = "Solving optimisation problem"
-        job.save_meta()
-        results_overview, results_series, error_msg = run_optimisation(assumptions, pu)
-        if error_msg is not None:
-            return error(error_msg, jobid)
-        results_series = results_series.round(1)
-        results_series.to_csv(series_csv)
-        results_overview.to_csv(overview_csv,header=False)
+    results_series.to_csv(series_csv)
+    results_overview.to_csv(overview_csv,header=False)
+    with open('assumptions-hash/results-{}.json'.format(assumptions['results_hex']), 'w') as fp:
+        json.dump(assumptions,fp)
 
     job.meta['status'] = "Processing and sending results"
     job.save_meta()
-
-    results = dict(results_overview)
-
-    results["assumptions"] = assumptions
-
-    results["snapshots"] = [str(s) for s in results_series.index]
-
-    columns = {"positive" : ["wind","solar","battery_discharge","hydrogen_turbine","dispatchable1","dispatchable2"],
-               "negative" : ["battery_charge","hydrogen_electrolyser"]}
-
-
-    for sign, cols in columns.items():
-        results[sign] = {}
-        results[sign]["columns"] = cols
-        results[sign]["data"] = results_series[cols].values.tolist()
-        results[sign]["color"] = [colors[c] for c in cols]
-
-    balance = results_series[columns["positive"]].sum(axis=1) - results_series[columns["negative"]].sum(axis=1)
-
-    print(balance.describe())
 
     with open('results-solve/results-{}.json'.format(jobid), 'w') as fp:
         json.dump({"jobid" : jobid,
                    "status" : "Finished",
                    "job_type" : assumptions["job_type"],
-                   "average_cost" : results["average_cost"],
+                   "average_cost" : results_overview["average_cost"],
                    "results_hex" : assumptions['results_hex']
                    },fp)
 
     #with open('results-{}.json'.format(job.id), 'w') as fp:
     #    json.dump(results,fp)
 
-    return results
+    return {"job_type" : "solve", "results_hex" : assumptions['results_hex']}

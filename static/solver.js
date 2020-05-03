@@ -107,7 +107,42 @@ electricity = ["solar","wind","dispatchable1","dispatchable2"];
 storage = ["battery","hydrogen"];
 
 
+defaults = {"version" : 190929,
+	    "location" : "country:DE",
+	    "location_name" : "Germany",
+	    "job_type" : "none",
+	    "year" : 2011,
+	    "frequency" : 3,
+	    "cf_exponent" : 2,
+	    "load" : 100,
+	    "hydrogen_load" : 0,
+	    "discount_rate" : 5,
+	    "co2_emissions" : 100,
+	    "wind" : true,
+	    "solar" : true,
+	    "battery" : true,
+	    "hydrogen" : true,
+	    "dispatchable1" : false,
+	    "dispatchable2" : false,
+	    "co2_limit" : false,
+	   };
 
+
+if("assumptions" in results){
+    var assumptions = results["assumptions"];
+} else {
+    var assumptions = {};
+};
+
+
+// set assumptions defaults
+
+for (let i = 0; i < Object.keys(defaults).length; i++){
+    let key = Object.keys(defaults)[i];
+    if(!(key in assumptions)){
+	assumptions[key] = defaults[key];
+    };
+};
 
 let default_tech_scenario = "2030";
 
@@ -132,8 +167,6 @@ d3.select("#tech_scenario").on("change", function(){
 
 
 var d = 10;
-
-var results = {};
 
 // Centered on Frankfurt
 var mymap = L.map('mapid').setView([50.11, 8.68], 2);
@@ -362,7 +395,7 @@ for (let i = 0; i < Object.keys(assumptions).length; i++){
 	    console.log(key,"changed to",assumptions[key]);
 	});
     }
-    else if(key == "job_type" || key == "location" || key == "version"){
+    else if(["job_type","location","version","jobid","timestamp","queue_length","weather_hex","results_hex"].includes(key)){
     }
     else{
 	document.getElementsByName(key)[0].value = value;
@@ -412,20 +445,29 @@ function solve() {
 	send_job.setRequestHeader("Content-Type", "application/json");
 	send_job.onload = function () {
 	    var data = JSON.parse(this.response);
-	    jobid = data["jobid"];
-	    console.log("Jobid:",jobid);
-	    timer = setInterval(poll_result, poll_interval);
-	    timerStart = new Date().getTime();
-	    document.getElementById("countdown").innerHTML="Ready in around " + timerExpected + " seconds";
-	    console.log("timer",timer,"polling every",poll_interval,"milliseconds");
-	    timeout = setTimeout(poll_kill, poll_timeout);
+	    if("jobid" in data){
+		jobid = data["jobid"];
+		console.log("Jobid:",jobid);
+		timer = setInterval(poll_result, poll_interval);
+		timerStart = new Date().getTime();
+		document.getElementById("countdown").innerHTML="Ready in around " + timerExpected + " seconds";
+		console.log("timer",timer,"polling every",poll_interval,"milliseconds");
+		timeout = setTimeout(poll_kill, poll_timeout);
+		solveButton.text(solveButtonText["after"]);
+		solveButton.attr("disabled","");
+		document.getElementById("status").innerHTML="Sending job to solver";
+	    } else if("status" in data && data["status"] == "Error") {
+		console.log("results:", data);
+		document.getElementById("status").innerHTML = data["status"] + ": " + data["error"];
+	    } else {
+		console.log("results:", data);
+		document.getElementById("status").innerHTML = "Found previously calculated version";
+		results = data;
+		display_results();
+	    };
 	};
 	assumptions["job_type"] = "solve";
 	send_job.send(JSON.stringify(assumptions));
-
-	solveButton.text(solveButtonText["after"]);
-	solveButton.attr("disabled","");
-	document.getElementById("status").innerHTML="Sending job to solver";
     };
 };
 
@@ -433,8 +475,7 @@ function solve() {
 solveButton.on("click", solve);
 
 if(assumptions["job_type"] === "solve"){
-    weather();
-    solve();
+    display_results();
 };
 
 
@@ -446,18 +487,27 @@ function weather() {
 	send_job.setRequestHeader("Content-Type", "application/json");
 	send_job.onload = function () {
 	    var data = JSON.parse(this.response);
-	    weatherJobid = data["jobid"];
-	    console.log("Weather jobid:",jobid);
-	    weatherTimer = setInterval(poll_weather_result, poll_interval);
-	    console.log("timer",weatherTimer,"polling every",poll_interval,"milliseconds");
-	    weatherTimeout = setTimeout(poll_weather_kill, poll_timeout);
+	    if("jobid" in data){
+		weatherJobid = data["jobid"];
+		console.log("Weather jobid:",jobid);
+		weatherTimer = setInterval(poll_weather_result, poll_interval);
+		console.log("timer",weatherTimer,"polling every",poll_interval,"milliseconds");
+		weatherTimeout = setTimeout(poll_weather_kill, poll_timeout);
+		weatherButton.text(weatherButtonText["after"]);
+		weatherButton.attr("disabled","");
+		document.getElementById("weather-status").innerHTML="Sending job to weather database";
+	    } else if("status" in data && data["status"] == "Error") {
+		console.log("results:", data);
+		document.getElementById("weather-status").innerHTML = data["status"] + ": " + data["error"];
+	    } else {
+		console.log("results:", data);
+		document.getElementById("weather-status").innerHTML = "Found previously calculated version";
+		results = data;
+		display_weather();
+	    };
 	};
 	assumptions["job_type"] = "weather";
 	send_job.send(JSON.stringify(assumptions));
-
-	weatherButton.text(weatherButtonText["after"]);
-	weatherButton.attr("disabled","");
-	document.getElementById("weather-status").innerHTML="Sending job to weather database";
     };
 };
 
@@ -465,7 +515,7 @@ weatherButton.on("click", weather);
 
 
 if(assumptions["job_type"] === "weather"){
-    weather();
+    display_weather();
 };
 
 
@@ -502,7 +552,6 @@ function poll_result() {
 	    solveButton.text(solveButtonText["before"]);
 	    $('#solve-button').removeAttr("disabled");
 	    display_results();
-	    $('#collapseResults').addClass("show");
 	};
     };
     poll.send();
@@ -609,21 +658,9 @@ function clear_weather(){
 };
 
 
-function assumptions_to_url(){
-    let url = "";
-    for (let i = 0; i < Object.keys(results.assumptions).length; i++){
-	let key = Object.keys(results.assumptions)[i];
-	let value = results.assumptions[key];
-	if(value === true) value = 1;
-	if(value === false) value = 0;
-	url += "&" + key + "=" + value;
-    };
-    return url.slice(1);
-};
-
-
-
 function display_results(){
+
+    $('#collapseResults').addClass("show");
 
     document.getElementById("results_assumptions").innerHTML=" for " + results["assumptions"]["location_name"] + " in year " + results["assumptions"]["year"];
     document.getElementById("average_cost").innerHTML=results["average_cost"].toFixed(1);
@@ -680,7 +717,7 @@ function display_results(){
 
     document.getElementById("results-overview-download").innerHTML = '<a href="data/results-overview-' + results.assumptions.results_hex + '.csv">Download Comma-Separated-Variable (CSV) file of results overview</a> ' + licenceText;
     document.getElementById("results-series-download").innerHTML = '<a href="data/results-series-' + results.assumptions.results_hex + '.csv">Download Comma-Separated-Variable (CSV) file of results time series</a> ' + licenceText;
-    document.getElementById("results-link").innerHTML = '<a href="https://model.energy/?' + assumptions_to_url() +'#solve">Link to these results</a>';
+    document.getElementById("results-link").innerHTML = '<a href="https://model.energy/?results=' + results.assumptions.results_hex + '#solve">Link to these results</a>';
 };
 
 function display_weather(){
@@ -692,7 +729,7 @@ function display_weather(){
     draw_weather_graph();
     document.getElementById("capacity-factors").innerHTML = "Capacity factor onshore wind (blue): " + (results["onwind_cf_available"]*100).toFixed(1) + "%<br />Capacity factor solar PV (DC side) (yellow): " + (results["solar_cf_available"]*100).toFixed(1) + "%";
     document.getElementById("weather-download").innerHTML = '<a href="data/time-series-' + results.assumptions.weather_hex + '.csv">Download Comma-Separated-Variable (CSV) file of data</a> ' + licenceText;
-    document.getElementById("weather-link").innerHTML = '<a href="https://model.energy/?' + assumptions_to_url() +'#time-series">Link to these results</a>';
+    document.getElementById("weather-link").innerHTML = '<a href="https://model.energy/?weather=' + results.assumptions.weather_hex + '#time-series">Link to these results</a>';
     document.getElementById("weather-instructions").innerHTML = "<b>Zoom and pan to see the details:</b>";
 };
 

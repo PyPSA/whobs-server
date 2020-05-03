@@ -525,7 +525,7 @@
               <p>The graphical user interface,
 		weather processing and optimisation model construction and post-processing are all built with
 		free software and open data only. The commercial optimisation solver <a href="https://www.gurobi.com">Gurobi</a> is used for its
-		high performance on this website, but it can also be replaced with an open source solver such as <a href="https://github.com/coin-or/Clp">CLP</a> if
+		high performance on this website, but it can also be replaced with an open source solver such as <a href="https://github.com/coin-or/Clp">Clp</a> if
 		performance is not required.  The
                 code for all parts except the solver can be downloaded from the GitHub
                 repository <a href="https://github.com/PyPSA/whobs-server">whobs-server</a>. It uses
@@ -533,12 +533,12 @@
                 System Analysis (PyPSA)</a> energy optimisation framework, open
                 weather data
                 from the European Centre for Medium-Range Weather Forecasts (ECMWF) <a href="https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels">ERA5 reanalysis dataset</a>, the <a href="https://github.com/PyPSA/atlite">atlite library</a> for converting weather data to generation profiles,
-                the <a href="https://projects.coin-or.org/Clp">Clp</a> solver, <a href="https://d3js.org/">D3.js</a> for graphics, <a href="https://www.mapbox.com/">Mapbox</a>, <a href="http://leafletjs.com/">Leaflet</a> and <a href="https://www.naturalearthdata.com/">Natural Earth</a> for maps,  and
+                <a href="https://d3js.org/">D3.js</a> for graphics, <a href="https://www.mapbox.com/">Mapbox</a>, <a href="http://leafletjs.com/">Leaflet</a> and <a href="https://www.naturalearthdata.com/">Natural Earth</a> for maps,  and
               free software for the server infrastructure (GNU/Linux, nginx, Flask, gunicorn, Redis).</p>
               <h3>New functionality coming soon</h3>
               <p>See the <a href="https://github.com/PyPSA/whobs-server/issues">GitHub issue tracker</a>.</p>
 	      <h3>Problems/comments/feedback/help out</h3>
-              <p>If you encounter any problems please use the <a href="https://github.com/PyPSA/whobs-server/issues">GitHub issue tracker</a>. It would be helpful to note the jobid and any other error messages from your browser's JavaScript console (find the console via your browser's "Developer Tools").</p>
+              <p>If you encounter any problems please report them using the <a href="https://github.com/PyPSA/whobs-server/issues">GitHub issue tracker</a>. It would be helpful to note the jobid and any other error messages from your browser's JavaScript console (find the console via your browser's "Developer Tools").</p>
               <p>If you want to help out and contribute improvements, please submit a <a href="https://github.com/PyPSA/whobs-server/pulls">pull request</a>!</p>
               <p>Any other feedback and comments can be sent to <a href="https://nworbmot.org/">Tom Brown</a>.</p>
               <h3>Contributors and thanks</h3>
@@ -566,7 +566,7 @@
     <script src="{{ url_for('static', filename='jquery.easing.min.js') }}"></script>
     <script src="{{ url_for('static', filename='scrolling-nav.js') }}"></script>
     <script type="text/javascript">
-      var assumptions = JSON.parse('{{ settings|json }}');
+      var results = JSON.parse('{{ results|json }}');
 
       // Determine which navbar to assign scrollspy depending on window width
       if ($(window).width() >= 992) {
@@ -585,6 +585,6 @@
         });
       }
     </script>
-    <script src="{{ url_for('static', filename='solver-200127.js') }}"></script>
+    <script src="{{ url_for('static', filename='solver-200502.js') }}"></script>
   </body>
 </html>

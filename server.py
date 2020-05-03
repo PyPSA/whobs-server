@@ -27,7 +27,9 @@ from rq import Queue
 
 import time, datetime
 
-import json
+import json, os, hashlib
+
+import pandas as pd
 
 current_version = 190929
 
@@ -51,60 +53,237 @@ with(open('static/selected_admin1.json', 'r')) as f:
 region_names = [f['properties']['name'] for f in j['features']]
 
 
-tbooleans = ["wind","solar","battery","hydrogen"]
-fbooleans = ["dispatchable1","dispatchable2","co2_limit"]
 
-float_tech_options = ["wind_cost", "solar_cost", "battery_energy_cost","battery_power_cost", "hydrogen_energy_cost", "hydrogen_electrolyser_cost", "hydrogen_electrolyser_efficiency", "hydrogen_turbine_cost", "hydrogen_turbine_efficiency", "dispatchable1_cost", "dispatchable1_marginal_cost", "dispatchable1_emissions", "dispatchable1_discount", "dispatchable2_cost", "dispatchable2_marginal_cost", "dispatchable2_emissions", "dispatchable2_discount", "co2_emissions"]
+booleans = ["wind","solar","battery","hydrogen","dispatchable1","dispatchable2","co2_limit"]
+
+floats = ["cf_exponent","load","hydrogen_load","wind_cost","solar_cost","battery_energy_cost",
+          "battery_power_cost","hydrogen_electrolyser_cost",
+          "hydrogen_energy_cost",
+          "hydrogen_electrolyser_efficiency",
+          "hydrogen_turbine_cost",
+          "hydrogen_turbine_efficiency",
+          "discount_rate",
+          "dispatchable1_cost",
+          "dispatchable1_marginal_cost",
+          "dispatchable1_emissions",
+          "dispatchable1_discount",
+          "dispatchable2_cost",
+          "dispatchable2_marginal_cost",
+          "dispatchable2_emissions",
+          "dispatchable2_discount",
+          "co2_emissions"]
+
+ints = ["year","frequency","version"]
+
+strings = ["location"]
+
+
+colors = {"wind":"#3B6182",
+          "solar" :"#FFFF00",
+          "battery" : "#999999",
+          "battery_charge" : "#999999",
+          "battery_discharge" : "#999999",
+          "battery_power" : "#999999",
+          "battery_energy" : "#666666",
+          "hydrogen_turbine" : "red",
+          "hydrogen_electrolyser" : "cyan",
+          "hydrogen_energy" : "magenta",
+          "dispatchable1" : "orange",
+          "dispatchable2" : "lime",
+}
+
+
+years_available_start = 2011
+years_available_end = 2013
+
+
+def sanitise_assumptions(assumptions):
+    """
+    Fix types of assumptions and check they are in correct
+    range.
+
+    Parameters
+    ----------
+    assumptions : dict
+        Assumptions (location, technical and economic parameters)
+
+    Returns
+    -------
+    error_message : None or string
+        If there was an error, details of the error
+    assumptions : dict
+        If there was no error, the clean type-safe assumptions
+    """
+
+    for key in booleans:
+        try:
+            assumptions[key] = bool(assumptions[key])
+        except:
+            return "{} {} could not be converted to boolean".format(key,assumptions[key]), None
+
+    for key in floats:
+        try:
+            assumptions[key] = float(assumptions[key])
+        except:
+            return "{} {} could not be converted to float".format(key,assumptions[key]), None
+
+        if assumptions[key] < 0 or assumptions[key] > 1e6:
+            return "{} {} was not in the valid range [0,1e6]".format(key,assumptions[key]), None
+
+    for key in ints:
+        try:
+            assumptions[key] = int(assumptions[key])
+        except:
+            return "{} {} could not be converted to an integer".format(key,assumptions[key]), None
+
+    for key in strings:
+        assumptions[key] = str(assumptions[key])
+
+    if assumptions["frequency"] < 1 or assumptions["frequency"] > 8760:
+        return "Frequency {} is not in the valid range [1,8760]".format(assumptions["frequency"]), None
+
+    if assumptions["year"] < years_available_start or assumptions["year"] > years_available_end:
+        return "Year {} not in valid range".format(assumptions["year"]), None
+
+    if assumptions["load"] == 0 and assumptions["hydrogen_load"] == 0:
+        return "No load", None
+
+    return None, assumptions
+
+def compute_results_hash(assumptions):
+    results_string = assumptions["location"].replace("country:","")
+    for item in ints+booleans+floats:
+        if "dispatchable1" in item and not assumptions["dispatchable1"]:
+            continue
+        if "dispatchable2" in item and not assumptions["dispatchable2"]:
+            continue
+        if "co2" in item and not assumptions["co2_limit"]:
+            continue
+        if item == "version" and assumptions["version"] == 0:
+            continue
+        if item == "hydrogen_load" and assumptions["hydrogen_load"] == 0:
+            continue
+        results_string += "&{}".format(assumptions[item])
+
+    return hashlib.md5(results_string.encode()).hexdigest()
+
+def compute_weather_hash(assumptions):
+    if assumptions["version"] == 0:
+        return hashlib.md5("{}&{}&{}".format(assumptions["location"].replace("country:",""), assumptions["year"], assumptions['cf_exponent']).encode()).hexdigest()
+    else:
+        return hashlib.md5("{}&{}&{}&{}".format(assumptions["location"].replace("country:",""), assumptions["year"], assumptions['cf_exponent'], assumptions["version"]).encode()).hexdigest()
+
+
+def find_results(results_hash):
+
+    assumptions_json = f'assumptions-hash/results-{results_hash}.json'
+    series_csv = f'data/results-series-{results_hash}.csv'
+    overview_csv = f'data/results-overview-{results_hash}.csv'
+
+    if not os.path.isfile(assumptions_json):
+        return "Assumptions file is missing", {}
+    if not os.path.isfile(series_csv):
+        return "Series results file is missing", {}
+    if not os.path.isfile(overview_csv):
+        return "Overview results file is missing", {}
+
+    print("Using preexisting results files:", assumptions_json, series_csv, overview_csv)
+    with(open(assumptions_json, 'r')) as f:
+        assumptions = json.load(f)
+    results_overview = pd.read_csv(overview_csv,
+                                   index_col=0,
+                                   header=None,
+                                   squeeze=True)
+    results_series = pd.read_csv(series_csv,
+                                 index_col=0,
+                                 parse_dates=True)
+
+    #fill in old results before dispatchable
+    for i in range(1,3):
+        g = "dispatchable" + str(i)
+        if not assumptions[g]:
+            results_overview[g+"_capacity"] = 0.
+            results_overview[g+"_cost"] = 0.
+            results_overview[g+"_marginal_cost"] = 0.
+            results_overview[g+"_used"] = 0.
+            results_overview[g+"_cf_used"] = 0.
+            results_overview[g+"_rmv"] = 0.
+            results_series[g] = 0.
+
+    results = dict(results_overview)
+
+    results["assumptions"] = assumptions
+
+    results["snapshots"] = [str(s) for s in results_series.index]
+
+    columns = {"positive" : ["wind","solar","battery_discharge","hydrogen_turbine","dispatchable1","dispatchable2"],
+               "negative" : ["battery_charge","hydrogen_electrolyser"]}
+
+
+    for sign, cols in columns.items():
+        results[sign] = {}
+        results[sign]["columns"] = cols
+        results[sign]["data"] = results_series[cols].values.tolist()
+        results[sign]["color"] = [colors[c] for c in cols]
+
+    balance = results_series[columns["positive"]].sum(axis=1) - results_series[columns["negative"]].sum(axis=1)
+
+    print(balance.describe())
+
+    return None, results
+
+
+
+def find_weather(weather_hash):
+
+    assumptions_json = f'assumptions-hash/weather-{weather_hash}.json'
+    weather_csv = f'data/time-series-{weather_hash}.csv'
+
+    if not os.path.isfile(assumptions_json):
+        return "Assumptions file is missing", {}
+    if not os.path.isfile(weather_csv):
+        return "Weather file is missing", {}
+
+    print("Using preexisting weather files:", assumptions_json, weather_csv)
+
+    with(open(assumptions_json, 'r')) as f:
+        assumptions = json.load(f)
+    pu = pd.read_csv(weather_csv,
+                     index_col=0,
+                     parse_dates=True)
+
+    results = {}
+    results['assumptions'] = assumptions
+    results["snapshots"] = [str(s) for s in pu.index]
+
+    for v in ["onwind","solar"]:
+        results[v+'_pu'] = pu[v].values.tolist()
+        results[v+"_cf_available"] = pu[v].mean()
+
+    return None, results
+
 
 
 #defaults to only listen to GET and HEAD
 @app.route('/')
 def root():
-    # Try to get settings from URL
-    assumptions = {}
-    assumptions["location"] = request.args.get('location', default = 'DE', type = str)
-    assumptions["job_type"] = request.args.get('job_type', default = 'none', type = str)
-    assumptions["year"] = request.args.get('year', default = 2011, type = int)
-    assumptions["frequency"] = request.args.get('frequency', default = 3, type = int)
-    assumptions["cf_exponent"] = request.args.get('cf_exponent', default = 2, type = float)
-    assumptions["load"] = request.args.get('load', default = 100, type = float)
-    assumptions["hydrogen_load"] = request.args.get('hydrogen_load', default = 0, type = float)
-    assumptions["discount_rate"] = request.args.get('discount_rate', default = 5, type = float)
-    assumptions["co2_emissions"] = request.args.get('co2_emissions', default = 100, type = float)
-    for boolean in tbooleans:
-        assumptions[boolean] = request.args.get(boolean, default = 1, type = int)
-    for boolean in fbooleans:
-        assumptions[boolean] = request.args.get(boolean, default = 0, type = int)
-    for float_tech_option in float_tech_options:
-        if float_tech_option in request.args:
-            assumptions[float_tech_option] = request.args.get(float_tech_option, default = 100, type = float)
 
-
-    if assumptions["location"][:8] == "country:" and assumptions["location"][8:] in country_names:
-        assumptions["location_name"] = country_names_full[country_names.index(assumptions["location"][8:])]
-    elif assumptions["location"][:6] == "point:":
-        assumptions["location_name"] = assumptions["location"]
-    elif assumptions["location"][:8] == "polygon:":
-        assumptions["location_name"] = "polygon"
-    elif assumptions["location"][:7] == "region:" and assumptions["location"][7:] in region_names:
-        assumptions["location_name"] = assumptions["location"][7:]
+    print("requests:",request.args)
+    if "results" in request.args:
+        results_hash = request.args.get("results",type=str)
+        error_message, results = find_results(results_hash)
+        if error_message is not None:
+            print(error_message)
+    elif "weather" in request.args:
+        weather_hash = request.args.get("weather",type=str)
+        error_message, results = find_weather(weather_hash)
+        if error_message is not None:
+            print(error_message)
     else:
-        assumptions["location"] = 'country:DE'
-        assumptions["location_name"] = country_names_full[country_names.index(assumptions["location"][8:])]
+        results = {}
 
-    for boolean in tbooleans + fbooleans:
-        if assumptions[boolean] == 0:
-            assumptions[boolean] = False
-        else:
-            assumptions[boolean] = True
-
-    #if a real job is requested without a version, assume it's the old original version
-    if assumptions["job_type"] == "none":
-        assumptions["version"] = request.args.get('version', default=current_version, type=int)
-    else:
-        assumptions["version"] = request.args.get('version', default=0, type=int)
-
-    return render_template('index.html', settings=assumptions)
+    return render_template('index.html',
+                           results=results)
 
 
 @app.route('/jobs', methods=['GET','POST'])
@@ -112,7 +291,27 @@ def jobs_api():
     if request.method == "POST":
         print(request.headers['Content-Type'])
         print(request.json)
-        job = queue.enqueue("solve.solve", args=(request.json,), job_timeout=300)
+
+        error_message, assumptions = sanitise_assumptions(request.json)
+
+        if error_message is not None:
+            return jsonify({"status" : "Error", "error" : error_message})
+
+        if assumptions["job_type"] == "weather":
+            assumptions["weather_hex"] = compute_weather_hash(assumptions)
+            error_message, results = find_weather(assumptions["weather_hex"])
+            if error_message is None:
+                return jsonify(results)
+        elif assumptions["job_type"] == "solve":
+            assumptions["weather_hex"] = compute_weather_hash(assumptions)
+            assumptions["results_hex"] = compute_results_hash(assumptions)
+            error_message, results = find_results(assumptions["results_hex"])
+            if error_message is None:
+                return jsonify(results)
+        else:
+            return jsonify({"status" : "Error", "error" : "job_type not one of solve or weather"})
+
+        job = queue.enqueue("solve.solve", args=(assumptions,), job_timeout=300)
         result = {"jobid" : job.get_id()}
         request.json.update({"jobid" : result["jobid"],
                              "timestamp" : str(datetime.datetime.now()),
@@ -143,13 +342,26 @@ def jobid_api(jobid):
     result = {"status" : status}
 
     if job.is_finished:
-        result.update(job.result)
-        if "error" in result:
+        if "error" in job.result:
             result["status"] = "Error"
+            result["error"] = job.result["error"]
         else:
             result["status"] = "Finished"
 
-        jobid = job.get_id()
+            if job.result["job_type"] == "weather":
+                error_message, results = find_weather(job.result["weather_hex"])
+                if error_message is not None:
+                    result["status"] = "Error"
+                    result["error"] = error_message
+            elif job.result["job_type"] == "solve":
+                error_message, results = find_results(job.result["results_hex"])
+                if error_message is not None:
+                    result["status"] = "Error"
+                    result["error"] = error_message
+
+        if result["status"] == "Finished":
+            results.update(result)
+            result = results
 
         mini_results = {"jobid" : jobid,
                         "status" : result["status"],

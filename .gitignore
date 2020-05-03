@@ -58,3 +58,7 @@ nomopyomo.py
 symlink_weather.py
 
 plot/
+
+assumptions-hash/
+
+static/d*
