@@ -98,12 +98,12 @@ for cf_exponent in cf_exponents:
 
                 assumptions["job_type"] = "weather"
 
-                with open('assumptions-hash/weather-{}.json'.format(assumptions['weather_hex']), 'w') as fp:
+                with open('data/weather-assumptions-{}.json'.format(assumptions['weather_hex']), 'w') as fp:
                     json.dump(assumptions,fp)
 
                 assumptions["results_hex"] = compute_results_hash(assumptions)
 
                 assumptions["job_type"] = "solve"
 
-                with open('assumptions-hash/results-{}.json'.format(assumptions['results_hex']), 'w') as fp:
+                with open('data/results-assumptions-{}.json'.format(assumptions['results_hex']), 'w') as fp:
                     json.dump(assumptions,fp)

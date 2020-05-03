@@ -176,7 +176,7 @@ def compute_weather_hash(assumptions):
 
 def find_results(results_hash):
 
-    assumptions_json = f'assumptions-hash/results-{results_hash}.json'
+    assumptions_json = f'data/results-assumptions-{results_hash}.json'
     series_csv = f'data/results-series-{results_hash}.csv'
     overview_csv = f'data/results-overview-{results_hash}.csv'
 
@@ -236,7 +236,7 @@ def find_results(results_hash):
 
 def find_weather(weather_hash):
 
-    assumptions_json = f'assumptions-hash/weather-{weather_hash}.json'
+    assumptions_json = f'data/weather-assumptions-{weather_hash}.json'
     weather_csv = f'data/time-series-{weather_hash}.csv'
 
     if not os.path.isfile(assumptions_json):
@@ -301,25 +301,43 @@ def jobs_api():
             assumptions["weather_hex"] = compute_weather_hash(assumptions)
             error_message, results = find_weather(assumptions["weather_hex"])
             if error_message is None:
+                assumptions["timestamp"] = str(datetime.datetime.now())
+                assumptions["jobid"] = hashlib.md5(assumptions["timestamp"].encode()).hexdigest()
+                assumptions["queue_length"] = 0
+                with open('assumptions/assumptions-{}.json'.format(assumptions["jobid"]), 'w') as fp:
+                    json.dump(assumptions, fp)
+                mini_results = {"jobid" : assumptions["jobid"], "status" : "Finished",
+                                "error" : None, "average_cost" : None}
+                with open('results/results-{}.json'.format(assumptions["jobid"]), 'w') as fp:
+                    json.dump(mini_results, fp)
                 return jsonify(results)
         elif assumptions["job_type"] == "solve":
             assumptions["weather_hex"] = compute_weather_hash(assumptions)
             assumptions["results_hex"] = compute_results_hash(assumptions)
             error_message, results = find_results(assumptions["results_hex"])
             if error_message is None:
+                assumptions["timestamp"] = str(datetime.datetime.now())
+                assumptions["jobid"] = hashlib.md5(assumptions["timestamp"].encode()).hexdigest()
+                assumptions["queue_length"] = 0
+                with open('assumptions/assumptions-{}.json'.format(assumptions["jobid"]), 'w') as fp:
+                    json.dump(assumptions, fp)
+                mini_results = {"jobid" : assumptions["jobid"], "status" : "Finished",
+                                "error" : None, "average_cost" : results["average_cost"]}
+                with open('results/results-{}.json'.format(assumptions["jobid"]), 'w') as fp:
+                    json.dump(mini_results, fp)
                 return jsonify(results)
         else:
             return jsonify({"status" : "Error", "error" : "job_type not one of solve or weather"})
 
         job = queue.enqueue("solve.solve", args=(assumptions,), job_timeout=300)
         result = {"jobid" : job.get_id()}
-        request.json.update({"jobid" : result["jobid"],
-                             "timestamp" : str(datetime.datetime.now()),
-                             "queue_length" : len(queue.jobs)})
-        with open('assumptions/assumptions-{}.json'.format(result["jobid"]), 'w') as fp:
-            json.dump(request.json, fp)
+        assumptions.update({"jobid" : result["jobid"],
+                            "timestamp" : str(datetime.datetime.now()),
+                            "queue_length" : len(queue.jobs)})
+        with open('assumptions/assumptions-{}.json'.format(assumptions["jobid"]), 'w') as fp:
+            json.dump(assumptions, fp)
         print("jobid {} request:".format(result["jobid"]))
-        print(request.json)
+        print(assumptions)
         return jsonify(result)
     elif request.method == "GET":
         return "jobs in queue: {}".format(len(queue.jobs))

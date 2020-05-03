@@ -677,43 +677,6 @@ def run_optimisation(assumptions, pu):
     return results_overview, results_series, None
 
 
-def sanitise_assumptions(assumptions):
-    """Returns error_message and clean type-safe assumptions"""
-    for key in booleans:
-        try:
-            assumptions[key] = bool(assumptions[key])
-        except:
-            return "{} {} could not be converted to boolean".format(key,assumptions[key]), None
-
-    for key in floats:
-        try:
-            assumptions[key] = float(assumptions[key])
-        except:
-            return "{} {} could not be converted to float".format(key,assumptions[key]), None
-
-        if assumptions[key] < 0 or assumptions[key] > 1e6:
-            return "{} {} was not in the valid range [0,1e6]".format(key,assumptions[key]), None
-
-    for key in ints:
-        try:
-            assumptions[key] = int(assumptions[key])
-        except:
-            return "{} {} could not be converted to an integer".format(key,assumptions[key]), None
-
-    for key in strings:
-        assumptions[key] = str(assumptions[key])
-
-    if assumptions["frequency"] < 1 or assumptions["frequency"] > 8760:
-        return "Frequency {} is not in the valid range [1,8760]".format(assumptions["frequency"]), None
-
-    if assumptions["year"] < years_available_start or assumptions["year"] > years_available_end:
-        return "Year {} not in valid range".format(assumptions["year"]), None
-
-    if assumptions["load"] == 0 and assumptions["hydrogen_load"] == 0:
-        return "No load", None
-
-    return None, assumptions
-
 def solve(assumptions):
 
     job = get_current_job()
@@ -739,7 +702,7 @@ def solve(assumptions):
             return error(error_msg, jobid)
         pu = pu.round(3)
         pu.to_csv(weather_csv)
-        with open('assumptions-hash/weather-{}.json'.format(assumptions['weather_hex']), 'w') as fp:
+        with open('data/weather-assumptions-{}.json'.format(assumptions['weather_hex']), 'w') as fp:
             json.dump(assumptions,fp)
 
     if assumptions["job_type"] == "weather":
@@ -774,7 +737,7 @@ def solve(assumptions):
 
     results_series.to_csv(series_csv)
     results_overview.to_csv(overview_csv,header=False)
-    with open('assumptions-hash/results-{}.json'.format(assumptions['results_hex']), 'w') as fp:
+    with open('data/results-assumptions-{}.json'.format(assumptions['results_hex']), 'w') as fp:
         json.dump(assumptions,fp)
 
     job.meta['status'] = "Processing and sending results"

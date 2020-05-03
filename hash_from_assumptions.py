@@ -1,7 +1,7 @@
 
 import os, json, hashlib
 
-from solve import sanitise_assumptions
+from server import sanitise_assumptions
 
 ass_dir = "assumptions/"
 
@@ -126,7 +126,7 @@ for filename in os.listdir(ass_dir):
 
         weather_csv = 'data/time-series-{}.csv'.format(assumptions['weather_hex'])
         if os.path.isfile(weather_csv):
-            with open(os.path.join("assumptions-hash",'weather-{}.json'.format(assumptions['weather_hex'])), 'w') as fp:
+            with open(os.path.join("data",'weather-assumptions-{}.json'.format(assumptions['weather_hex'])), 'w') as fp:
                 json.dump(assumptions,fp)
 
 
@@ -151,5 +151,5 @@ for filename in os.listdir(ass_dir):
         overview_csv = 'data/results-overview-{}.csv'.format(assumptions['results_hex'])
 
         if os.path.isfile(series_csv) and os.path.isfile(overview_csv):
-            with open(os.path.join("assumptions-hash",'results-{}.json'.format(assumptions['results_hex'])), 'w') as fp:
+            with open(os.path.join("data",'results-assumptions-{}.json'.format(assumptions['results_hex'])), 'w') as fp:
                 json.dump(assumptions,fp)
