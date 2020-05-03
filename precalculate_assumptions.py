@@ -10,6 +10,8 @@ countries = "country:" + pd.Index(solve.get_country_multipolygons().keys())
 
 regions = "region:" + pd.Index(solve.get_region_multipolygons().keys())
 
+country_names = solve.get_country_names()
+
 locations = countries.append(regions)
 
 years = range(2011,2014)
@@ -78,11 +80,18 @@ tech_assumptions = {"2020" : {"wind_cost" : 1120,
 
 assumptions = base_assumptions.copy()
 
-for cf_exponent in cf_exponents:
-    for year in years:
-        for location in locations:
+for location in locations:
+    assumptions["location"] = location
+    if location[:len("country:")] == "country:":
+        assumptions["location_name"] = country_names[location[len("country:"):]]
+    elif location[:len("region:")] == "region:":
+        assumptions["location_name"] = location[len("region:"):]
+    else:
+        assumptions["location_name"] = "None"
+    print(assumptions["location"],assumptions["location_name"])
+    for cf_exponent in cf_exponents:
+        for year in years:
             assumptions["cf_exponent"] = cf_exponent
-            assumptions["location"] = location
             assumptions["year"] = year
 
             for assumption_year in assumption_years:
@@ -96,10 +105,10 @@ for cf_exponent in cf_exponents:
 
                 assumptions["weather_hex"] = compute_weather_hash(assumptions)
 
-                assumptions["job_type"] = "weather"
-
-                with open('data/weather-assumptions-{}.json'.format(assumptions['weather_hex']), 'w') as fp:
-                    json.dump(assumptions,fp)
+                if assumption_year == 2030:
+                    assumptions["job_type"] = "weather"
+                    with open('data/weather-assumptions-{}.json'.format(assumptions['weather_hex']), 'w') as fp:
+                        json.dump(assumptions,fp)
 
                 assumptions["results_hex"] = compute_results_hash(assumptions)
 

@@ -1,4 +1,4 @@
-## Copyright 2018-2019 Tom Brown
+## Copyright 2018-2020 Tom Brown
 
 ## This program is free software; you can redistribute it and/or
 ## modify it under the terms of the GNU Affero General Public License as
@@ -49,9 +49,7 @@ solar_correction_factor = 0.926328
 def get_country_multipolygons():
 
     with open('static/ne-countries-110m.json', 'r') as myfile:
-        data=myfile.read()
-
-        geojson = json.loads(data)
+        geojson = json.load(myfile)
 
     def get_multipolygon(feature):
         if feature["geometry"]["type"] == "Polygon":
@@ -69,12 +67,19 @@ def get_country_multipolygons():
 country_multipolygons = get_country_multipolygons()
 
 
+
+def get_country_names():
+
+    with open('static/ne-countries-110m.json', 'r') as myfile:
+        geojson = json.load(myfile)
+
+    return {feature["properties"]["iso_a2"] : feature["properties"]["name"] for feature in geojson["features"] if feature["properties"]["iso_a2"] != "-99"}
+
+
 def get_region_multipolygons():
 
     with open('static/selected_admin1.json', 'r') as myfile:
-        data=myfile.read()
-
-        geojson = json.loads(data)
+        geojson = json.load(myfile)
 
     def get_multipolygon(feature):
         if feature["geometry"]["type"] == "Polygon":

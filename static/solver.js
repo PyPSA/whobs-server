@@ -1,4 +1,4 @@
-// Copyright 2018-2019 Tom Brown
+// Copyright 2018-2020 Tom Brown
 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Affero General Public License as

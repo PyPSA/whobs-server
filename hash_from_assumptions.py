@@ -125,6 +125,7 @@ for filename in os.listdir(ass_dir):
 
 
         weather_csv = 'data/time-series-{}.csv'.format(assumptions['weather_hex'])
+        assumptions["job_type"] = "weather"
         if os.path.isfile(weather_csv):
             with open(os.path.join("data",'weather-assumptions-{}.json'.format(assumptions['weather_hex'])), 'w') as fp:
                 json.dump(assumptions,fp)
@@ -149,7 +150,7 @@ for filename in os.listdir(ass_dir):
         print(assumptions['results_hex'])
         series_csv = 'data/results-series-{}.csv'.format(assumptions['results_hex'])
         overview_csv = 'data/results-overview-{}.csv'.format(assumptions['results_hex'])
-
+        assumptions["job_type"] = "solve"
         if os.path.isfile(series_csv) and os.path.isfile(overview_csv):
             with open(os.path.join("data",'results-assumptions-{}.json'.format(assumptions['results_hex'])), 'w') as fp:
                 json.dump(assumptions,fp)

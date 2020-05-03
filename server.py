@@ -1,4 +1,4 @@
-## Copyright 2018-2019 Tom Brown
+## Copyright 2018-2020 Tom Brown
 
 ## This program is free software; you can redistribute it and/or
 ## modify it under the terms of the GNU Affero General Public License as
@@ -40,18 +40,6 @@ queue = Queue('whobs', connection=conn)
 
 app = Flask(__name__)
 app.jinja_env.filters['json'] = lambda v: Markup(json.dumps(v))
-
-# Load allowed country names
-with(open('static/ne-countries-110m.json', 'r')) as f:
-    j = json.load(f)
-country_names = [f['properties']['iso_a2'] for f in j['features']]
-country_names_full = [f['properties']['name'] for f in j['features']]
-
-# Load allowed region names
-with(open('static/selected_admin1.json', 'r')) as f:
-    j = json.load(f)
-region_names = [f['properties']['name'] for f in j['features']]
-
 
 
 booleans = ["wind","solar","battery","hydrogen","dispatchable1","dispatchable2","co2_limit"]
