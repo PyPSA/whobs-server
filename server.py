@@ -102,6 +102,9 @@ def sanitise_assumptions(assumptions):
     assumptions : dict
         If there was no error, the clean type-safe assumptions
     """
+    for key in strings+ints+booleans+floats:
+        if key not in assumptions:
+            return f"{key} missing from assumptions", None
 
     for key in booleans:
         try:
@@ -135,6 +138,9 @@ def sanitise_assumptions(assumptions):
 
     if assumptions["load"] == 0 and assumptions["hydrogen_load"] == 0:
         return "No load", None
+
+    if not assumptions["hydrogen"] and assumptions["hydrogen_load"] != 0:
+        return "Non-zero hydrogen load is defined without activating hydrogen infrastructure", None
 
     return None, assumptions
 
@@ -277,8 +283,8 @@ def root():
 @app.route('/jobs', methods=['GET','POST'])
 def jobs_api():
     if request.method == "POST":
-        print(request.headers['Content-Type'])
-        print(request.json)
+        if request.headers.get('Content-Type','missing') != 'application/json':
+            return jsonify({"status" : "Error", "error" : "No JSON assumptions sent."})
 
         error_message, assumptions = sanitise_assumptions(request.json)
 
