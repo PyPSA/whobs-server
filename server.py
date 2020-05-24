@@ -59,7 +59,10 @@ floats = ["cf_exponent","load","hydrogen_load","wind_cost","solar_cost","battery
           "dispatchable2_marginal_cost",
           "dispatchable2_emissions",
           "dispatchable2_discount",
-          "co2_emissions"]
+          "co2_emissions",
+          "wind_max",
+          "solar_max"]
+
 
 ints = ["year","frequency","version"]
 
@@ -83,6 +86,8 @@ colors = {"wind":"#3B6182",
 
 years_available_start = 2011
 years_available_end = 2013
+
+float_upper_limit = 1e7
 
 
 def sanitise_assumptions(assumptions):
@@ -118,8 +123,8 @@ def sanitise_assumptions(assumptions):
         except:
             return "{} {} could not be converted to float".format(key,assumptions[key]), None
 
-        if assumptions[key] < 0 or assumptions[key] > 1e6:
-            return "{} {} was not in the valid range [0,1e6]".format(key,assumptions[key]), None
+        if assumptions[key] < 0 or assumptions[key] > float_upper_limit:
+            return "{} {} was not in the valid range [0,{}]".format(key,assumptions[key],float_upper_limit), None
 
     for key in ints:
         try:
@@ -145,27 +150,27 @@ def sanitise_assumptions(assumptions):
     return None, assumptions
 
 def compute_results_hash(assumptions):
-    results_string = assumptions["location"].replace("country:","")
-    for item in ints+booleans+floats:
-        if "dispatchable1" in item and not assumptions["dispatchable1"]:
-            continue
-        if "dispatchable2" in item and not assumptions["dispatchable2"]:
-            continue
-        if "co2" in item and not assumptions["co2_limit"]:
-            continue
-        if item == "version" and assumptions["version"] == 0:
-            continue
-        if item == "hydrogen_load" and assumptions["hydrogen_load"] == 0:
-            continue
-        results_string += "&{}".format(assumptions[item])
-
+    results_string = ""
+    for item in strings+ints+booleans+floats:
+        #remove assumptions for excluded technologies
+        skip = False
+        for tech in ["wind","solar","hydrogen","battery","dispatchable1","dispatchable2"]:
+            if not assumptions[tech] and tech in item and tech != item:
+                skip = True
+                continue
+        if not assumptions["co2_limit"] and item == "co2_emissions":
+            skip = True
+        if not skip:
+            results_string += "&{}={}".format(item,assumptions[item])
+    print(results_string)
     return hashlib.md5(results_string.encode()).hexdigest()
 
 def compute_weather_hash(assumptions):
-    if assumptions["version"] == 0:
-        return hashlib.md5("{}&{}&{}".format(assumptions["location"].replace("country:",""), assumptions["year"], assumptions['cf_exponent']).encode()).hexdigest()
-    else:
-        return hashlib.md5("{}&{}&{}&{}".format(assumptions["location"].replace("country:",""), assumptions["year"], assumptions['cf_exponent'], assumptions["version"]).encode()).hexdigest()
+    weather_string = ""
+    for item in ["location","year","cf_exponent","version"]:
+        weather_string += "&{}={}".format(item,assumptions[item])
+    print(weather_string)
+    return hashlib.md5(weather_string.encode()).hexdigest()
 
 
 def find_results(results_hash):
@@ -285,6 +290,8 @@ def jobs_api():
     if request.method == "POST":
         if request.headers.get('Content-Type','missing') != 'application/json':
             return jsonify({"status" : "Error", "error" : "No JSON assumptions sent."})
+
+        print(request.json)
 
         error_message, assumptions = sanitise_assumptions(request.json)
 

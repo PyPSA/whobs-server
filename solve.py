@@ -120,29 +120,6 @@ assumptions_df["efficiency"] = 1.
 #Approximates DEA AC round-trip efficiency of 91% in 2020
 assumptions_df.at["battery_power","efficiency"] = 0.95
 
-booleans = ["wind","solar","battery","hydrogen","dispatchable1","dispatchable2","co2_limit"]
-
-floats = ["cf_exponent","load","hydrogen_load","wind_cost","solar_cost","battery_energy_cost",
-          "battery_power_cost","hydrogen_electrolyser_cost",
-          "hydrogen_energy_cost",
-          "hydrogen_electrolyser_efficiency",
-          "hydrogen_turbine_cost",
-          "hydrogen_turbine_efficiency",
-          "discount_rate",
-          "dispatchable1_cost",
-          "dispatchable1_marginal_cost",
-          "dispatchable1_emissions",
-          "dispatchable1_discount",
-          "dispatchable2_cost",
-          "dispatchable2_marginal_cost",
-          "dispatchable2_emissions",
-          "dispatchable2_discount",
-          "co2_emissions"]
-
-ints = ["year","frequency","version"]
-
-strings = ["location"]
-
 threshold = 0.1
 
 def error(message, jobid):
@@ -413,6 +390,7 @@ def run_optimisation(assumptions, pu):
                     bus="elec",
                     p_max_pu = pu["solar"],
                     p_nom_extendable = True,
+                    p_nom_max = assumptions["solar_max"],
                     marginal_cost = 0.1, #Small cost to prefer curtailment to destroying energy in storage, solar curtails before wind
                     capital_cost = assumptions_df.at['solar','fixed'])
 
@@ -421,6 +399,7 @@ def run_optimisation(assumptions, pu):
                     bus="elec",
                     p_max_pu = pu["onwind"],
                     p_nom_extendable = True,
+                    p_nom_max = assumptions["wind_max"],
                     marginal_cost = 0.2, #Small cost to prefer curtailment to destroying energy in storage, solar curtails before wind
                     capital_cost = assumptions_df.at['wind','fixed'])
 
