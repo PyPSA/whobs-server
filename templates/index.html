@@ -205,8 +205,12 @@
 			<small class="form-text text-muted">Default assumption from <a href="https://ens.dk/en/our-services/projections-and-models/technology-data">Danish Energy Agency Technology Data for Generation of Electricity and District Heating, November 2019</a>; includes grid connection costs.</small>
                       </div>
                       <div class="form-group">
-                        <label for="avdSel1a">Maximum installable wind capacity [MWp]</label>
+                        <label for="avdSel1a">Maximum wind capacity allowed [MWp]</label>
                         <input type="number" class="form-control" id="advSel1a" name="wind_max">
+                      </div>
+                      <div class="form-group">
+                        <label for="avdSel1b">Minimum wind capacity allowed [MWp]</label>
+                        <input type="number" class="form-control" id="advSel1b" name="wind_min">
                       </div>
                       <div class="form-group">
                         <label for="avdSel2">Solar capital cost (overnight) [EUR/kWp]</label>
@@ -214,8 +218,12 @@
 			<small class="form-text text-muted">Default assumption from <a href="https://ens.dk/en/our-services/projections-and-models/technology-data">Danish Energy Agency Technology Data for Generation of Electricity and District Heating, November 2019</a>; cost for DC capacity, assumes panel:inverter output ratio of 1.35.</small>
                       </div>
                       <div class="form-group">
-                        <label for="avdSel2a">Maximum installable solar capacity [MWp]</label>
+                        <label for="avdSel2a">Maximum solar capacity allowed [MWp]</label>
                         <input type="number" class="form-control" id="advSel2a" name="solar_max">
+                      </div>
+                      <div class="form-group">
+                        <label for="avdSel2a">Minimum solar capacity allowed [MWp]</label>
+                        <input type="number" class="form-control" id="advSel2b" name="solar_min">
                       </div>
                       <div class="form-group">
                         <label for="avdSel3">Battery energy capital cost (overnight) [EUR/kWh]</label>

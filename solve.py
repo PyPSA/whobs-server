@@ -390,6 +390,7 @@ def run_optimisation(assumptions, pu):
                     bus="elec",
                     p_max_pu = pu["solar"],
                     p_nom_extendable = True,
+                    p_nom_min = assumptions["solar_min"],
                     p_nom_max = assumptions["solar_max"],
                     marginal_cost = 0.1, #Small cost to prefer curtailment to destroying energy in storage, solar curtails before wind
                     capital_cost = assumptions_df.at['solar','fixed'])
@@ -399,6 +400,7 @@ def run_optimisation(assumptions, pu):
                     bus="elec",
                     p_max_pu = pu["onwind"],
                     p_nom_extendable = True,
+                    p_nom_min = assumptions["wind_min"],
                     p_nom_max = assumptions["wind_max"],
                     marginal_cost = 0.2, #Small cost to prefer curtailment to destroying energy in storage, solar curtails before wind
                     capital_cost = assumptions_df.at['wind','fixed'])
@@ -509,6 +511,8 @@ def run_optimisation(assumptions, pu):
 
     if termination_condition in ["infeasible","infeasible or unbounded"]:
         return None, None, "Problem was infeasible"
+    elif termination_condition in ["numeric"]:
+        return None, None, "Numerical trouble encountered, problem could be infeasible"
     elif status == "ok" and termination_condition == "optimal":
         pass
     elif status == "warning" and termination_condition == "suboptimal":

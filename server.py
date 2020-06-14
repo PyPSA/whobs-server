@@ -60,6 +60,8 @@ floats = ["cf_exponent","load","hydrogen_load","wind_cost","solar_cost","battery
           "dispatchable2_emissions",
           "dispatchable2_discount",
           "co2_emissions",
+          "wind_min",
+          "solar_min",
           "wind_max",
           "solar_max"]
 
