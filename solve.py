@@ -104,21 +104,10 @@ def annuity(lifetime,rate):
         return rate/(1. - 1. / (1. + rate)**lifetime)
 
 
-assumptions_df = pd.DataFrame(columns=["FOM","fixed","discount rate","lifetime","investment","efficiency"],
+assumptions_df = pd.DataFrame(columns=["FOM","fixed","discount rate","lifetime","investment"],
                               index=["wind","solar","hydrogen_electrolyser","hydrogen_turbine","hydrogen_energy",
                                      "battery_power","battery_energy","dispatchable1","dispatchable2"],
                               dtype=float)
-
-assumptions_df["lifetime"] = 25.
-assumptions_df.at["hydrogen_electrolyser","lifetime"] = 20.
-assumptions_df.at["battery_power","lifetime"] = 15.
-assumptions_df.at["battery_energy","lifetime"] = 15.
-assumptions_df["FOM"] = 3.
-#From Welder et al (2018) https://doi.org/10.1016/j.energy.2018.05.059
-assumptions_df.at["hydrogen_energy","FOM"] = 14.
-assumptions_df["efficiency"] = 1.
-#Approximates DEA AC round-trip efficiency of 91% in 2020
-assumptions_df.at["battery_power","efficiency"] = 0.95
 
 threshold = 0.1
 
@@ -351,16 +340,13 @@ def run_optimisation(assumptions, pu):
 
     Nyears = 1
 
-    assumptions_df["discount rate"] = assumptions["discount_rate"]/100.
-    for item in ["dispatchable1","dispatchable2"]:
+    techs = ["wind","solar","battery_energy","battery_power","hydrogen_electrolyser","hydrogen_energy","hydrogen_turbine","dispatchable1","dispatchable2"]
+
+    for item in techs:
         assumptions_df.at[item,"discount rate"] = assumptions[item + "_discount"]/100.
-
-    for item in ["wind","solar","battery_energy","battery_power","hydrogen_electrolyser","hydrogen_energy","hydrogen_turbine","dispatchable1","dispatchable2"]:
         assumptions_df.at[item,"investment"] = assumptions[item + "_cost"]
-
-    for item in ["hydrogen_electrolyser","hydrogen_turbine"]:
-        assumptions_df.at[item,"efficiency"] = assumptions[item + "_efficiency"]/100.
-
+        assumptions_df.at[item,"FOM"] = assumptions[item + "_fom"]
+        assumptions_df.at[item,"lifetime"] = assumptions[item + "_lifetime"]
 
     #convert costs from per kW to per MW
     assumptions_df["investment"] *= 1000.
@@ -430,7 +416,7 @@ def run_optimisation(assumptions, pu):
         network.add("Link","battery_power",
                     bus0 = "elec",
                     bus1 = "battery",
-                    efficiency = assumptions_df.at['battery_power','efficiency'],
+                    efficiency = assumptions["battery_power_efficiency_charging"]/100.,
                     p_nom_extendable = True,
                     capital_cost=assumptions_df.at['battery_power','fixed'])
 
@@ -438,7 +424,7 @@ def run_optimisation(assumptions, pu):
                     bus0 = "battery",
                     bus1 = "elec",
                     p_nom_extendable = True,
-                    efficiency = assumptions_df.at['battery_power','efficiency'])
+                    efficiency = assumptions["battery_power_efficiency_discharging"]/100.)
 
         def extra_functionality(network,snapshots):
 
@@ -467,7 +453,7 @@ def run_optimisation(assumptions, pu):
                     bus1="hydrogen",
                     bus0="elec",
                     p_nom_extendable=True,
-                    efficiency=assumptions_df.at["hydrogen_electrolyser","efficiency"],
+                    efficiency=assumptions["hydrogen_electrolyser_efficiency"]/100.,
                     capital_cost=assumptions_df.at["hydrogen_electrolyser","fixed"])
 
         network.add("Link",
@@ -475,8 +461,8 @@ def run_optimisation(assumptions, pu):
                      bus0="hydrogen",
                      bus1="elec",
                      p_nom_extendable=True,
-                     efficiency=assumptions_df.at["hydrogen_turbine","efficiency"],
-                     capital_cost=assumptions_df.at["hydrogen_turbine","fixed"]*assumptions_df.at["hydrogen_turbine","efficiency"])  #NB: fixed cost is per MWel
+                     efficiency=assumptions["hydrogen_turbine_efficiency"]/100.,
+                     capital_cost=assumptions_df.at["hydrogen_turbine","fixed"]*assumptions["hydrogen_turbine_efficiency"]/100.)  #NB: fixed cost is per MWel
 
         network.add("Store",
                      "hydrogen_energy",
