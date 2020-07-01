@@ -237,10 +237,12 @@ var d = 10;
 // Centered on Frankfurt
 var mymap = L.map('mapid').setView([50.11, 8.68], 2);
 
-L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
+L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
     attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+    tileSize: 512,
     maxZoom: 18,
-    id: 'mapbox.streets',
+    zoomOffset: -1,
+    id: 'mapbox/streets-v11',
     accessToken: 'pk.eyJ1IjoibndvcmJtb3QiLCJhIjoiY2prbWxibTUyMjZsMDNwcGp2bHR3OWZsaSJ9.MgSprgR6BEbBLXl5rPvXvQ'
 }).addTo(mymap);
 
