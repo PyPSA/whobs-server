@@ -730,7 +730,7 @@ function display_results(){
 
     $('#collapseResults').addClass("show");
 
-    document.getElementById("results_assumptions").innerHTML=" for " + results["assumptions"]["location_name"] + " in year " + results["assumptions"]["year"];
+    document.getElementById("results_assumptions").innerHTML=" for " + results["assumptions"]["location_name"] + " for weather year " + results["assumptions"]["year"];
     document.getElementById("average_cost").innerHTML=results["average_cost"].toFixed(1);
     if(results["assumptions"]["hydrogen_load"] > 0.){
 	document.getElementById("average_electricity_price").innerHTML="<b>Average marginal price of electricity [EUR/MWh]: " + (results["average_price"]).toFixed(1);
