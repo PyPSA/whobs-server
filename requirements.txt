@@ -1,9 +1,0 @@
-ipython
-pandas
-numpy
-redis
-rq
-Flask
-xarray
-netcdf4
-pypsa>=0.16.0
