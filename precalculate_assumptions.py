@@ -14,7 +14,7 @@ country_names = solve.get_country_names()
 
 locations = countries.append(regions)
 
-years = range(2011,2014)
+years = range(2011,2013)
 
 techs = ["solar","onwind"]
 

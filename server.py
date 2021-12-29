@@ -96,7 +96,7 @@ colors = {"wind":"#3B6182",
 
 
 years_available_start = 2011
-years_available_end = 2013
+years_available_end = 2012
 
 float_upper_limit = 1e7
 
