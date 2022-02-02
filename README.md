@@ -143,7 +143,7 @@ See [nginx server configuration](nginx-configuration.txt).
 
 ## License
 
-Copyright 2018-2019 Tom Brown <https://nworbmot.org/>
+Copyright 2018-2022 Tom Brown <https://nworbmot.org/>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as

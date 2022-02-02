@@ -363,9 +363,6 @@ def run_optimisation(assumptions, pu):
 
     network.snapshot_weightings = pd.Series(float(assumptions["frequency"]),index=network.snapshots)
 
-    #bug-fix until PyPSA 0.16.2
-    network.snapshot_weightings.name = "weightings"
-
     network.add("Bus","elec")
     network.add("Load","load",
                 bus="elec",
@@ -474,7 +471,7 @@ def run_optimisation(assumptions, pu):
     if assumptions["co2_limit"]:
         network.add("GlobalConstraint","co2_limit",
                     sense="<=",
-                    constant=assumptions["co2_emissions"]*assumptions["load"]*network.snapshot_weightings.sum())
+                    constant=assumptions["co2_emissions"]*assumptions["load"]*network.snapshot_weightings.objective.sum())
 
     network.consistency_check()
 
@@ -507,18 +504,13 @@ def run_optimisation(assumptions, pu):
         return None, None, "Job failed to optimise correctly"
 
 
-    #correction
-    if pypsa.__version__ == "0.16.0":
-        network.buses_t.marginal_price.loc[network.snapshots] = network.buses_t.marginal_price.loc[network.snapshots].divide(network.snapshot_weightings.loc[network.snapshots],axis=0)
-
-
     results_overview = pd.Series(dtype=float)
     results_overview["objective"] = network.objective/8760
     results_overview["average_price"] = network.buses_t.marginal_price.mean()["elec"]
     if assumptions["hydrogen"]:
         results_overview["average_hydrogen_price"] = network.buses_t.marginal_price.mean()["hydrogen"]
 
-    year_weight = network.snapshot_weightings.sum()
+    year_weight = network.snapshot_weightings.objective.sum()
 
     vre = ["wind","solar"]
 
