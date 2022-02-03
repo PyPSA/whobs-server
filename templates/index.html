@@ -436,7 +436,7 @@
             <hr>
             <p>
               <button type="button" class="btn btn-lg btn-primary" id="solve-button">Solve</button>
-              &nbsp;&nbsp;<span id="countdown">Ready in around 10 seconds</span>, status: <span id="status">Waiting for job</span>
+              &nbsp;&nbsp;<span id="countdown">Ready in around 15 seconds</span>, status: <span id="status">Waiting for job</span>
             </p>
             <div class="accordion" id="accordionResults">
               <div id="collapseResults" class="collapse" data-parent="#accordionResults">
@@ -643,17 +643,15 @@
                 the <a href="https://github.com/PyPSA/WHOBS">WHOBS repository</a>.</p>
               <h3>Only free software and open data</h3>
               <p>The graphical user interface,
-		weather processing and optimisation model construction and post-processing are all built with
-		free software and open data only. The commercial optimisation solver <a href="https://www.gurobi.com">Gurobi</a> is used for its
-		high performance on this website, but it can also be replaced with an open source solver such as <a href="https://github.com/coin-or/Clp">Clp</a> if
-		performance is not required.  The
+		weather processing, optimisation model construction, solver and post-processing are all built with
+		free software and open data only. The
                 code for all parts except the solver can be downloaded from the GitHub
                 repository <a href="https://github.com/PyPSA/whobs-server">whobs-server</a>. It uses
                 the <a href="https://github.com/PyPSA/PyPSA">Python for Power
                 System Analysis (PyPSA)</a> energy optimisation framework, open
                 weather data
                 from the European Centre for Medium-Range Weather Forecasts (ECMWF) <a href="https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels">ERA5 reanalysis dataset</a>, the <a href="https://github.com/PyPSA/atlite">atlite library</a> for converting weather data to generation profiles,
-                <a href="https://d3js.org/">D3.js</a> for graphics, <a href="https://www.mapbox.com/">Mapbox</a>, <a href="http://leafletjs.com/">Leaflet</a> and <a href="https://www.naturalearthdata.com/">Natural Earth</a> for maps,  and
+                <a href="https://d3js.org/">D3.js</a> for graphics, <a href="https://www.mapbox.com/">Mapbox</a>, <a href="http://leafletjs.com/">Leaflet</a> and <a href="https://www.naturalearthdata.com/">Natural Earth</a> for maps,  <a href="https://github.com/coin-or/Clp">Clp</a> for the solver, and
               free software for the server infrastructure (GNU/Linux, nginx, Flask, gunicorn, Redis).</p>
               <h3>New functionality coming soon</h3>
               <p>See the <a href="https://github.com/PyPSA/whobs-server/issues">GitHub issue tracker</a>.</p>
@@ -668,8 +666,6 @@
                 <li><a href="https://github.com/coroa">Jonas Hörsch</a> developed the library <a href="https://github.com/PyPSA/atlite">atlite</a> that processes the weather data and selects different geographical areas.</li>
               </ul>
 	      <p>We thank also all the developers of the other free software on which model.energy depends.</p>
-	      <p>We thank <a href="https://www.gurobi.com">Gurobi</a> for providing a fully featured commercial licence for the optimisation solver
-		in order to enhance the performance of this website.</p>
               <h3>Privacy statement</h3>
               <p>No personal information is stored on the server. There are no cookies.</p>
               <p>Simulation assumptions and results for each job are stored on the server for statistical purposes.</p>

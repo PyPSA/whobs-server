@@ -475,9 +475,11 @@ def run_optimisation(assumptions, pu):
 
     network.consistency_check()
 
-    solver_name = "gurobi"
-    solver_options = {"method": 2, # barrier
-                      "crossover": 0}
+    solver_name = "cbc"
+    solver_options = {}
+    #solver_name = "gurobi"
+    #solver_options = {"method": 2, # barrier
+    #                  "crossover": 0}
                       #"BarConvTol": 1.e-5,
                       #"AggFill": 0,
                       #"PreDual": 0,

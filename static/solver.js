@@ -492,7 +492,7 @@ var weatherJobid = "";
 var timer;
 var timeout;
 var timerStart;
-var timerExpected = 10;
+var timerExpected = 15;
 
 var weatherTimer;
 var weatherTimeout;
