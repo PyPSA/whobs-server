@@ -557,7 +557,7 @@ function weather() {
 	    var data = JSON.parse(this.response);
 	    if("jobid" in data){
 		weatherJobid = data["jobid"];
-		console.log("Weather jobid:",jobid);
+		console.log("Weather jobid:",weatherJobid);
 		weatherTimer = setInterval(poll_weather_result, poll_interval);
 		console.log("timer",weatherTimer,"polling every",poll_interval,"milliseconds");
 		weatherTimeout = setTimeout(poll_weather_kill, poll_timeout);
