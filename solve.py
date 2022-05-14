@@ -257,7 +257,14 @@ def process_shapely_polygon(polygon,year,cf_exponent):
         matrix = sp.sparse.csr_matrix(matrix)
 
         for tech in techs:
+
             da = xr.open_dataarray("{}octant{}-{}-{}.nc".format(octant_folder,i,year,tech))
+            if da.isnull().any():
+                print(tech,"has some NaN values:")
+                print(da.where(da.isnull(),drop=True))
+                print("filling with zero")
+                da = da.fillna(0.)
+
             means = pd.read_csv("data/octant{}-{}-{}-mean.csv".format(i,year,tech),index_col=0,squeeze=True)
 
             layout = (means.values)**cf_exponent
