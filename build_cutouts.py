@@ -1,42 +1,35 @@
-import os
 import atlite
 import logging
+import yaml, os
+
 logger = logging.getLogger(__name__)
 
 logging.basicConfig(level="INFO")
 
+year = 2011
 
-year = 2014
+with open("config.yaml", "r") as f:
+    config = yaml.safe_load(f)
 
-cutout_dir = "/beegfs/work/ws/ka_kc5996-cutouts-0/"
-
+octant_folder = config["octant_folder"]
 
 for quadrant in range(4):
+
+    print("preparing quadrant",quadrant)
+
     x0 = -180 + quadrant*90.
     x1 = x0 + 90.
 
-    y0 = 90.
-    y1 = -90.
+    y0 = -90.
+    y1 = 90.
 
-    cutout_name = "quadrant{}-{}".format(quadrant,year)
+    cutout_name = os.path.join(octant_folder,
+                               f"quadrant-{year}-{quadrant}.nc")
 
+    cutout = atlite.Cutout(path=cutout_name,
+                           module="era5",
+                           x=slice(x0,x1),
+                           y=slice(y0,y1),
+                           time=str(year))
 
-    cutout_params = {"module" : "era5",
-                     "xs" : [x0,x1],
-                     "ys" : [y0,y1],
-                     "years" : [year, year]}
-
-    print("Preparing cutout for quadrant {} with name {} and parameters {}".format(quadrant,cutout_name,cutout_params))
-
-
-    for p in ('xs', 'ys', 'years', 'months'):
-        if p in cutout_params:
-            cutout_params[p] = slice(*cutout_params[p])
-
-    cutout = atlite.Cutout(cutout_name,
-                           cutout_dir=cutout_dir,
-                           **cutout_params)
-
-    cutout.prepare(nprocesses=4)
-
-    print("Preparation finished")
+    cutout.prepare()

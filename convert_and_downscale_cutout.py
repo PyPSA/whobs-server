@@ -55,12 +55,9 @@ def generate_octant(cutout_name, cutout_span, years, xs, ys, azimuth, filename):
 
     config["solar"]["resource"]["orientation"]["azimuth"] = azimuth
 
-    cutout = atlite.Cutout(cutout_name,
-                           cutout_dir=cutout_dir,
-                           years=years,
-                           months=slice(1,12),
-                           xs=xs,
-                           ys=ys)
+    cutout = atlite.Cutout(cutout_name+".nc").sel(x=xs,y=ys)
+
+    print("cutout has extent", cutout.extent)
 
     new_mesh = 0.5
 
@@ -69,42 +66,21 @@ def generate_octant(cutout_name, cutout_span, years, xs, ys, azimuth, filename):
                   new_mesh)
 
     y = np.arange(cutout.coords['y'].values[0],
-                  cutout.coords['y'].values[-1] - new_mesh,
-                  -new_mesh)
+                  cutout.coords['y'].values[-1] + new_mesh,
+                  +new_mesh)
 
 
     #grid_coordinates and grid_cells copied from atlite/cutout.py
 
-
     xs, ys = np.meshgrid(x,y)
-    grid_coordinates = np.asarray((np.ravel(xs), np.ravel(ys))).T
+    new_grid_coordinates = np.asarray((np.ravel(xs), np.ravel(ys))).T
 
 
     span = new_mesh / 2
-    grid_cells = [box(*c) for c in np.hstack((grid_coordinates - span, grid_coordinates + span))]
-
-
+    new_grid_cells = [box(*c) for c in np.hstack((new_grid_coordinates - span, new_grid_coordinates + span))]
 
     ## build transfer matrix from cutout grid to new grid
-    ## this is much faster than built-in atlite indicator matrix
-
-    matrix = sp.sparse.lil_matrix((len(grid_cells), len(cutout.grid_coordinates())), dtype=np.float)
-
-    n_ys = int(round((cutout.extent[3]-cutout.extent[2])/cutout_span))+1
-    n_xs = int(round((cutout.extent[1]-cutout.extent[0])/cutout_span))+1
-
-    for i,gc in enumerate(grid_cells):
-        #print(gc.bounds)
-        x_overlaps = indicator(cutout.extent[0]-cutout_span/2,cutout.extent[1]+cutout_span/2,cutout_span,gc.bounds[0],gc.bounds[2])
-        y_overlaps = indicator(cutout.extent[2]-cutout_span/2,cutout.extent[3]+cutout_span/2,cutout_span,gc.bounds[1],gc.bounds[3])
-
-        for x,wx in x_overlaps:
-            for y,wy in y_overlaps:
-                matrix[i,(n_ys-1-y)*n_xs+x] = wx*wy
-
-    ## double check against standard atlite indicator matrix
-    for s in [slice(5),slice(4000,4005),slice(-5,None)]:
-        assert abs(matrix[s,:]-cutout.indicatormatrix(grid_cells[s])).sum() < 1e-3
+    matrix = cutout.indicatormatrix(new_grid_cells)
 
     # Normalise so that i'th row adds up to 1 (since have 1 MW in each coarse grid_cell)
     matrix = matrix.multiply(1/matrix.sum(axis=1))
@@ -124,15 +100,11 @@ def generate_octant(cutout_name, cutout_span, years, xs, ys, azimuth, filename):
 
         correction_factor = config[tech].get('correction_factor', 1.)
 
-        (correction_factor * profiles).to_netcdf("{}{}-{}.nc".format(cutout_dir, filename, tech))
+        (correction_factor * profiles).to_netcdf("{}-{}.nc".format(filename, tech))
 
 
 
-
-
-cutout_dir = "/beegfs/work/ws/ka_kc5996-cutouts-0/"
-
-year = 2014
+year = 2011
 
 for i in range(8):
 
@@ -141,8 +113,8 @@ for i in range(8):
     x0 = -180 + quadrant*90.
     x1 = x0 + 90.
 
-    y0 = 90. - (i%2)*90.
-    y1 = y0 - 90.
+    y0 = -90. + (i%2)*90.
+    y1 = y0 + 90.
 
 
     filename = "octant{}-{}".format(i, year)
@@ -150,16 +122,16 @@ for i in range(8):
     xs = slice(x0,x1)
     ys = slice(y0,y1)
 
-    cutout_name = "quadrant{}-{}".format(quadrant, year)
-    
+    cutout_name = "quadrant-{}-{}".format(year, quadrant)
+
     cutout_span = 0.25
 
-    if y0 == 90.:
+    if y0 == 0.:
         azimuth = 180.
     else:
         azimuth = 0.
 
-    print("Doing octant",i,"corresponding to quadrant",quadrant,"and azimuth",azimuth)    
+    print("Doing octant",i,"corresponding to quadrant",quadrant,"and azimuth",azimuth)
     print(x0,x1,y0,y1)
 
     generate_octant(cutout_name, cutout_span, years, xs, ys, azimuth, filename)

@@ -23,7 +23,7 @@ import pandas as pd
 from pyomo.environ import Constraint
 from rq import get_current_job
 
-import json, os, hashlib
+import json, os, hashlib, yaml
 
 #required to stop wierd failures
 import netCDF4
@@ -38,9 +38,14 @@ import numpy as np
 
 from shapely.geometry import box, Point, Polygon, MultiPolygon
 
-current_version = 190929
 
-octant_folder = "../cutouts/"
+with open("config.yaml", "r") as f:
+    config = yaml.safe_load(f)
+
+
+current_version = config["current_version"]
+
+octant_folder = config["octant_folder"]
 
 #based on mean deviation against renewables.ninja capacity factors for European countries for 2011-2013
 solar_correction_factor = 0.926328
@@ -129,8 +134,8 @@ def get_octant_bounds(octant):
     x0 = -180 + (octant//2)*90.
     x1 = x0 + 90.
 
-    y0 = 90. - (octant%2)*90.
-    y1 = y0 - 90.
+    y0 = -90. + (octant%2)*90.
+    y1 = y0 + 90.
 
     return x0,x1,y0,y1
 
@@ -143,9 +148,8 @@ def generate_octant_grid_cells(octant, mesh=0.5):
                   mesh)
 
     y = np.arange(y0,
-                  y1 - mesh,
-                      -mesh)
-
+                  y1 + mesh,
+                  mesh)
 
     #grid_coordinates and grid_cells copied from atlite/cutout.py
     xs, ys = np.meshgrid(x,y)
@@ -160,26 +164,30 @@ def get_octant(lon,lat):
     # 0 for lon -180--90, 1 for lon -90-0, etc.
     quadrant = find_interval(-180.,90,lon)
 
-    #0 for lat 90-0, 1 for lat 0--90
-    hemisphere = 1-find_interval(-90,90,lat)
+    #0 for lat -90 - 0, 1 for lat 0 - 90
+    hemisphere = find_interval(-90,90,lat)
 
     octant = 2*quadrant + hemisphere
 
+    print("octant",octant)
+
     rel_x = lon - quadrant*90 + 180.
 
-    rel_y = lat + 90*hemisphere
+    rel_y = lat - hemisphere*90 + 90.
 
     span = 0.5
 
     n_per_octant = int(90/span +1)
 
     i = find_interval(0-span/2,span,rel_x)
-    j = n_per_octant - 1 - find_interval(0-span/2,span,rel_y)
+    j = find_interval(0-span/2,span,rel_y)
 
     position = j*n_per_octant+i
 
+    print("position",position)
+
     #paranoid check
-    if False:
+    if True:
         grid_cells = generate_octant_grid_cells(octant, mesh=span)
         assert grid_cells[position].contains(Point(lon,lat))
 
@@ -215,7 +223,7 @@ def process_point(ct,year):
 
     for tech in ["solar", "onwind"]:
         o = xr.open_dataarray("{}octant{}-{}-{}.nc".format(octant_folder,octant,year,tech))
-        pu[tech] = o.loc[position,:].to_pandas()
+        pu[tech] = o.loc[{"dim_0":position}].to_pandas()
 
     return None, pd.DataFrame(pu)
 
@@ -244,7 +252,7 @@ def process_shapely_polygon(polygon,year,cf_exponent):
 
         x0,x1,y0,y1 = get_octant_bounds(i)
 
-        if bounds[0] > x1 or bounds[2] < x0 or bounds[3] < y1 or bounds[1] > y0:
+        if bounds[0] > x1 or bounds[1] > y1 or bounds[2] < x0 or bounds[3] < y0:
             print("Skipping octant {}, since it is out of bounds".format(i))
             continue
 
@@ -258,20 +266,22 @@ def process_shapely_polygon(polygon,year,cf_exponent):
 
         for tech in techs:
 
-            da = xr.open_dataarray("{}octant{}-{}-{}.nc".format(octant_folder,i,year,tech))
+            da = xr.open_dataarray(os.path.join(octant_folder, f"octant{i}-{year}-{tech}.nc"))
             if da.isnull().any():
                 print(tech,"has some NaN values:")
                 print(da.where(da.isnull(),drop=True))
                 print("filling with zero")
                 da = da.fillna(0.)
 
-            means = pd.read_csv("data/octant{}-{}-{}-mean.csv".format(i,year,tech),index_col=0,squeeze=True)
+            #precalculated for speed
+            means = xr.open_dataarray(os.path.join(octant_folder, f"octant{i}-{year}-{tech}-mean.nc"))
+            #means = da.mean(dim="time")
 
-            layout = (means.values)**cf_exponent
+            layout = means**cf_exponent
 
             tech_matrix = matrix.dot(spdiag(layout))
 
-            result = tech_matrix*da
+            result = tech_matrix*da.T
 
             final_result[tech] += pd.Series(result[0],
                                             index=da.coords["time"].to_pandas())
