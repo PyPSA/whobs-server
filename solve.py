@@ -129,19 +129,19 @@ def find_interval(interval_start,interval_length,value):
     return int((value-interval_start)//interval_length)
 
 
-def get_octant_bounds(octant):
+def get_octant_bounds(quadrant, hemisphere):
 
-    x0 = -180 + (octant//2)*90.
+    x0 = -180 + quadrant*90.
     x1 = x0 + 90.
 
-    y0 = -90. + (octant%2)*90.
+    y0 = -90. + hemisphere*90.
     y1 = y0 + 90.
 
     return x0,x1,y0,y1
 
-def generate_octant_grid_cells(octant, mesh=0.5):
+def generate_octant_grid_cells(quadrant, hemisphere, mesh=0.5):
 
-    x0,x1,y0,y1 = get_octant_bounds(octant)
+    x0,x1,y0,y1 = get_octant_bounds(quadrant, hemisphere)
 
     x = np.arange(x0,
                   x1 + mesh,
@@ -167,9 +167,7 @@ def get_octant(lon,lat):
     #0 for lat -90 - 0, 1 for lat 0 - 90
     hemisphere = find_interval(-90,90,lat)
 
-    octant = 2*quadrant + hemisphere
-
-    print("octant",octant)
+    print(f"octant is in quadrant {quadrant} and hemisphere {hemisphere}")
 
     rel_x = lon - quadrant*90 + 180.
 
@@ -188,10 +186,10 @@ def get_octant(lon,lat):
 
     #paranoid check
     if True:
-        grid_cells = generate_octant_grid_cells(octant, mesh=span)
+        grid_cells = generate_octant_grid_cells(quadrant, hemisphere, mesh=span)
         assert grid_cells[position].contains(Point(lon,lat))
 
-    return octant, position
+    return quadrant, hemisphere, position
 
 def process_point(ct,year):
     """Return error_msg, solar_pu, wind_pu
@@ -217,12 +215,14 @@ def process_point(ct,year):
     if lon < -180 or lon > 180 or lat > 90 or lat < -90:
         return "Point's coordinates not within lon*lat range of (-180,180)*(-90,90)", None, None
 
-    octant, position = get_octant(lon,lat)
+    quadrant, hemisphere, position = get_octant(lon,lat)
 
     pu = {}
 
     for tech in ["solar", "onwind"]:
-        o = xr.open_dataarray("{}octant{}-{}-{}.nc".format(octant_folder,octant,year,tech))
+        filename = os.path.join(octant_folder,
+                                f"octant-{year}-{quadrant}-{hemisphere}-{tech}.nc")
+        o = xr.open_dataarray(filename)
         pu[tech] = o.loc[{"dim_0":position}].to_pandas()
 
     return None, pd.DataFrame(pu)
@@ -239,54 +239,55 @@ def process_shapely_polygon(polygon,year,cf_exponent):
     if bounds[0] < -180 or bounds[2] > 180 or bounds[3] > 90 or bounds[1] < -90:
         return "Polygon's coordinates not within lon*lat range of (-180,180)*(-90,90)", None, None
 
-    #use for index
-    da = xr.open_dataarray("{}octant0-{}-onwind.nc".format(octant_folder,year))
-
     techs = ["onwind","solar"]
-    final_result = pd.DataFrame(0.,columns=techs,
-                                index=da.coords["time"].to_pandas())
+
+    final_result = pd.DataFrame(0.,
+                                columns=techs,
+                                index=pd.date_range(f'{year}-01-01', f'{year}-12-31', freq='1H', inclusive="left"))
+
     matrix_sum = { tech : 0. for tech in techs}
 
     #range over octants
-    for i in range(8):
+    for quadrant in range(4):
+        for hemisphere in range(2):
 
-        x0,x1,y0,y1 = get_octant_bounds(i)
+            x0,x1,y0,y1 = get_octant_bounds(quadrant, hemisphere)
 
-        if bounds[0] > x1 or bounds[1] > y1 or bounds[2] < x0 or bounds[3] < y0:
-            print("Skipping octant {}, since it is out of bounds".format(i))
-            continue
+            if bounds[0] > x1 or bounds[1] > y1 or bounds[2] < x0 or bounds[3] < y0:
+                print(f"Skipping octant {quadrant}, {hemisphere} since it is out of bounds")
+                continue
 
-        print("Computing transfer matrix with octant {}".format(i))
+            print(f"Computing transfer matrix with octant {quadrant}, {hemisphere}")
 
-        grid_cells = generate_octant_grid_cells(i, mesh=0.5)
+            grid_cells = generate_octant_grid_cells(quadrant, hemisphere, mesh=0.5)
 
-        matrix = compute_indicatormatrix(grid_cells,[polygon])
+            matrix = compute_indicatormatrix(grid_cells,[polygon])
 
-        matrix = sp.sparse.csr_matrix(matrix)
+            matrix = sp.sparse.csr_matrix(matrix)
 
-        for tech in techs:
+            for tech in techs:
 
-            da = xr.open_dataarray(os.path.join(octant_folder, f"octant{i}-{year}-{tech}.nc"))
-            if da.isnull().any():
-                print(tech,"has some NaN values:")
-                print(da.where(da.isnull(),drop=True))
-                print("filling with zero")
-                da = da.fillna(0.)
+                da = xr.open_dataarray(os.path.join(octant_folder, f"octant-{year}-{quadrant}-{hemisphere}-{tech}.nc"))
+                if da.isnull().any():
+                    print(tech,"has some NaN values:")
+                    print(da.where(da.isnull(),drop=True))
+                    print("filling with zero")
+                    da = da.fillna(0.)
 
-            #precalculated for speed
-            means = xr.open_dataarray(os.path.join(octant_folder, f"octant{i}-{year}-{tech}-mean.nc"))
-            #means = da.mean(dim="time")
+                #precalculated for speed
+                means = xr.open_dataarray(os.path.join(octant_folder, f"octant-{year}-{quadrant}-{hemisphere}-{tech}-mean.nc"))
+                #means = da.mean(dim="time")
 
-            layout = means**cf_exponent
+                layout = means**cf_exponent
 
-            tech_matrix = matrix.dot(spdiag(layout))
+                tech_matrix = matrix.dot(spdiag(layout))
 
-            result = tech_matrix*da.T
+                result = tech_matrix*da.T
 
-            final_result[tech] += pd.Series(result[0],
-                                            index=da.coords["time"].to_pandas())
+                final_result[tech] += pd.Series(result[0],
+                                                index=da.coords["time"].to_pandas())
 
-            matrix_sum[tech] += tech_matrix.sum(axis=1)[0,0]
+                matrix_sum[tech] += tech_matrix.sum(axis=1)[0,0]
 
     for tech in techs:
         print("Matrix sum for {}: {}".format(tech,matrix_sum[tech]))

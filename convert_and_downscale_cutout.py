@@ -1,4 +1,4 @@
-import os
+import os, yaml
 import atlite
 import logging
 import numpy as np
@@ -10,54 +10,17 @@ logger = logging.getLogger(__name__)
 
 logging.basicConfig(level="INFO")
 
-config = {"onwind" : { "resource" : { "turbine" : "Vestas_V112_3MW"}},
-          "solar" : { "correction_factor": 1.,
-                      "resource" : { "panel" : "CSi",
-                                     "orientation" : {"slope" : 35.,
-                                                       "azimuth" : 0.}}}}
-
-method = {"onwind" : "wind",
-          "solar" : "pv"}
+with open("config.yaml", "r") as f:
+    config = yaml.safe_load(f)
 
 
-def indicator(range_start, range_end, range_gap, interval_start, interval_end):
-    """ Return list of locations of overlaps between interval and range
-    Example: indicator(0, 90, 0.3, 89.5, 90.5) returns
-    [[298, 0.666666666], [299, 1]]
-    """
-    if interval_end < range_start or interval_start > range_end:
-        return []
+def generate_octant(cutout_name, cutout_span, years, xs, ys, azimuth, octant_name):
 
-    i_start = max(int((interval_start-range_start)/range_gap),0)
-    i_end = min(int((interval_end-range_start)/range_gap),int(round((range_end-range_start)/range_gap))-1)
+    config["renewable"]["solar"]["resource"]["orientation"]["azimuth"] = azimuth
 
-    result = []
+    cutout = atlite.Cutout(cutout_name).sel(x=xs,y=ys)
 
-    #potential overlaps
-    for i in range(i_start,i_end+1):
-        candidate_start = range_start + i*range_gap
-        candidate_end = range_start + (i+1)*range_gap
-        #print(candidate_start, candidate_end)
-
-        overlap_start = max(interval_start,candidate_start)
-        overlap_end = min(interval_end,candidate_end)
-
-        fraction = (overlap_end-overlap_start)/range_gap
-        if abs(fraction) > 1e-5:
-            result.append([i,fraction])
-
-    return result
-
-
-
-
-def generate_octant(cutout_name, cutout_span, years, xs, ys, azimuth, filename):
-
-    config["solar"]["resource"]["orientation"]["azimuth"] = azimuth
-
-    cutout = atlite.Cutout(cutout_name+".nc").sel(x=xs,y=ys)
-
-    print("cutout has extent", cutout.extent)
+    logger.info(f"cutout has extent {cutout.extent}")
 
     new_mesh = 0.5
 
@@ -86,52 +49,77 @@ def generate_octant(cutout_name, cutout_span, years, xs, ys, azimuth, filename):
     matrix = matrix.multiply(1/matrix.sum(axis=1))
 
 
-    for tech in config.keys():
+    for tech in config['renewable'].keys():
 
-        print("Making {} profiles".format(tech))
+        logger.info(f"Making {tech} profiles")
 
-        resource = config[tech]['resource']
+        resource = config['renewable'][tech]['resource']
 
-        func = getattr(cutout, method[tech])
+        func = getattr(cutout, config['renewable'][tech]['method'])
 
         profiles = func(matrix=matrix,
                         index=pd.Index(range(matrix.shape[0])),
                         **resource)
 
-        correction_factor = config[tech].get('correction_factor', 1.)
+        correction_factor = config['renewable'][tech].get('correction_factor', 1.)
 
-        (correction_factor * profiles).to_netcdf("{}-{}.nc".format(filename, tech))
+        profiles *= correction_factor
+
+        #reducing from 64-bit to 32-bit halves size
+        profiles = profiles.astype(np.float32)
+
+        encoding = {profiles.name: {'zlib': True,
+                                    'complevel': config['octant_compression']['complevel'],
+                                    'least_significant_digit' : config['octant_compression']['least_significant_digit']}}
+
+        filename = f"{octant_name}-{tech}.nc"
+
+        profiles.to_netcdf(filename,
+                           encoding=encoding)
+
+        mean = profiles.mean(dim="time")
+
+        filename = f"{octant_name}-{tech}-mean.nc"
+
+        mean.to_netcdf(filename)
 
 
 
-year = 2011
+for year in config["weather_years"]:
+    for quadrant in range(4):
+        for hemisphere in range(2):
 
-for i in range(8):
+            logger.info(f"processing year {year} quadrant {quadrant} and hemisphere {hemisphere}")
 
-    quadrant = i//2
+            x0 = -180 + quadrant*90.
+            x1 = x0 + 90.
 
-    x0 = -180 + quadrant*90.
-    x1 = x0 + 90.
-
-    y0 = -90. + (i%2)*90.
-    y1 = y0 + 90.
+            y0 = -90. + hemisphere*90.
+            y1 = y0 + 90.
 
 
-    filename = "octant{}-{}".format(i, year)
-    years = slice(year,year)
-    xs = slice(x0,x1)
-    ys = slice(y0,y1)
+            octant_name = os.path.join(config["octant_folder"],
+                                       f"octant-{year}-{quadrant}-{hemisphere}")
 
-    cutout_name = "quadrant-{}-{}".format(year, quadrant)
+            if all([os.path.isfile(f"{octant_name}-{tech}.nc") for tech in config['renewable'].keys()]):
+                logger.info(f"skipping following octant, since it already exists: {octant_name}")
+                continue
 
-    cutout_span = 0.25
+            years = slice(int(year),int(year))
+            xs = slice(x0,x1)
+            ys = slice(y0,y1)
 
-    if y0 == 0.:
-        azimuth = 180.
-    else:
-        azimuth = 0.
+            cutout_name = os.path.join(config["cutout_folder"],
+                                       f"quadrant-{year}-{quadrant}.nc")
 
-    print("Doing octant",i,"corresponding to quadrant",quadrant,"and azimuth",azimuth)
-    print(x0,x1,y0,y1)
+            cutout_span = 0.25
 
-    generate_octant(cutout_name, cutout_span, years, xs, ys, azimuth, filename)
+            if y0 == 0.:
+                azimuth = 180.
+            else:
+                azimuth = 0.
+
+            logger.info(f"xs {xs}, ys {ys}")
+            logger.info(f"Azimuth is {azimuth}")
+
+            generate_octant(cutout_name, cutout_span, years, xs, ys, azimuth, octant_name)

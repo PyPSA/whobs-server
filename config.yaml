@@ -1,5 +1,26 @@
 
 current_version: 190929
 
-#octant_folder: "../cutouts/"
-octant_folder: "../redone-old-cutouts/"
+cutout_folder: "../cutouts/"
+
+octant_folder: "../octants/"
+
+weather_years: [2011,2012,2013,2014]
+
+renewable:
+  onwind:
+    method: wind
+    resource:
+      turbine: Vestas_V112_3MW
+  solar:
+    method: pv
+    resource:
+      panel: CSi
+      orientation:
+        slope: 35.
+        azimuth: 180.
+    correction_factor: 1.
+
+octant_compression:
+  complevel: 4
+  least_significant_digit: 5
