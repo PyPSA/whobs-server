@@ -45,7 +45,7 @@ For (optional) server deployment:
 	mamba install gunicorn
 
 
-### Preparation
+### Automatic preparation
 
 After installing the dependencies above, run the following line of code:
 
@@ -53,14 +53,19 @@ After installing the dependencies above, run the following line of code:
 
 This helps you:
 
-1. Fetch the weather data described below
-1. Convert it to netCDF
+1. Fetch the pre-processed wind and solar data for the globe (around 6.5 GB per weather year specified in `config.yaml`)
 1. Create folders for results
 1. Fetch static files not included in this repository
 
 Now you are ready to [run the server locally](#run-server-locally-on-your-own-computer).
 
-### Data
+### Generating wind and solar data yourself
+
+The script `prepare.py` will download everything you need to get
+started, including the pre-processed wind and solar data for the
+globe. If you want to build this data from scratch from wind and solar
+data, follow these instructions. Be warned that the global datasets
+take space of 444 GB per weather year.
 
 For the wind and solar generation time series, we use the European
 Centre for Medium-Range Weather Forecasts (ECMWF) [ERA5
@@ -82,10 +87,18 @@ library](https://github.com/FRESNA/atlite) using the script:
 Note that you need to register an account on the CDS first in order to
 get a CDS API key.
 
-You need to set the `year` variable in the script first, then it will
-download 4 quadrants cutouts (4 slices of 90 degrees of longitude) to
-cover the whole globe. Each quadrant takes up 60 GB, so you will need
-240 GB per year.
+As of 19.03.2023 the atlite master cannot cope with such large
+cutouts, so you need to use the [monthly retrieval
+branch](https://github.com/PyPSA/atlite/tree/feat/era5-monthly-retrieveal)
+of atlite. If you have shapely 2.0 you will need to backport [this bug
+fix](https://github.com/PyPSA/atlite/blob/ad6c9f5a076054e2b953666076447729e33c2fb0/atlite/gis.py#L150)
+by hand in the code.
+
+
+Set the `weather_years` you want to download in `config.yaml`. For
+each year it will download 4 quadrants cutouts (4 slices of 90 degrees
+of longitude) to cover the whole globe. Each quadrant takes up 111 GB,
+so you will need 444 GB per year.
 
 To build the power system data, i.e. wind and solar generation time
 series for each point on the globe, run the script:
@@ -97,17 +110,8 @@ the quadrant with solar panels facing south, and the other for the
 southern half with solar panels facing north (with a slope of 35
 degrees against the horizontal in both cases). The script downscales
 the spatial resolution to 0.5 by 0.5 degrees to save disk space. Each
-octant takes up 2.2 GB for each technology (solar and onshore wind),
-so in total for a year we have 2.2 GB times 2 technologies times 8
-octants, i.e. 35 GB.
-
-
-For spatial distributions of wind and solar proportional to (capacity
-factor)^x, precalculating the capacity factors for each octant in
-`data/` speeds things up significantly. To calculate these means, use
-the script:
-
-`python get_statistics.py`
+octant takes up 820 MB for both technologies (solar and onshore wind),
+so in total for a year we have 820 MB times 8 octants, i.e. 6.5 GB.
 
 
 ## Run without server
@@ -143,7 +147,7 @@ See [nginx server configuration](nginx-configuration.txt).
 
 ## License
 
-Copyright 2018-2022 Tom Brown <https://nworbmot.org/>
+Copyright 2018-2023 Tom Brown <https://nworbmot.org/>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
