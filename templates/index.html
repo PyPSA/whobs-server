@@ -112,7 +112,7 @@
               <div class="form-group">
                 <label for="weatherSelector">Weather year</label>
                 <input type="number" class="form-control" id="weatherSelector" aria-describedby="weatherSelect" name="year">
-                <small id="weatherSelect" class="form-text text-muted">Only the years 2011 and 2012 are available (until we get a bigger hard-drive).</small>
+                <small id="weatherSelect" class="form-text text-muted">Only the years {{ config["weather_years"] | join(", ") }} are available (until we get a bigger hard-drive).</small>
               </div>
               <div class="form-group">
                 <label for="distributionSelector">Capacity factor exponent for spatial distribution of wind and solar</label>
@@ -683,6 +683,7 @@
     <script src="{{ url_for('static', filename='jquery.easing.min.js') }}"></script>
     <script src="{{ url_for('static', filename='scrolling-nav.js') }}"></script>
     <script type="text/javascript">
+      var config = {{config | tojson}};
       var results = JSON.parse('{{ results|json }}');
 
       // Determine which navbar to assign scrollspy depending on window width

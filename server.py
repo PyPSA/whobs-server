@@ -27,16 +27,17 @@ from rq import Queue
 
 import time, datetime
 
-import json, os, hashlib
+import json, os, hashlib, yaml
 
 import pandas as pd
 
-current_version = 190929
 
 conn = Redis.from_url('redis://')
 
 queue = Queue('whobs', connection=conn)
 
+with open("config.yaml", "r") as f:
+    config = yaml.safe_load(f)
 
 app = Flask(__name__)
 app.jinja_env.filters['json'] = lambda v: Markup(json.dumps(v))
@@ -95,9 +96,6 @@ colors = {"wind":"#3B6182",
 }
 
 
-years_available_start = 2011
-years_available_end = 2012
-
 float_upper_limit = 1e7
 
 
@@ -149,7 +147,7 @@ def sanitise_assumptions(assumptions):
     if assumptions["frequency"] < 1 or assumptions["frequency"] > 8760:
         return "Frequency {} is not in the valid range [1,8760]".format(assumptions["frequency"]), None
 
-    if assumptions["year"] < years_available_start or assumptions["year"] > years_available_end:
+    if assumptions["year"] not in config["weather_years"]:
         return "Year {} not in valid range".format(assumptions["year"]), None
 
     if assumptions["load"] == 0 and assumptions["hydrogen_load"] == 0:
@@ -293,6 +291,7 @@ def root():
         results = {}
 
     return render_template('index.html',
+                           config=config,
                            results=results)
 
 
