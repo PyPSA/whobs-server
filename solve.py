@@ -111,6 +111,7 @@ def annuity(lifetime,rate):
 
 assumptions_df = pd.DataFrame(columns=["FOM","fixed","discount rate","lifetime","investment"],
                               index=["wind","solar","hydrogen_electrolyser","hydrogen_turbine","hydrogen_energy",
+                                     "hydrogen_compressor",
                                      "battery_power","battery_energy","dispatchable1","dispatchable2"],
                               dtype=float)
 
@@ -358,9 +359,7 @@ def run_optimisation(assumptions, pu):
 
     Nyears = 1
 
-    techs = ["wind","solar","battery_energy","battery_power","hydrogen_electrolyser","hydrogen_energy","hydrogen_turbine","dispatchable1","dispatchable2"]
-
-    for item in techs:
+    for item in assumptions_df.index:
         assumptions_df.at[item,"discount rate"] = assumptions[item + "_discount"]/100.
         assumptions_df.at[item,"investment"] = assumptions[item + "_cost"]
         assumptions_df.at[item,"FOM"] = assumptions[item + "_fom"]
@@ -465,8 +464,8 @@ def run_optimisation(assumptions, pu):
 
         network.add("Link",
                     "hydrogen_electrolyser",
-                    bus1="hydrogen",
                     bus0="elec",
+                    bus1="hydrogen",
                     p_nom_extendable=True,
                     efficiency=assumptions["hydrogen_electrolyser_efficiency"]/100.,
                     capital_cost=assumptions_df.at["hydrogen_electrolyser","fixed"])
@@ -479,12 +478,34 @@ def run_optimisation(assumptions, pu):
                      efficiency=assumptions["hydrogen_turbine_efficiency"]/100.,
                      capital_cost=assumptions_df.at["hydrogen_turbine","fixed"]*assumptions["hydrogen_turbine_efficiency"]/100.)  #NB: fixed cost is per MWel
 
+        network.add("Bus",
+                    "compressed hydrogen",
+                    carrier="compressed hydrogen")
+
+        network.add("Link",
+                    "hydrogen_compressor",
+                    carrier="hydrogen storing compressor",
+                    bus0="hydrogen",
+                    bus1="compressed hydrogen",
+                    bus2="elec",
+                    p_nom_extendable=True,
+                    efficiency=1,
+                    efficiency2=-assumptions["hydrogen_compressor_electricity"],
+                    capital_cost=assumptions_df.at["hydrogen_compressor","fixed"])
+
+        network.add("Link",
+                    "hydrogen_decompressor",
+                    carrier="hydrogen storing decompressor",
+                    bus0="compressed hydrogen",
+                    bus1="hydrogen",
+                    p_nom_extendable=True)
+
         network.add("Store",
-                     "hydrogen_energy",
-                     bus="hydrogen",
-                     e_nom_extendable=True,
-                     e_cyclic=True,
-                     capital_cost=assumptions_df.at["hydrogen_energy","fixed"])
+                    "hydrogen_energy",
+                    bus="compressed hydrogen",
+                    e_nom_extendable=True,
+                    e_cyclic=True,
+                    capital_cost=assumptions_df.at["hydrogen_energy","fixed"])
 
     if assumptions["co2_limit"]:
         network.add("GlobalConstraint","co2_limit",
@@ -616,6 +637,9 @@ def run_optimisation(assumptions, pu):
         results_overview["hydrogen_energy_capacity"] = network.stores.at["hydrogen_energy","e_nom_opt"]
         results_overview["hydrogen_energy_cost"] = network.stores.at["hydrogen_energy","e_nom_opt"]*network.stores.at["hydrogen_energy","capital_cost"]/year_weight
         results_overview["hydrogen_electrolyser_used"] = network.links_t.p0["hydrogen_electrolyser"].mean()
+        results_overview["hydrogen_compressor_capacity"] = network.links.at["hydrogen_compressor","p_nom_opt"]
+        results_overview["hydrogen_compressor_cf_used"] = network.links_t.p0["hydrogen_compressor"].mean()/network.links.at["hydrogen_compressor","p_nom_opt"]
+        results_overview["hydrogen_compressor_cost"] = network.links.at["hydrogen_compressor","p_nom_opt"]*network.links.at["hydrogen_compressor","capital_cost"]/year_weight
         if network.links.at["hydrogen_electrolyser","p_nom_opt"] > threshold:
             results_overview["hydrogen_electrolyser_cf_used"] = results_overview["hydrogen_electrolyser_used"]/network.links.at["hydrogen_electrolyser","p_nom_opt"]
             results_overview["hydrogen_electrolyser_rmv"] = (network.buses_t.marginal_price["elec"]*network.links_t.p0["hydrogen_electrolyser"]).sum()/network.links_t.p0["hydrogen_electrolyser"].sum()/results_overview["average_price"]
@@ -645,6 +669,9 @@ def run_optimisation(assumptions, pu):
         results_overview["hydrogen_turbine_cost"] = 0.
         results_overview["hydrogen_energy_capacity"] = 0.
         results_overview["hydrogen_energy_cost"] = 0.
+        results_overview["hydrogen_compressor_capacity"] = 0.
+        results_overview["hydrogen_compressor_cf_used"] = 0.
+        results_overview["hydrogen_compressor_cost"] = 0.
         results_overview["hydrogen_electrolyser_used"] = 0.
         results_overview["hydrogen_electrolyser_cf_used"] = 0.
         results_overview["hydrogen_turbine_used"] = 0.

@@ -28,7 +28,7 @@ let colors = config["colors"];
 
 let assets = ["solar","wind","battery_power",
               "battery_energy","hydrogen_electrolyser",
-	      "hydrogen_turbine","hydrogen_energy",
+	      "hydrogen_turbine","hydrogen_energy", "hydrogen_compressor",
 	      "dispatchable1","dispatchable2"];
 
 let vre = ["solar","wind"];
@@ -543,7 +543,7 @@ function clear_results(){
     for (let i = 0; i < assets.length; i++){
 	document.getElementById(assets[i] + "_capacity").innerHTML="";
 	document.getElementById(assets[i] + "_cf_used").innerHTML="";
-	if(!assets[i].includes("energy")){
+	if(!assets[i].includes("energy") && !assets[i].includes("compressor")){
 	    document.getElementById(assets[i] + "_rmv").innerHTML="";
 	};
     };
@@ -595,7 +595,7 @@ function display_results(){
     for (let i = 0; i < assets.length; i++){
 	document.getElementById(assets[i] + "_capacity").innerHTML=Math.abs(results[assets[i] + "_capacity"].toFixed(1));
 	document.getElementById(assets[i] + "_cf_used").innerHTML=Math.abs((results[assets[i] + "_cf_used"]*100)).toFixed(1);
-	if(!assets[i].includes("energy")){
+	if(!assets[i].includes("energy") && !assets[i].includes("compressor")){
 	    document.getElementById(assets[i] + "_rmv").innerHTML=Math.abs((results[assets[i] + "_rmv"]*100)).toFixed(1);
 	};
     };

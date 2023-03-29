@@ -60,6 +60,7 @@ colors:
   hydrogen_energy: magenta
   hydrogen storage: magenta
   hydrogen storing compressor: "#ff66ff"
+  hydrogen_compressor: "#ff66ff"
   hydrogen storing decompressor: "#660066"
   lh2 shipping: green
   dispatchable1: orange
