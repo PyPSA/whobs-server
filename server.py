@@ -43,61 +43,32 @@ app = Flask(__name__)
 app.jinja_env.filters['json'] = lambda v: Markup(json.dumps(v))
 
 
-booleans = ["wind","solar","battery","hydrogen","dispatchable1","dispatchable2","co2_limit"]
-
-floats = ["cf_exponent","load","hydrogen_load","wind_cost","solar_cost","battery_energy_cost",
-          "wind_fom","wind_lifetime","wind_discount",
-          "solar_fom","solar_lifetime","solar_discount",
-          "battery_energy_fom","battery_energy_lifetime","battery_energy_discount",
-          "battery_power_fom","battery_power_lifetime","battery_power_discount",
-          "battery_power_efficiency_charging","battery_power_efficiency_discharging",
-          "hydrogen_energy_fom","hydrogen_energy_lifetime","hydrogen_energy_discount",
-          "hydrogen_electrolyser_fom","hydrogen_electrolyser_lifetime","hydrogen_electrolyser_discount",
-          "hydrogen_turbine_fom","hydrogen_turbine_lifetime","hydrogen_turbine_discount",
-          "battery_power_cost","hydrogen_electrolyser_cost",
-          "hydrogen_energy_cost",
-          "hydrogen_electrolyser_efficiency",
-          "hydrogen_turbine_cost",
-          "hydrogen_turbine_efficiency",
-          "dispatchable1_cost",
-          "dispatchable1_marginal_cost",
-          "dispatchable1_emissions",
-          "dispatchable1_discount",
-          "dispatchable1_fom","dispatchable1_lifetime",
-          "dispatchable2_cost",
-          "dispatchable2_marginal_cost",
-          "dispatchable2_emissions",
-          "dispatchable2_discount",
-          "dispatchable2_fom","dispatchable2_lifetime",
-          "co2_emissions",
-          "wind_min",
-          "solar_min",
-          "wind_max",
-          "solar_max"]
 
 
-ints = ["year","frequency","version"]
+#na_filter leaves "" as "" rather than doing nan which confuses jinja2
+defaults = pd.read_csv("defaults.csv",index_col=[0,1],na_filter=False)
 
-strings = ["location"]
+for (n,t) in [("f",float),("i",int)]:
+    defaults.loc[defaults["type"] == n, "value"] = defaults.loc[defaults["type"] == n,"value"].astype(t)
 
+#work around fact bool("False") returns True
+defaults.loc[defaults.type == "b","value"] = (defaults.loc[defaults.type == "b","value"] == "True")
 
-colors = {"wind":"#3B6182",
-          "solar" :"#FFFF00",
-          "battery" : "#999999",
-          "battery_charge" : "#999999",
-          "battery_discharge" : "#999999",
-          "battery_power" : "#999999",
-          "battery_energy" : "#666666",
-          "hydrogen_turbine" : "red",
-          "hydrogen_electrolyser" : "cyan",
-          "hydrogen_energy" : "magenta",
-          "dispatchable1" : "orange",
-          "dispatchable2" : "lime",
-}
+defaults_t = {str(year): defaults.swaplevel().loc[str(year)] for year in config["tech_years"]}
+defaults = defaults.swaplevel().loc[""]
 
+defaults = pd.concat((defaults,defaults_t[str(config["tech_years_default"])])).sort_index()
 
-float_upper_limit = 1e7
+first = ["load","hydrogen_load","year","frequency"]
+defaults = defaults.reindex(first + defaults.index.drop(first).to_list())
 
+booleans = defaults.index[defaults.type == "b"].to_list()
+
+floats = defaults.index[defaults.type == "f"].to_list()
+
+ints = defaults.index[defaults.type == "i"].to_list()
+
+strings = defaults.index[defaults.type == "s"].to_list()
 
 def sanitise_assumptions(assumptions):
     """
@@ -132,8 +103,8 @@ def sanitise_assumptions(assumptions):
         except:
             return "{} {} could not be converted to float".format(key,assumptions[key]), None
 
-        if assumptions[key] < 0 or assumptions[key] > float_upper_limit:
-            return "{} {} was not in the valid range [0,{}]".format(key,assumptions[key],float_upper_limit), None
+        if assumptions[key] < 0 or assumptions[key] > config["float_upper_limit"]:
+            return "{} {} was not in the valid range [0,{}]".format(key,assumptions[key],config["float_upper_limit"]), None
 
     for key in ints:
         try:
@@ -232,7 +203,7 @@ def find_results(results_hash):
         results[sign] = {}
         results[sign]["columns"] = cols
         results[sign]["data"] = results_series[cols].values.tolist()
-        results[sign]["color"] = [colors[c] for c in cols]
+        results[sign]["color"] = [config["colors"][c] for c in cols]
 
     balance = results_series[columns["positive"]].sum(axis=1) - results_series[columns["negative"]].sum(axis=1)
 
@@ -291,6 +262,8 @@ def root():
         results = {}
 
     return render_template('index.html',
+                           defaults=defaults.T.to_dict(),
+                           defaults_t={year: defaults_t[year].T.to_dict() for year in defaults_t},
                            config=config,
                            results=results)
 

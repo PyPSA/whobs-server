@@ -1,0 +1,190 @@
+name,year,type,value,unit,full_name,text
+year,,i,2011,,Weather year,"Only the years 2011, 2012, 2013, 2014 are available (until we get a bigger hard-drive)"
+version,,i,190929,,Version,
+cf_exponent,,f,2,,Capacity factor exponent for spatial distribution of wind and solar,"If exponent is 0 generators are distributed evenly across the region, if it is 1 they are distributed proportional to capacity factor, if it is x they are distributed proportional to (capacity factor)^x"
+location,,s,country:DE,,Location,Select from map above.
+location_name,,s,Germany,,Location name,
+job_type,,s,None,,,
+frequency,,i,3,,Sampling frequency for weather time-series,"n-hourly, n<3 is very slow, big n solves faster (n=25 or n=49 give fast and relatively accurate results)"
+load,,f,100,MW,Constant electricity demand,Demand should be large enough for utility-scale assets but small enough to neglect land availability constraints
+hydrogen_load,,f,0,MW-H2-LHV,Constant hydrogen demand,
+wind_max,,f,1e7,MWp,Wind maximum capacity allowed,
+wind_min,,f,0,MWp,Wind minimum capacity allowed,
+dispatchable1_cost,2020,f,441.6,EUR/kW,Dispatchable technology 1 capital cost (overnight),
+dispatchable1_cost,2030,f,441.6,EUR/kW,Dispatchable technology 1 capital cost (overnight),
+dispatchable1_cost,2050,f,441.6,EUR/kW,Dispatchable technology 1 capital cost (overnight),
+dispatchable1_marginal_cost,2020,f,50,EUR/MWhel,Dispatchable technology 1 marginal cost (including fuel and VOM),
+dispatchable1_marginal_cost,2030,f,50,EUR/MWhel,Dispatchable technology 1 marginal cost (including fuel and VOM),
+dispatchable1_marginal_cost,2050,f,50,EUR/MWhel,Dispatchable technology 1 marginal cost (including fuel and VOM),
+dispatchable1_emissions,2020,f,500,gCO2eq/kWhel,Dispatchable technology 1 emissions factor,
+dispatchable1_emissions,2030,f,500,gCO2eq/kWhel,Dispatchable technology 1 emissions factor,
+dispatchable1_emissions,2050,f,500,gCO2eq/kWhel,Dispatchable technology 1 emissions factor,
+dispatchable1_fom,2020,f,3,percent of overnight cost per year,Dispatchable technology 1 fixed operation and maintenance costs,
+dispatchable1_fom,2030,f,3,percent of overnight cost per year,Dispatchable technology 1 fixed operation and maintenance costs,
+dispatchable1_fom,2050,f,3,percent of overnight cost per year,Dispatchable technology 1 fixed operation and maintenance costs,
+dispatchable1_lifetime,2020,f,25,years,Dispatchable technology 1 lifetime,
+dispatchable1_lifetime,2030,f,25,years,Dispatchable technology 1 lifetime,
+dispatchable1_lifetime,2050,f,25,years,Dispatchable technology 1 lifetime,
+dispatchable2_cost,2020,f,6624.5,EUR/kW,Dispatchable technology 2 capital cost (overnight),
+dispatchable2_cost,2030,f,6624.5,EUR/kW,Dispatchable technology 2 capital cost (overnight),
+dispatchable2_cost,2050,f,6624.5,EUR/kW,Dispatchable technology 2 capital cost (overnight),
+dispatchable2_marginal_cost,2020,f,10,EUR/MWhel,Dispatchable technology 2 marginal cost (including fuel and VOM),
+dispatchable2_marginal_cost,2030,f,10,EUR/MWhel,Dispatchable technology 2 marginal cost (including fuel and VOM),
+dispatchable2_marginal_cost,2050,f,10,EUR/MWhel,Dispatchable technology 2 marginal cost (including fuel and VOM),
+dispatchable2_emissions,2020,f,0,gCO2eq/kWhel,Dispatchable technology 2 emissions factor,
+dispatchable2_emissions,2030,f,0,gCO2eq/kWhel,Dispatchable technology 2 emissions factor,
+dispatchable2_emissions,2050,f,0,gCO2eq/kWhel,Dispatchable technology 2 emissions factor,
+dispatchable2_fom,2020,f,3,percent of overnight cost per year,Dispatchable technology 2 fixed operation and maintenance costs,
+dispatchable2_fom,2030,f,3,percent of overnight cost per year,Dispatchable technology 2 fixed operation and maintenance costs,
+dispatchable2_fom,2050,f,3,percent of overnight cost per year,Dispatchable technology 2 fixed operation and maintenance costs,
+dispatchable2_lifetime,2020,f,25,years,Dispatchable technology 2 lifetime,
+dispatchable2_lifetime,2030,f,25,years,Dispatchable technology 2 lifetime,
+dispatchable2_lifetime,2050,f,25,years,Dispatchable technology 2 lifetime,
+solar_max,,f,1e7,MWp,Solar maximum capacity allowed,
+solar_min,,f,0,MWp,Solar minimum capacity allowed,
+wind_discount,,f,5,percent,Onshore wind turbine discount rate,
+solar_discount,,f,5,percent,Utility-scale solar PV discount rate,
+battery_energy_discount,,f,5,percent,Utility-scale battery energy discount rate,
+battery_power_discount,,f,5,percent,Utility-scale battery converter power discount rate,
+hydrogen_energy_discount,,f,5,percent,Hydrogen underground salt cavern storage discount rate,
+hydrogen_electrolyser_discount,,f,5,percent,Hydrogen electrolyser discount rate,
+dispatchable1_discount,,f,10,percent,Dispatchable technology 1 discount rate,
+dispatchable2_discount,,f,10,percent,Dispatchable technology 2 discount rate,
+wind,,b,True,,Onshore wind turbine,
+solar,,b,True,,Utility-scale solar PV,
+battery,,b,True,,Utility-scale battery storage,
+hydrogen,,b,True,,Hydrogen gas storage,
+dispatchable1,,b,False,,Include dispatchable technology 1,Default assumption is based on open cycle natural gas turbine (OCGT)
+dispatchable2,,b,False,,Include dispatchable technology 2,Default assumption is based on new nuclear EPR reactor in Europe
+co2_limit,,b,False,,Limit on CO2 emissions,
+co2_emissions,,f,0.0,gCO2eq/kWhel,Maximum average system emissions,
+wind_cost,2020,f,1235.2,EUR/kW,Onshore wind turbine capital cost (overnight),"Danish Energy Agency, technology_data_for_el_and_dh.xlsx"
+wind_fom,2020,f,1.25,percent of overnight cost per year,Onshore wind turbine fixed operation and maintenance costs,"Danish Energy Agency, technology_data_for_el_and_dh.xlsx"
+wind_lifetime,2020,f,27.0,years,Onshore wind turbine lifetime,"Danish Energy Agency, technology_data_for_el_and_dh.xlsx"
+wind_cost,2030,f,1143.3,EUR/kW,Onshore wind turbine capital cost (overnight),"Danish Energy Agency, technology_data_for_el_and_dh.xlsx"
+wind_fom,2030,f,1.22,percent of overnight cost per year,Onshore wind turbine fixed operation and maintenance costs,"Danish Energy Agency, technology_data_for_el_and_dh.xlsx"
+wind_lifetime,2030,f,30.0,years,Onshore wind turbine lifetime,"Danish Energy Agency, technology_data_for_el_and_dh.xlsx"
+wind_cost,2040,f,1079.3,EUR/kW,Onshore wind turbine capital cost (overnight),"Danish Energy Agency, technology_data_for_el_and_dh.xlsx"
+wind_fom,2040,f,1.19,percent of overnight cost per year,Onshore wind turbine fixed operation and maintenance costs,"Danish Energy Agency, technology_data_for_el_and_dh.xlsx"
+wind_lifetime,2040,f,30.0,years,Onshore wind turbine lifetime,"Danish Energy Agency, technology_data_for_el_and_dh.xlsx"
+wind_cost,2050,f,1063.3,EUR/kW,Onshore wind turbine capital cost (overnight),"Danish Energy Agency, technology_data_for_el_and_dh.xlsx"
+wind_fom,2050,f,1.18,percent of overnight cost per year,Onshore wind turbine fixed operation and maintenance costs,"Danish Energy Agency, technology_data_for_el_and_dh.xlsx"
+wind_lifetime,2050,f,30.0,years,Onshore wind turbine lifetime,"Danish Energy Agency, technology_data_for_el_and_dh.xlsx"
+solar_cost,2020,f,562.5,EUR/kW_e,Utility-scale solar PV capital cost (overnight),"Danish Energy Agency, technology_data_for_el_and_dh.xlsx"
+solar_fom,2020,f,2.01,percent of overnight cost per year,Utility-scale solar PV fixed operation and maintenance costs,"Danish Energy Agency, technology_data_for_el_and_dh.xlsx"
+solar_lifetime,2020,f,35.0,years,Utility-scale solar PV lifetime,"Danish Energy Agency, technology_data_for_el_and_dh.xlsx"
+solar_cost,2030,f,383.7,EUR/kW_e,Utility-scale solar PV capital cost (overnight),"Danish Energy Agency, technology_data_for_el_and_dh.xlsx"
+solar_fom,2030,f,2.48,percent of overnight cost per year,Utility-scale solar PV fixed operation and maintenance costs,"Danish Energy Agency, technology_data_for_el_and_dh.xlsx"
+solar_lifetime,2030,f,40.0,years,Utility-scale solar PV lifetime,"Danish Energy Agency, technology_data_for_el_and_dh.xlsx"
+solar_cost,2040,f,320.8,EUR/kW_e,Utility-scale solar PV capital cost (overnight),"Danish Energy Agency, technology_data_for_el_and_dh.xlsx"
+solar_fom,2040,f,2.52,percent of overnight cost per year,Utility-scale solar PV fixed operation and maintenance costs,"Danish Energy Agency, technology_data_for_el_and_dh.xlsx"
+solar_lifetime,2040,f,40.0,years,Utility-scale solar PV lifetime,"Danish Energy Agency, technology_data_for_el_and_dh.xlsx"
+solar_cost,2050,f,292.6,EUR/kW_e,Utility-scale solar PV capital cost (overnight),"Danish Energy Agency, technology_data_for_el_and_dh.xlsx"
+solar_fom,2050,f,2.53,percent of overnight cost per year,Utility-scale solar PV fixed operation and maintenance costs,"Danish Energy Agency, technology_data_for_el_and_dh.xlsx"
+solar_lifetime,2050,f,40.0,years,Utility-scale solar PV lifetime,"Danish Energy Agency, technology_data_for_el_and_dh.xlsx"
+hydrogen_electrolyser_cost,2020,f,717.7,EUR/kW_e,Hydrogen electrolyser capital cost (overnight),"Danish Energy Agency, data_sheets_for_renewable_fuels.xlsx"
+hydrogen_electrolyser_fom,2020,f,2.0,percent of overnight cost per year,Hydrogen electrolyser fixed operation and maintenance costs,"Danish Energy Agency, data_sheets_for_renewable_fuels.xlsx"
+hydrogen_electrolyser_lifetime,2020,f,25.0,years,Hydrogen electrolyser lifetime,"Danish Energy Agency, data_sheets_for_renewable_fuels.xlsx"
+hydrogen_electrolyser_cost,2030,f,496.8,EUR/kW_e,Hydrogen electrolyser capital cost (overnight),"Danish Energy Agency, data_sheets_for_renewable_fuels.xlsx"
+hydrogen_electrolyser_fom,2030,f,2.0,percent of overnight cost per year,Hydrogen electrolyser fixed operation and maintenance costs,"Danish Energy Agency, data_sheets_for_renewable_fuels.xlsx"
+hydrogen_electrolyser_lifetime,2030,f,30.0,years,Hydrogen electrolyser lifetime,"Danish Energy Agency, data_sheets_for_renewable_fuels.xlsx"
+hydrogen_electrolyser_cost,2040,f,331.2,EUR/kW_e,Hydrogen electrolyser capital cost (overnight),"Danish Energy Agency, data_sheets_for_renewable_fuels.xlsx"
+hydrogen_electrolyser_fom,2040,f,2.0,percent of overnight cost per year,Hydrogen electrolyser fixed operation and maintenance costs,"Danish Energy Agency, data_sheets_for_renewable_fuels.xlsx"
+hydrogen_electrolyser_lifetime,2040,f,32.0,years,Hydrogen electrolyser lifetime,"Danish Energy Agency, data_sheets_for_renewable_fuels.xlsx"
+hydrogen_electrolyser_cost,2050,f,276.0,EUR/kW_e,Hydrogen electrolyser capital cost (overnight),"Danish Energy Agency, data_sheets_for_renewable_fuels.xlsx"
+hydrogen_electrolyser_fom,2050,f,2.0,percent of overnight cost per year,Hydrogen electrolyser fixed operation and maintenance costs,"Danish Energy Agency, data_sheets_for_renewable_fuels.xlsx"
+hydrogen_electrolyser_lifetime,2050,f,35.0,years,Hydrogen electrolyser lifetime,"Danish Energy Agency, data_sheets_for_renewable_fuels.xlsx"
+desalination_discount,,f,5,percent,Seawater desalination discount rate,
+desalination_cost,2020,f,44405.9,EUR/(m^3-H2O/h),Seawater desalination capital cost (overnight),"Caldera et al 2017: Learning Curve for Seawater Reverse Osmosis Desalination Plants: Capital Cost Trend of the Past, Present, and Future (https://doi.org/10.1002/2017WR021402), Table 4."
+desalination_fom,2020,f,4.0,percent of overnight cost per year,Seawater desalination fixed operation and maintenance costs,"Caldera et al 2016: Local cost of seawater RO desalination based on solar PV and windenergy: A global estimate. (https://doi.org/10.1016/j.desal.2016.02.004), Table 1."
+desalination_lifetime,2020,f,30.0,years,Seawater desalination lifetime,"Caldera et al 2016: Local cost of seawater RO desalination based on solar PV and windenergy: A global estimate. (https://doi.org/10.1016/j.desal.2016.02.004), Table 1."
+desalination_cost,2030,f,36304.4,EUR/(m^3-H2O/h),Seawater desalination capital cost (overnight),"Caldera et al 2017: Learning Curve for Seawater Reverse Osmosis Desalination Plants: Capital Cost Trend of the Past, Present, and Future (https://doi.org/10.1002/2017WR021402), Table 4."
+desalination_fom,2030,f,4.0,percent of overnight cost per year,Seawater desalination fixed operation and maintenance costs,"Caldera et al 2016: Local cost of seawater RO desalination based on solar PV and windenergy: A global estimate. (https://doi.org/10.1016/j.desal.2016.02.004), Table 1."
+desalination_lifetime,2030,f,30.0,years,Seawater desalination lifetime,"Caldera et al 2016: Local cost of seawater RO desalination based on solar PV and windenergy: A global estimate. (https://doi.org/10.1016/j.desal.2016.02.004), Table 1."
+desalination_cost,2040,f,29034.5,EUR/(m^3-H2O/h),Seawater desalination capital cost (overnight),"Caldera et al 2017: Learning Curve for Seawater Reverse Osmosis Desalination Plants: Capital Cost Trend of the Past, Present, and Future (https://doi.org/10.1002/2017WR021402), Table 4."
+desalination_fom,2040,f,4.0,percent of overnight cost per year,Seawater desalination fixed operation and maintenance costs,"Caldera et al 2016: Local cost of seawater RO desalination based on solar PV and windenergy: A global estimate. (https://doi.org/10.1016/j.desal.2016.02.004), Table 1."
+desalination_lifetime,2040,f,30.0,years,Seawater desalination lifetime,"Caldera et al 2016: Local cost of seawater RO desalination based on solar PV and windenergy: A global estimate. (https://doi.org/10.1016/j.desal.2016.02.004), Table 1."
+desalination_cost,2050,f,23214.0,EUR/(m^3-H2O/h),Seawater desalination capital cost (overnight),"Caldera et al 2017: Learning Curve for Seawater Reverse Osmosis Desalination Plants: Capital Cost Trend of the Past, Present, and Future (https://doi.org/10.1002/2017WR021402), Table 4."
+desalination_fom,2050,f,4.0,percent of overnight cost per year,Seawater desalination fixed operation and maintenance costs,"Caldera et al 2016: Local cost of seawater RO desalination based on solar PV and windenergy: A global estimate. (https://doi.org/10.1016/j.desal.2016.02.004), Table 1."
+desalination_lifetime,2050,f,30.0,years,Seawater desalination lifetime,"Caldera et al 2016: Local cost of seawater RO desalination based on solar PV and windenergy: A global estimate. (https://doi.org/10.1016/j.desal.2016.02.004), Table 1."
+hydrogen_energy_cost,2020,f,3.3,EUR/kWh,Hydrogen underground salt cavern storage capital cost (overnight),"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx"
+hydrogen_energy_fom,2020,f,0.0,percent of overnight cost per year,Hydrogen underground salt cavern storage fixed operation and maintenance costs,"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx"
+hydrogen_energy_lifetime,2020,f,100.0,years,Hydrogen underground salt cavern storage lifetime,"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx"
+hydrogen_energy_cost,2030,f,2.2,EUR/kWh,Hydrogen underground salt cavern storage capital cost (overnight),"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx"
+hydrogen_energy_fom,2030,f,0.0,percent of overnight cost per year,Hydrogen underground salt cavern storage fixed operation and maintenance costs,"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx"
+hydrogen_energy_lifetime,2030,f,100.0,years,Hydrogen underground salt cavern storage lifetime,"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx"
+hydrogen_energy_cost,2040,f,1.7,EUR/kWh,Hydrogen underground salt cavern storage capital cost (overnight),"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx"
+hydrogen_energy_fom,2040,f,0.0,percent of overnight cost per year,Hydrogen underground salt cavern storage fixed operation and maintenance costs,"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx"
+hydrogen_energy_lifetime,2040,f,100.0,years,Hydrogen underground salt cavern storage lifetime,"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx"
+hydrogen_energy_cost,2050,f,1.3,EUR/kWh,Hydrogen underground salt cavern storage capital cost (overnight),"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx"
+hydrogen_energy_fom,2050,f,0.0,percent of overnight cost per year,Hydrogen underground salt cavern storage fixed operation and maintenance costs,"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx"
+hydrogen_energy_lifetime,2050,f,100.0,years,Hydrogen underground salt cavern storage lifetime,"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx"
+hydrogen_turbine_discount,,f,5,percent,Hydrogen combined cycle turbine discount rate,
+hydrogen_turbine_cost,2020,f,971.6,EUR/kW,Hydrogen combined cycle turbine capital cost (overnight),"Danish Energy Agency, technology_data_for_el_and_dh.xlsx"
+hydrogen_turbine_fom,2020,f,3.33,percent of overnight cost per year,Hydrogen combined cycle turbine fixed operation and maintenance costs,"Danish Energy Agency, technology_data_for_el_and_dh.xlsx"
+hydrogen_turbine_lifetime,2020,f,25.0,years,Hydrogen combined cycle turbine lifetime,"Danish Energy Agency, technology_data_for_el_and_dh.xlsx"
+hydrogen_turbine_cost,2030,f,916.4,EUR/kW,Hydrogen combined cycle turbine capital cost (overnight),"Danish Energy Agency, technology_data_for_el_and_dh.xlsx"
+hydrogen_turbine_fom,2030,f,3.35,percent of overnight cost per year,Hydrogen combined cycle turbine fixed operation and maintenance costs,"Danish Energy Agency, technology_data_for_el_and_dh.xlsx"
+hydrogen_turbine_lifetime,2030,f,25.0,years,Hydrogen combined cycle turbine lifetime,"Danish Energy Agency, technology_data_for_el_and_dh.xlsx"
+hydrogen_turbine_cost,2040,f,899.8,EUR/kW,Hydrogen combined cycle turbine capital cost (overnight),"Danish Energy Agency, technology_data_for_el_and_dh.xlsx"
+hydrogen_turbine_fom,2040,f,3.3,percent of overnight cost per year,Hydrogen combined cycle turbine fixed operation and maintenance costs,"Danish Energy Agency, technology_data_for_el_and_dh.xlsx"
+hydrogen_turbine_lifetime,2040,f,25.0,years,Hydrogen combined cycle turbine lifetime,"Danish Energy Agency, technology_data_for_el_and_dh.xlsx"
+hydrogen_turbine_cost,2050,f,883.3,EUR/kW,Hydrogen combined cycle turbine capital cost (overnight),"Danish Energy Agency, technology_data_for_el_and_dh.xlsx"
+hydrogen_turbine_fom,2050,f,3.25,percent of overnight cost per year,Hydrogen combined cycle turbine fixed operation and maintenance costs,"Danish Energy Agency, technology_data_for_el_and_dh.xlsx"
+hydrogen_turbine_lifetime,2050,f,25.0,years,Hydrogen combined cycle turbine lifetime,"Danish Energy Agency, technology_data_for_el_and_dh.xlsx"
+battery_energy_cost,2020,f,256.1,EUR/kWh,Utility-scale battery energy capital cost (overnight),"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx"
+battery_energy_fom,2020,f,0,percent of overnight cost per year,Utility-scale battery energy fixed operation and maintenance costs,default
+battery_energy_lifetime,2020,f,20.0,years,Utility-scale battery energy lifetime,"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx"
+battery_energy_cost,2030,f,156.8,EUR/kWh,Utility-scale battery energy capital cost (overnight),"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx"
+battery_energy_fom,2030,f,0,percent of overnight cost per year,Utility-scale battery energy fixed operation and maintenance costs,default
+battery_energy_lifetime,2030,f,25.0,years,Utility-scale battery energy lifetime,"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx"
+battery_energy_cost,2040,f,103.8,EUR/kWh,Utility-scale battery energy capital cost (overnight),"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx"
+battery_energy_fom,2040,f,0,percent of overnight cost per year,Utility-scale battery energy fixed operation and maintenance costs,default
+battery_energy_lifetime,2040,f,30.0,years,Utility-scale battery energy lifetime,"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx"
+battery_energy_cost,2050,f,82.8,EUR/kWh,Utility-scale battery energy capital cost (overnight),"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx"
+battery_energy_fom,2050,f,0,percent of overnight cost per year,Utility-scale battery energy fixed operation and maintenance costs,default
+battery_energy_lifetime,2050,f,30.0,years,Utility-scale battery energy lifetime,"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx"
+battery_power_cost,2020,f,298.1,EUR/kW,Utility-scale battery converter power capital cost (overnight),"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx"
+battery_power_fom,2020,f,0.2,percent of overnight cost per year,Utility-scale battery converter power fixed operation and maintenance costs,"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx"
+battery_power_lifetime,2020,f,10.0,years,Utility-scale battery converter power lifetime,"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx, Note K."
+battery_power_cost,2030,f,176.7,EUR/kW,Utility-scale battery converter power capital cost (overnight),"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx"
+battery_power_fom,2030,f,0.34,percent of overnight cost per year,Utility-scale battery converter power fixed operation and maintenance costs,"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx"
+battery_power_lifetime,2030,f,10.0,years,Utility-scale battery converter power lifetime,"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx, Note K."
+battery_power_cost,2040,f,110.4,EUR/kW,Utility-scale battery converter power capital cost (overnight),"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx"
+battery_power_fom,2040,f,0.54,percent of overnight cost per year,Utility-scale battery converter power fixed operation and maintenance costs,"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx"
+battery_power_lifetime,2040,f,10.0,years,Utility-scale battery converter power lifetime,"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx, Note K."
+battery_power_cost,2050,f,66.2,EUR/kW,Utility-scale battery converter power capital cost (overnight),"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx"
+battery_power_fom,2050,f,0.9,percent of overnight cost per year,Utility-scale battery converter power fixed operation and maintenance costs,"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx"
+battery_power_lifetime,2050,f,10.0,years,Utility-scale battery converter power lifetime,"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx, Note K."
+hydrogen_compressor_discount,,f,5,percent,Hydrogen storage compressor discount rate,
+hydrogen_compressor_cost,2020,f,87.7,EUR/kWh_H2,Hydrogen storage compressor capital cost (overnight),"Based on Stöckl et al (2021): https://doi.org/10.48550/arXiv.2005.03464, table SI.4."
+hydrogen_compressor_fom,2020,f,4.0,percent of overnight cost per year,Hydrogen storage compressor fixed operation and maintenance costs,"Based on Stöckl et al (2021): https://doi.org/10.48550/arXiv.2005.03464, table SI.4."
+hydrogen_compressor_lifetime,2020,f,15.0,years,Hydrogen storage compressor lifetime,"Based on Stöckl et al (2021): https://doi.org/10.48550/arXiv.2005.03464, table SI.4."
+hydrogen_compressor_cost,2030,f,87.7,EUR/kWh_H2,Hydrogen storage compressor capital cost (overnight),"Based on Stöckl et al (2021): https://doi.org/10.48550/arXiv.2005.03464, table SI.4."
+hydrogen_compressor_fom,2030,f,4.0,percent of overnight cost per year,Hydrogen storage compressor fixed operation and maintenance costs,"Based on Stöckl et al (2021): https://doi.org/10.48550/arXiv.2005.03464, table SI.4."
+hydrogen_compressor_lifetime,2030,f,15.0,years,Hydrogen storage compressor lifetime,"Based on Stöckl et al (2021): https://doi.org/10.48550/arXiv.2005.03464, table SI.4."
+hydrogen_compressor_cost,2040,f,87.7,EUR/kWh_H2,Hydrogen storage compressor capital cost (overnight),"Based on Stöckl et al (2021): https://doi.org/10.48550/arXiv.2005.03464, table SI.4."
+hydrogen_compressor_fom,2040,f,4.0,percent of overnight cost per year,Hydrogen storage compressor fixed operation and maintenance costs,"Based on Stöckl et al (2021): https://doi.org/10.48550/arXiv.2005.03464, table SI.4."
+hydrogen_compressor_lifetime,2040,f,15.0,years,Hydrogen storage compressor lifetime,"Based on Stöckl et al (2021): https://doi.org/10.48550/arXiv.2005.03464, table SI.4."
+hydrogen_compressor_cost,2050,f,87.7,EUR/kWh_H2,Hydrogen storage compressor capital cost (overnight),"Based on Stöckl et al (2021): https://doi.org/10.48550/arXiv.2005.03464, table SI.4."
+hydrogen_compressor_fom,2050,f,4.0,percent of overnight cost per year,Hydrogen storage compressor fixed operation and maintenance costs,"Based on Stöckl et al (2021): https://doi.org/10.48550/arXiv.2005.03464, table SI.4."
+hydrogen_compressor_lifetime,2050,f,15.0,years,Hydrogen storage compressor lifetime,"Based on Stöckl et al (2021): https://doi.org/10.48550/arXiv.2005.03464, table SI.4."
+battery_power_efficiency_charging,2020,f,97.46794344808963,percent,Battery power charging efficiency,"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx"
+battery_power_efficiency_charging,2030,f,97.97958971132712,percent,Battery power charging efficiency,"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx"
+battery_power_efficiency_charging,2040,f,97.97958971132712,percent,Battery power charging efficiency,"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx"
+battery_power_efficiency_charging,2050,f,97.97958971132712,percent,Battery power charging efficiency,"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx"
+battery_power_efficiency_discharging,2020,f,97.46794344808963,percent,Battery power discharging efficiency,"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx"
+battery_power_efficiency_discharging,2030,f,97.97958971132712,percent,Battery power discharging efficiency,"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx"
+battery_power_efficiency_discharging,2040,f,97.97958971132712,percent,Battery power discharging efficiency,"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx"
+battery_power_efficiency_discharging,2050,f,97.97958971132712,percent,Battery power discharging efficiency,"Danish Energy Agency, technology_data_catalogue_for_energy_storage.xlsx"
+hydrogen_electrolyser_efficiency,2020,f,66.0,"""percent, LHV""",Hydrogen electrolyser efficiency,"Danish Energy Agency, data_sheets_for_renewable_fuels.xlsx"
+hydrogen_electrolyser_efficiency,2030,f,68.0,"""percent, LHV""",Hydrogen electrolyser efficiency,"Danish Energy Agency, data_sheets_for_renewable_fuels.xlsx"
+hydrogen_electrolyser_efficiency,2040,f,72.0,"""percent, LHV""",Hydrogen electrolyser efficiency,"Danish Energy Agency, data_sheets_for_renewable_fuels.xlsx"
+hydrogen_electrolyser_efficiency,2050,f,75.0,"""percent, LHV""",Hydrogen electrolyser efficiency,"Danish Energy Agency, data_sheets_for_renewable_fuels.xlsx"
+hydrogen_turbine_efficiency,2020,f,56.00000000000001,"""percent, LHV""",Hydrogen combined cycle turbine efficiency,"Danish Energy Agency, technology_data_for_el_and_dh.xlsx"
+hydrogen_turbine_efficiency,2030,f,57.99999999999999,"""percent, LHV""",Hydrogen combined cycle turbine efficiency,"Danish Energy Agency, technology_data_for_el_and_dh.xlsx"
+hydrogen_turbine_efficiency,2040,f,59.0,"""percent, LHV""",Hydrogen combined cycle turbine efficiency,"Danish Energy Agency, technology_data_for_el_and_dh.xlsx"
+hydrogen_turbine_efficiency,2050,f,60.0,"""percent, LHV""",Hydrogen combined cycle turbine efficiency,"Danish Energy Agency, technology_data_for_el_and_dh.xlsx"
+hydrogen_electrolyser_water,,f,0.27000027000027,m3-H2O/MWh-H2-LHV,Hydrogen electrolyser water input,-
+desalination_electricity,,f,0.003,MWh-el/m3-H2O,Seawater desalination electricity input,"Caldera et al 2016: Local cost of seawater RO desalination based on solar PV and windenergy: A global estimate. (https://doi.org/10.1016/j.desal.2016.02.004), Fig. 4."
+hydrogen_compressor_electricity,,f,0.12000012000011999,MWhel/MWh-H2-LHV,Hydrogen storage compressor electricity input,"DEA technology data for energy storage, pg. 82 ."

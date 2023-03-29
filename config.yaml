@@ -7,6 +7,22 @@ octant_folder: "../octants/"
 
 weather_years: [2011,2012,2013,2014]
 
+tech_years: [2020,2030,2040,2050]
+
+tech_years_default: 2030
+
+cost_year_assumptions: 2015
+cost_year: 2020
+inflation: 2
+
+
+
+float_upper_limit: 1.e+7
+
+tech_data_commit: "3a23cfc5808df00a2c039fd0e7ce8755a090d4df"
+trace_commit: "55e71c86d36869079b46377ce7ef16a46afa1d99"
+
+
 renewable:
   onwind:
     method: wind
@@ -24,3 +40,29 @@ renewable:
 octant_compression:
   complevel: 4
   least_significant_digit: 5
+
+
+colors:
+  wind : "#3B6182"
+  solar: "#FFFF00"
+  battery: "#999999"
+  battery_charge: "#999999"
+  battery_discharge: "#999999"
+  battery discharger: "#999999"
+  battery_power: "#999999"
+  battery inverter: "#999999"
+  battery_energy: "#666666"
+  battery storage: "#666666"
+  hydrogen_turbine: red
+  hydrogen turbine: red
+  hydrogen_electrolyser: cyan
+  hydrogen electrolyser: cyan
+  hydrogen_energy: magenta
+  hydrogen storage: magenta
+  hydrogen storing compressor: "#ff66ff"
+  hydrogen storing decompressor: "#660066"
+  lh2 shipping: green
+  dispatchable1: orange
+  dispatchable2: lime
+  load: black
+  hydrogen_load: purple

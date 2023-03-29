@@ -109,16 +109,19 @@
                 <input type="text" class="form-control" id="countrySelecter" aria-describedby="countrySelect" name="location_name" readonly>
                 <small id="countrySelect" class="form-text text-muted">Select from map above.</small>
               </div>
-              <div class="form-group">
-                <label for="weatherSelector">Weather year</label>
-                <input type="number" class="form-control" id="weatherSelector" aria-describedby="weatherSelect" name="year">
-                <small id="weatherSelect" class="form-text text-muted">Only the years {{ config["weather_years"] | join(", ") }} are available (until we get a bigger hard-drive).</small>
+	      {% for d in ["year","cf_exponent"] %}
+	      <div class="form-group">
+		<label for="sel-{{ d }}">{{ defaults[d]["full_name"] }}
+		  {% if not defaults[d]["unit"] == "" %}
+		  [{{ defaults[d]["unit"] }}]
+		  {% endif %}
+		</label>
+                <input type="number" class="form-control" id="sel-{{ d }}" name="{{ d }}">
+		{% if not defaults[d]["text"] == "" %}
+		<small class="form-text text-muted">{{ defaults[d]["text"]|safe }}</small>
+		{% endif %}
               </div>
-              <div class="form-group">
-                <label for="distributionSelector">Capacity factor exponent for spatial distribution of wind and solar</label>
-                <input type="number" class="form-control" id="distributionSelector" aria-describedby="distributionSelect" name="cf_exponent">
-                <small id="distributionSelect" class="form-text text-muted">If exponent is 0 generators are distributed evenly across the region, if it is 1 they are distributed proportional to capacity factor, if it is x they are distributed proportional to (capacity factor)^x.</small>
-              </div>
+	      {% endfor %}
             </section>
 
             <section id="time-series">
@@ -143,46 +146,41 @@
             <section id="assumptions">
               <h2 data-toc-text="3. Choose technologies, costs and other assumptions">Step 3: Choose technologies, costs and other assumptions</h2>
               <hr>
-              <div class="form-group">
-                <label for="samplingSelector">Constant electricity demand [MW]</label>
-                <input type="number" class="form-control" id="samplingSelector" name="load">
-                <small class="form-text text-muted">Demand should be large enough for utility-scale assets but small enough to neglect land availability constraints.</small>
+	      {% for d in ["load"] %}
+	      <div class="form-group">
+		<label for="sel-{{ d }}">{{ defaults[d]["full_name"] }}
+		  {% if not defaults[d]["unit"] == "" %}
+		  [{{ defaults[d]["unit"] }}]
+		  {% endif %}
+		</label>
+                <input type="number" class="form-control" id="sel-{{ d }}" name="{{ d }}">
+		{% if not defaults[d]["text"] == "" %}
+		<small class="form-text text-muted">{{ defaults[d]["text"]|safe }}</small>
+		{% endif %}
               </div>
+	      {% endfor %}
               <div class="form-group">
                 <label for="tech_scenario">Technology assumption scenario</label>
                 <select class="form-control" name="tech_scenario" id="tech_scenario">
-                  <option value="2020">2020 scenario</option>
-                  <option value="2030" selected>2030 scenario</option>
-                  <option value="2050">2050 scenario</option>
+		  {% for year in config['tech_years'] %}
+                  <option value="{{ year }}"{{ " selected" if year == config['tech_years_default'] else "" }}>{{ year }} scenario</option>
+		  {% endfor %}
                 </select>
-                <small class="form-text text-muted">Individual cost assumptions can be changed below under "advanced assumption settings". 2030 is the default year for technology assumptions because this is the earliest reasonable time when most regions could have zero emissions.</small>
+                <small class="form-text text-muted">Individual cost assumptions can be changed below under "advanced assumption settings". 2030 is the default year for technology assumptions because this is a reasonable time by which green products can be scaled up to large volumes.</small>
               </div>
               <p>Choose which technologies should be included:</p>
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" name="wind" id="techCheck1">
-                <label class="form-check-label" for="techCheck1">
-                  Wind turbine
-                </label>
+	      {% for d in ["wind","solar","battery","hydrogen"] %}
+	      <div class="form-check">
+		<input class="form-check-input" type="checkbox" name="{{ d }}" id="sel-{{ d }}">
+		<label class="form-check-label" for="sel-{{ d }}">
+		  {{ defaults[d]["full_name"] }}
+		</label>
+		{% if not defaults[d]["text"] == "" %}
+		<small class="form-text text-muted">{{ defaults[d]["text"] }}</small>
+		{% endif %}
               </div>
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" name="solar" id="techCheck2">
-                <label class="form-check-label" for="techCheck2">
-                  Solar photovoltaic cell
-                </label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" name="battery" id="techCheck3">
-                <label class="form-check-label" for="techCheck3">
-                  Battery storage
-                </label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" name="hydrogen" id="techCheck4">
-                <label class="form-check-label" for="techCheck4">
-                  Hydrogen gas storage
-                </label>
-              </div>
-              <br>
+	      {% endfor %}
+	      <br>
               <p>
                 <a class="btn btn-secondary" data-toggle="collapse" href="#advCost" role="button" aria-expanded="false" aria-controls="advCost">Show advanced assumption settings</a>
               </p>
@@ -190,241 +188,29 @@
                 <div class="col">
                   <div class="collapse multi-collapse" id="advCost">
                     <div class="card card-body">
-		      <p>All costs are in 2015 euros, following the <a href="https://ens.dk/en/our-services/projections-and-models/technology-data">Danish Energy Agency Technology Data Catalogue<a>.</p>
+		      <p>All costs are in {{ config['cost_year'] }} euros. All energy units for fuels are given for the lower heating value (LHV).</p>
+		      {% for d in defaults if d not in ["wind", "solar", "battery", "hydrogen", "location", "location_name", "year", "cf_exponent", "version", "load", "job_type"] %}
+		        {% if defaults[d]["type"] in ["f","i"] %}
                       <div class="form-group">
-                        <label for="samplingSelector">Sampling frequency</label>
-                        <input type="number" class="form-control" id="samplingSelector" aria-describedby="samplingSelect" name="frequency">
-                        <small id="samplingSelect" class="form-text text-muted">n-hourly, n&lt;3 is very slow, big n solves faster (n=25 or n=49 give fast and relatively accurate results).</small>
-                      </div>
-                      <div class="form-group">
-                        <label for="avdSel1">Constant hydrogen demand [MW LHV]</label>
-                        <input type="number" class="form-control" id="advSel0" name="hydrogen_load">
-                      </div>
-                      <div class="form-group">
-                        <label for="avdSel1">Wind capital cost (overnight) [EUR/kWp]</label>
-                        <input type="number" class="form-control" id="advSel1" name="wind_cost">
-			<small class="form-text text-muted">Default assumption from <a href="https://ens.dk/en/our-services/projections-and-models/technology-data">Danish Energy Agency Technology Data for Generation of Electricity and District Heating, November 2019</a>; includes grid connection costs.</small>
-                      </div>
-                      <div class="form-group">
-                        <label for="avdSel1a">Wind maximum capacity allowed [MWp]</label>
-                        <input type="number" class="form-control" id="advSel1a" name="wind_max">
-                      </div>
-                      <div class="form-group">
-                        <label for="avdSel1b">Wind minimum capacity allowed [MWp]</label>
-                        <input type="number" class="form-control" id="advSel1b" name="wind_min">
-                      </div>
-                      <div class="form-group">
-                        <label for="avdSel1c">Wind fixed operation and maintenance costs [percent of overnight cost per year]</label>
-                        <input type="number" class="form-control" id="advSel1c" name="wind_fom">
-                      </div>
-                      <div class="form-group">
-                        <label for="avdSel1d">Wind lifetime [years]</label>
-                        <input type="number" class="form-control" id="advSel1d" name="wind_lifetime">
-                      </div>
-		      <div class="form-group">
-                        <label for="avdSel1e">Wind discount rate [percent]</label>
-                        <input type="number" class="form-control" id="advSel1e" name="wind_discount">
-                      </div>
-                      <div class="form-group">
-                        <label for="avdSel2">Solar capital cost (overnight) [EUR/kWp]</label>
-                        <input type="number" class="form-control" id="advSel2" name="solar_cost">
-			<small class="form-text text-muted">Default assumption from <a href="https://ens.dk/en/our-services/projections-and-models/technology-data">Danish Energy Agency Technology Data for Generation of Electricity and District Heating, November 2019</a>; cost for DC capacity, assumes panel:inverter output ratio of 1.35.</small>
-                      </div>
-                      <div class="form-group">
-                        <label for="avdSel2a">Solar maximum capacity allowed [MWp]</label>
-                        <input type="number" class="form-control" id="advSel2a" name="solar_max">
-                      </div>
-                      <div class="form-group">
-                        <label for="avdSel2b">Solar minimum capacity allowed [MWp]</label>
-                        <input type="number" class="form-control" id="advSel2b" name="solar_min">
-                      </div>
-                      <div class="form-group">
-                        <label for="avdSel2c">Solar fixed operation and maintenance costs [percent of overnight cost per year]</label>
-                        <input type="number" class="form-control" id="advSel2c" name="solar_fom">
-                      </div>
-                      <div class="form-group">
-                        <label for="avdSel2d">Solar lifetime [years]</label>
-                        <input type="number" class="form-control" id="advSel2d" name="solar_lifetime">
-                      </div>
-		      <div class="form-group">
-                        <label for="avdSel2e">Solar discount rate [percent]</label>
-                        <input type="number" class="form-control" id="advSel2e" name="solar_discount">
-                      </div>
-                      <div class="form-group">
-                        <label for="avdSel3">Battery energy capital cost (overnight) [EUR/kWh]</label>
-                        <input type="number" class="form-control" id="advSel3" name="battery_energy_cost">
-			<small class="form-text text-muted">Default assumption from <a href="https://ens.dk/en/our-services/projections-and-models/technology-data">Danish Energy Agency Technology Data for Energy Storage, January 2020</a>.</small>
-                      </div>
-                      <div class="form-group">
-                        <label for="avdSel3a">Battery energy fixed operation and maintenance costs [percent of overnight cost per year]</label>
-                        <input type="number" class="form-control" id="advSel3a" name="battery_energy_fom">
-                      </div>
-                      <div class="form-group">
-                        <label for="avdSel3b">Battery energy lifetime [years]</label>
-                        <input type="number" class="form-control" id="advSel3b" name="battery_energy_lifetime">
-                      </div>
-		      <div class="form-group">
-                        <label for="avdSel3c">Battery energy discount rate [percent]</label>
-                        <input type="number" class="form-control" id="advSel3c" name="battery_energy_discount">
-                      </div>
-                      <div class="form-group">
-                        <label for="avdSel4">Battery power capital cost (overnight) [EUR/kW]</label>
-                        <input type="number" class="form-control" id="advSel4" name="battery_power_cost">
-			<small class="form-text text-muted">Default assumption from <a href="https://ens.dk/en/our-services/projections-and-models/technology-data">Danish Energy Agency Technology Data for Energy Storage, January 2020</a>; power costs include e.g. inverter.</small>
-                      </div>
-		      <div class="form-group">
-                        <label for="avdSel4d">Battery power charging efficiency [percent]</label>
-                        <input type="number" class="form-control" id="advSel4d" name="battery_power_efficiency_charging">
-                      </div>
-		      <div class="form-group">
-                        <label for="avdSel4e">Battery power discharging efficiency [percent]</label>
-                        <input type="number" class="form-control" id="advSel4e" name="battery_power_efficiency_discharging">
-                      </div>
-                      <div class="form-group">
-                        <label for="avdSel4a">Battery power fixed operation and maintenance costs [percent of overnight cost per year]</label>
-                        <input type="number" class="form-control" id="advSel4a" name="battery_power_fom">
-                      </div>
-                      <div class="form-group">
-                        <label for="avdSel4b">Battery power lifetime [years]</label>
-                        <input type="number" class="form-control" id="advSel4b" name="battery_power_lifetime">
-                      </div>
-		      <div class="form-group">
-                        <label for="avdSel4c">Battery power discount rate [percent]</label>
-                        <input type="number" class="form-control" id="advSel4c" name="battery_power_discount">
-                      </div>
-                      <div class="form-group">
-                        <label for="avdSel5">Hydrogen energy capital cost (overnight) [EUR/kWh]</label>
-                        <input type="number" class="form-control" id="advSel5" name="hydrogen_energy_cost">
-			<small class="form-text text-muted">Default assumption from <a href="https://doi.org/10.1016/j.energy.2018.05.059">Welder et al 2018</a> assumes salt caverns in suitable underground salt deposits. For aboveground steel talks, replace with 11 EUR/kWh.</small>
-                      </div>
-		      <div class="form-group">
-                        <label for="avdSel5a">Hydrogen energy fixed operation and maintenance costs [percent of overnight cost per year]</label>
-                        <input type="number" class="form-control" id="advSel5a" name="hydrogen_energy_fom">
-                      </div>
-                      <div class="form-group">
-                        <label for="avdSel5b">Hydrogen energy lifetime [years]</label>
-                        <input type="number" class="form-control" id="advSel5b" name="hydrogen_energy_lifetime">
-                      </div>
-		      <div class="form-group">
-                        <label for="avdSel5c">Hydrogen energy discount rate [percent]</label>
-                        <input type="number" class="form-control" id="advSel5c" name="hydrogen_energy_discount">
-                      </div>
-                      <div class="form-group">
-                        <label for="avdSel6">Hydrogen electrolyser capital cost (overnight) [EUR/kW]</label>
-                        <input type="number" class="form-control" id="advSel6" name="hydrogen_electrolyser_cost">
-			<small class="form-text text-muted">Default assumption from <a href="https://ens.dk/en/our-services/projections-and-models/technology-data">Danish Energy Agency Technology Data for Renewable Fuels, February 2019</a>.</small>
-                      </div>
-                      <div class="form-group">
-                        <label for="avdSel7">Hydrogen electrolyser efficiency [percent, LHV]</label>
-                        <input type="number" class="form-control" id="advSel7" name="hydrogen_electrolyser_efficiency">
-			<small class="form-text text-muted">Default assumption from <a href="https://ens.dk/en/our-services/projections-and-models/technology-data">Danish Energy Agency Technology Data for Renewable Fuels, February 2019</a>.</small>
-                      </div>
-		      <div class="form-group">
-                        <label for="avdSel7a">Hydrogen electrolyser fixed operation and maintenance costs [percent of overnight cost per year]</label>
-                        <input type="number" class="form-control" id="advSel7a" name="hydrogen_electrolyser_fom">
-                      </div>
-                      <div class="form-group">
-                        <label for="avdSel7b">Hydrogen electrolyser lifetime [years]</label>
-                        <input type="number" class="form-control" id="advSel7b" name="hydrogen_electrolyser_lifetime">
-                      </div>
-		      <div class="form-group">
-                        <label for="avdSel7c">Hydrogen electrolyser discount rate [percent]</label>
-                        <input type="number" class="form-control" id="advSel7c" name="hydrogen_electrolyser_discount">
-                      </div>
-                      <div class="form-group">
-                        <label for="avdSel8">Hydrogen combined cycle turbine (or fuel cell - see below) capital cost (overnight) [EUR/kW]</label>
-                        <input type="number" class="form-control" id="advSel8" name="hydrogen_turbine_cost">
-			<small class="form-text text-muted">Default assumption from <a href="https://ens.dk/en/our-services/projections-and-models/technology-data">Danish Energy Agency Technology Data for Generation of Electricity and District Heating, November 2019</a>; assumption taken from that for natural gas CCGT.</small>
-                      </div>
-                      <div class="form-group">
-                        <label for="avdSel9">Hydrogen turbine efficiency [percent, LHV]</label>
-                        <input type="number" class="form-control" id="advSel9" name="hydrogen_turbine_efficiency">
-			<small class="form-text text-muted">Default assumption from <a href="https://ens.dk/en/our-services/projections-and-models/technology-data">Danish Energy Agency Technology Data for Generation of Electricity and District Heating, November 2019</a>; assumption taken from that for natural gas CCGT.</small>
-                      </div>
-		      <div class="form-group">
-                        <label for="avdSel9a">Hydrogen turbine fixed operation and maintenance costs [percent of overnight cost per year]</label>
-                        <input type="number" class="form-control" id="advSel9a" name="hydrogen_turbine_fom">
-                      </div>
-                      <div class="form-group">
-                        <label for="avdSel9b">Hydrogen turbine lifetime [years]</label>
-                        <input type="number" class="form-control" id="advSel9b" name="hydrogen_turbine_lifetime">
-                      </div>
-		      <div class="form-group">
-                        <label for="avdSel9c">Hydrogen turbine discount rate [percent]</label>
-                        <input type="number" class="form-control" id="advSel9c" name="hydrogen_turbine_discount">
-                      </div>
-		      <div class="form-check">
-			<input class="form-check-input" type="checkbox" name="dispatchable1" id="techCheck5">
-			<label class="form-check-label" for="techCheck5">
-			  Dispatchable technology 1
+                        <label for="sel-{{ d }}">{{ defaults[d]["full_name"] }}
+			  {% if not defaults[d]["unit"] == "" %}
+			  [{{ defaults[d]["unit"] }}]
+			  {% endif %}
 			</label>
-			<small class="form-text text-muted">Default assumption is based on open cycle natural gas turbine (OCGT).</small>
-		      </div>
-                      <div class="form-group">
-                        <label for="avdSel11">Dispatchable technology 1 capital cost (overnight) [EUR/kW]</label>
-                        <input type="number" class="form-control" id="advSel11" name="dispatchable1_cost">
-                      </div>
-                      <div class="form-group">
-                        <label for="avdSel12">Dispatchable technology 1 marginal cost (including fuel and VOM) [EUR/MWhel]</label>
-                        <input type="number" class="form-control" id="advSel12" name="dispatchable1_marginal_cost">
-                      </div>
-                      <div class="form-group">
-                        <label for="avdSel13">Dispatchable technology 1 emissions factor [gCO2eq/kWhel]</label>
-                        <input type="number" class="form-control" id="advSel13" name="dispatchable1_emissions">
-                      </div>
-		      <div class="form-group">
-                        <label for="avdSel13a">Dispatchable technology 1 fixed operation and maintenance costs [percent of overnight cost per year]</label>
-                        <input type="number" class="form-control" id="advSel13a" name="dispatchable1_fom">
-                      </div>
-                      <div class="form-group">
-                        <label for="avdSel13b">Dispatchable technology 1 lifetime [years]</label>
-                        <input type="number" class="form-control" id="advSel13b" name="dispatchable1_lifetime">
-                      </div>
-                      <div class="form-group">
-                        <label for="avdSel14">Dispatchable technology 1 discount rate [percent]</label>
-                        <input type="number" class="form-control" id="advSel14" name="dispatchable1_discount">
-                      </div>
-		      <div class="form-check">
-			<input class="form-check-input" type="checkbox" name="dispatchable2" id="techCheck6">
-			<label class="form-check-label" for="techCheck6">
-			  Dispatchable technology 2
+                        <input type="number" class="form-control" id="sel-{{ d }}" name="{{ d }}">
+		        {% endif %}
+		        {% if defaults[d]["type"] == "b" %}
+                      <div class="form-check">
+			<input class="form-check-input" type="checkbox" name="{{ d }}" id="sel-{{ d }}">
+			<label class="form-check-label" for="sel-{{ d }}">
+			  {{ defaults[d]["full_name"] }}
 			</label>
-			<small class="form-text text-muted">Default assumption is based on new nuclear EPR reactor in Europe.</small>
-		      </div>
-                      <div class="form-group">
-                        <label for="avdSel15">Dispatchable technology 2 capital cost (overnight) [EUR/kW]</label>
-                        <input type="number" class="form-control" id="advSel15" name="dispatchable2_cost">
+			{% endif %}
+			{% if not defaults[d]["text"] == "" %}
+			<small class="form-text text-muted">{{ defaults[d]["text"]|safe }}</small>
+			{% endif %}
                       </div>
-                      <div class="form-group">
-                        <label for="avdSel16">Dispatchable technology 2 marginal cost (including fuel and VOM) [EUR/MWhel]</label>
-                        <input type="number" class="form-control" id="advSel16" name="dispatchable2_marginal_cost">
-                      </div>
-                      <div class="form-group">
-                        <label for="avdSel17">Dispatchable technology 2 emissions factor [gCO2eq/kWhel]</label>
-                        <input type="number" class="form-control" id="advSel17" name="dispatchable2_emissions">
-                      </div>
-		      <div class="form-group">
-                        <label for="avdSel17a">Dispatchable technology 2 fixed operation and maintenance costs [percent of overnight cost per year]</label>
-                        <input type="number" class="form-control" id="advSel17a" name="dispatchable2_fom">
-                      </div>
-                      <div class="form-group">
-                        <label for="avdSel17b">Dispatchable technology 2 lifetime [years]</label>
-                        <input type="number" class="form-control" id="advSel17b" name="dispatchable2_lifetime">
-                      </div>
-                      <div class="form-group">
-                        <label for="avdSel18">Dispatchable technology 2 discount rate [percent]</label>
-                        <input type="number" class="form-control" id="advSel18" name="dispatchable2_discount">
-                      </div>
-		      <div class="form-check">
-			<input class="form-check-input" type="checkbox" name="co2_limit" id="co2_limit">
-			<label class="form-check-label" for="co2_limit">
-			  Limit on CO2 emissions
-			</label>
-		      </div>
-                      <div class="form-group">
-                        <label for="avdSel19">Maximum average system emissions [gCO2eq/kWhel]</label>
-                        <input type="number" class="form-control" id="avdSel19" name="co2_emissions">
-                      </div>
+		      {% endfor %}
                     </div>
                   </div>
                 </div>
@@ -446,7 +232,7 @@
                     <h3 data-toc-skip>Results<span id="results_assumptions"></span></h3>
                     <br />
                     <p><b>Average system cost [EUR/MWh]: <span id="average_cost"></span></b></p>
-		    <small class="form-text text-muted">Cost is per unit of energy delivered in 2015 euros. For comparison, household electricity rates (including taxes and grid charges) averaged 211 EUR/MWh in the <a href="https://ec.europa.eu/eurostat/statistics-explained/index.php/Electricity_price_statistics">European Union in 2018</a> & 132 USD/MWh in the <a href="https://www.electricchoice.com/electricity-prices-by-state/">United States in 2019</a></small>
+		    <small class="form-text text-muted">Cost is per unit of energy delivered in {{ config['cost_year'] }} euros. For comparison, household electricity rates (including taxes and grid charges) averaged 211 EUR/MWh in the <a href="https://ec.europa.eu/eurostat/statistics-explained/index.php/Electricity_price_statistics">European Union in 2018</a> & 132 USD/MWh in the <a href="https://www.electricchoice.com/electricity-prices-by-state/">United States in 2019</a></small>
 		    <p><span id="average_electricity_price"></span></p>
                     <p><span id="average_hydrogen_price"></span></p>
                     <div id="average_cost_div">
@@ -618,7 +404,7 @@
                   Because the wind and solar profiles are computed using a fixed distribution of power plants, there is no possibility to optimise the distribution of power plants within each region to reduce the costs of providing a baseload profile.
                 </li>
                 <li>
-                  The costs for hydrogen storage (0.7 EUR/kWh) assume hydrogen gas is stored in salt caverns in suitable underground salt deposits based on assumptions from <a href="https://doi.org/10.1016/j.energy.2018.05.059">Welder et al 2018</a>. These costs are higher than assumed in e.g. Table 3 of <a href="https://www.nrel.gov/docs/fy10osti/46719.pdf">NREL 2009</a> (0.49 USD/kWh) using the most expensive option ("rock caverns created by excavating comparatively impervious rock formations"). Studies on salt deposit availability are available for most countries, see e.g. <a href="https://www.researchgate.net/figure/Underground-salt-deposits-and-cavern-fields-in-Europe-225_fig5_319417820">this map</a> for Europe or Figure 2 of <a href="https://www.nrel.gov/docs/fy10osti/46719.pdf">NREL 2009</a> for the United States. Where suitable salt deposits are not available, hydrogen can be stored in aboveground steel tanks for 11 EUR/kWh.
+                  The costs for hydrogen storage (2.2 EUR/kWh) assume hydrogen gas is stored in salt caverns in suitable underground salt deposits based on assumptions from the <a href="https://ens.dk/en/our-services/projections-and-models/technology-data">Danish Energy Agency Technology Data Catalogue<a>. These costs are higher than assumed in e.g. Table 3 of <a href="https://www.nrel.gov/docs/fy10osti/46719.pdf">NREL 2009</a> (0.49 USD/kWh) using the most expensive option ("rock caverns created by excavating comparatively impervious rock formations"). Studies on salt deposit availability are available for most countries, see e.g. <a href="https://www.researchgate.net/figure/Underground-salt-deposits-and-cavern-fields-in-Europe-225_fig5_319417820">this map</a> for Europe or Figure 2 of <a href="https://www.nrel.gov/docs/fy10osti/46719.pdf">NREL 2009</a> for the United States. Where suitable salt deposits are not available, hydrogen can be stored in aboveground steel tanks for 13 EUR/kWh, fixed operation and maintenance costs of 2% per year and a lifetime of 20 years.
                 </li>
                 <li>
                   Costs for the electricity grid inside each region and costs for ancillary services are not included.
@@ -683,6 +469,8 @@
     <script src="{{ url_for('static', filename='jquery.easing.min.js') }}"></script>
     <script src="{{ url_for('static', filename='scrolling-nav.js') }}"></script>
     <script type="text/javascript">
+      var defaults = {{defaults | tojson}};
+      var defaults_t = {{defaults_t | tojson}};
       var config = {{config | tojson}};
       var results = JSON.parse('{{ results|json }}');
 
