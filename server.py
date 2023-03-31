@@ -173,41 +173,73 @@ def find_results(results_hash):
                                    index_col=0,
                                    header=None,
                                    squeeze=True)
-    results_series = pd.read_csv(series_csv,
+    carrier_series = pd.read_csv(series_csv,
                                  index_col=0,
+                                 header=[0,1],
                                  parse_dates=True)
 
-    #fill in old results before dispatchable
-    for i in range(1,3):
-        g = "dispatchable" + str(i)
-        if not assumptions[g]:
-            results_overview[g+"_capacity"] = 0.
-            results_overview[g+"_cost"] = 0.
-            results_overview[g+"_marginal_cost"] = 0.
-            results_overview[g+"_used"] = 0.
-            results_overview[g+"_cf_used"] = 0.
-            results_overview[g+"_rmv"] = 0.
-            results_series[g] = 0.
+    #determine nice ordering of components
+    current_order = results_overview.index[results_overview.index.str[-6:] == " totex"].str[:-6]
+    preferred_order = pd.Index(config["preferred order"])
+    new_order = preferred_order.intersection(current_order).append(current_order.difference(preferred_order))
+
+    print("old:",current_order)
+    print("new:",new_order)
 
     results = dict(results_overview)
 
     results["assumptions"] = assumptions
 
-    results["snapshots"] = [str(s) for s in results_series.index]
+    results["order"] = list(new_order)
 
-    columns = {"positive" : ["wind","solar","battery_discharge","hydrogen_turbine","dispatchable1","dispatchable2"],
-               "negative" : ["battery_charge","hydrogen_electrolyser"]}
+    results["snapshots"] = [str(s) for s in carrier_series.index]
 
+    results["carrier_series"] = {}
 
-    for sign, cols in columns.items():
-        results[sign] = {}
-        results[sign]["columns"] = cols
-        results[sign]["data"] = results_series[cols].values.tolist()
-        results[sign]["color"] = [config["colors"][c] for c in cols]
+    for carrier in config["balances_to_display"]:
 
-    balance = results_series[columns["positive"]].sum(axis=1) - results_series[columns["negative"]].sum(axis=1)
+        if carrier not in carrier_series:
+            continue
 
-    print(balance.describe())
+        print("processing series for energy carrier", carrier)
+
+        #group technologies
+        df =  carrier_series[carrier]
+
+        #sort into positive and negative
+        separated = {}
+        separated["positive"] = pd.DataFrame(index=df.index,
+                                             dtype=float)
+        separated["negative"] = pd.DataFrame(index=df.index,
+                                             dtype=float)
+
+        for col in df.columns:
+            if df[col].min() > -1:
+                separated["positive"][col] = df[col]
+                separated["positive"][col][separated["positive"][col] < 0] = 0
+
+            elif df[col].max() < 1:
+                separated["negative"][col] = df[col]
+                separated["negative"][col][separated["negative"][col] > 0] = 0
+
+            else:
+                separated["positive"][col] = df[col]
+                separated["positive"][col][separated["positive"][col] < 0] = 0
+                separated["negative"][col] = df[col]
+                separated["negative"][col][separated["negative"][col] > 0] = 0
+
+        separated["negative"] *= -1
+
+        results["carrier_series"][carrier] = {}
+        results["carrier_series"][carrier]["label"] = "power"
+        results["carrier_series"][carrier]["units"] = "MW"
+
+        for sign in ["positive","negative"]:
+            results["carrier_series"][carrier][sign] = {}
+            results["carrier_series"][carrier][sign]["columns"] = separated[sign].columns.tolist()
+            results["carrier_series"][carrier][sign]["data"] = (separated[sign].values).tolist()
+            print(sign,separated[sign].columns)
+            results["carrier_series"][carrier][sign]["color"] = [config["colors"][i] for i in separated[sign].columns]
 
     return None, results
 

@@ -42,6 +42,11 @@ octant_compression:
   least_significant_digit: 5
 
 
+balances_to_display: ["electricity","hydrogen"]
+
+preferred order: ["wind","solar","battery storage","battery inverter","hydrogen storage","hydrogen storing compressor","hydrogen electrolyser","seawater desalination","hydrogen turbine"]
+
+
 colors:
   wind : "#3B6182"
   solar: "#FFFF00"

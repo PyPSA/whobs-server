@@ -23,7 +23,7 @@
 }
 
 .container-like {
-    max-width: 1140px;
+    max-width: 1180px;
     font-size: 1.25rem;
     font-weight: 300;
 }
@@ -60,7 +60,7 @@ section {
 
 #results {
     float: left;
-    width: 1100px;
+    width: 1150px;
 }
 
 
@@ -110,7 +110,7 @@ section {
 
 #graph {
     float: left;
-    width: 1100px;
+    width: 1150px;
 }
 
 
@@ -145,6 +145,11 @@ section {
 }
 
 #tab_results th, td {
+    font-size: 85%;
+    padding: 5px;
+}
+
+#results_table th, td {
     font-size: 85%;
     padding: 5px;
 }

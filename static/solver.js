@@ -21,7 +21,7 @@ var parseDate = d3.timeParse("%Y-%m-%d %H:%M:00");
 
 var formatDate = d3.timeFormat("%b %d %H:%M");
 
-
+let balances = config["balances_to_display"];
 
 let colors = config["colors"];
 
@@ -540,28 +540,23 @@ function clear_results(){
     document.getElementById("average_cost").innerHTML="";
     document.getElementById("average_electricity_price").innerHTML="";
     document.getElementById("average_hydrogen_price").innerHTML="";
-    for (let i = 0; i < assets.length; i++){
-	document.getElementById(assets[i] + "_capacity").innerHTML="";
-	document.getElementById(assets[i] + "_cf_used").innerHTML="";
-	if(!assets[i].includes("energy") && !assets[i].includes("compressor")){
-	    document.getElementById(assets[i] + "_rmv").innerHTML="";
-	};
+
+
+    var table = document.getElementById('results_table');
+    var rowCount = table.rows.length;
+    for (let i=rowCount-1; i>0; i--){
+	table.deleteRow(i);
     };
-    document.getElementById("battery_discharge_rmv").innerHTML="";
-    for (let i = 0; i < vre.length; i++){
-	document.getElementById(vre[i] + "_cf_available").innerHTML="";
-	document.getElementById(vre[i] + "_curtailment").innerHTML="";
-    };
-    for (let i = 0; i < electricity.length; i++){
-	document.getElementById(electricity[i] + "_lcoe").innerHTML="";
-    };
-    for (let i = 0; i < storage.length; i++){
-	document.getElementById(storage[i] + "_lcos").innerHTML="";
-    };
-    d3.select("#power").selectAll("g").remove();
+
     d3.select("#average_cost_graph").selectAll("g").remove();
     d3.select("#power_capacity_bar").selectAll("g").remove();
     d3.select("#energy_capacity_bar").selectAll("g").remove();
+
+    for (var k=0; k < balances.length; k++){
+	let balance = balances[k];
+	d3.select("#" + balance + "_power_graph").selectAll("g").remove();
+	d3.select("#" + balance + "_power_graph_legend").selectAll("g").remove();
+    };
 
     document.getElementById("results-overview-download").innerHTML = '';
     document.getElementById("results-series-download").innerHTML = '';
@@ -579,6 +574,49 @@ function clear_weather(){
 };
 
 
+function fill_results_table(){
+    var table = document.getElementById('results_table');
+
+
+    for(let i=0; i<results["order"].length; i++){
+	let asset = results["order"][i];
+	// escape for co2
+	if(!(asset + " capacity" in results)){
+	    continue;
+	};
+	let row = table.insertRow(table.rows.length);
+	let cap = results[asset + " capacity"].toFixed(1) + " MW";
+	if (asset.includes("storage")) cap += "h";
+	if (asset.includes("co2 storage")) cap = cap.slice(0,-3) + "tCO2";
+	let cfUsed = (100*results[asset + " cf used"]).toFixed(1);
+	let cfAvailable = "";
+	if (["wind","solar"].includes(asset)) cfAvailable = (100*results[asset + " cf available"]).toFixed(1);
+	let curtailment = "";
+	if (["wind","solar"].includes(asset)) curtailment = (100*results[asset + " curtailment"]).toFixed(1);
+	let lcoe = "";
+	if (["wind","solar"].includes(asset)) lcoe = results[asset + " LCOE"].toFixed(1);
+
+	let content = [asset,
+		       cap,
+		       cfUsed,
+		       cfAvailable,
+		       curtailment,
+		       lcoe];
+
+	for(let j=0; j<content.length;j++){
+	    let cell = row.insertCell(j);
+	    cell.innerHTML = content[j];
+	    if(j == 0){
+		cell.className="tab_asset";
+	    } else {
+		cell.className="tab_data";
+	    };
+	};
+    };
+};
+
+
+
 function display_results(){
 
     $('#collapseResults').addClass("show");
@@ -592,49 +630,25 @@ function display_results(){
 	document.getElementById("average_hydrogen_price").innerHTML="<b>Average marginal price of hydrogen [EUR/MWh LHV]: " + (results["average_hydrogen_price"]).toFixed(1) + ", [EUR/kg]: " + (results["average_hydrogen_price"]*0.033).toFixed(2);
     };
 
-    for (let i = 0; i < assets.length; i++){
-	document.getElementById(assets[i] + "_capacity").innerHTML=Math.abs(results[assets[i] + "_capacity"].toFixed(1));
-	document.getElementById(assets[i] + "_cf_used").innerHTML=Math.abs((results[assets[i] + "_cf_used"]*100)).toFixed(1);
-	if(!assets[i].includes("energy") && !assets[i].includes("compressor")){
-	    document.getElementById(assets[i] + "_rmv").innerHTML=Math.abs((results[assets[i] + "_rmv"]*100)).toFixed(1);
-	};
-    };
-    document.getElementById("battery_discharge_rmv").innerHTML=Math.abs((results["battery_discharge_rmv"]*100)).toFixed(1);
-    for (let i = 0; i < vre.length; i++){
-	document.getElementById(vre[i] + "_cf_available").innerHTML=Math.abs((results[vre[i] + "_cf_available"]*100)).toFixed(1);
-	document.getElementById(vre[i] + "_curtailment").innerHTML=Math.abs((results[vre[i] + "_curtailment"]*100)).toFixed(1);
-    };
-
-    for (let i = 0; i < electricity.length; i++){
-	if(results[electricity[i] + "_capacity"] > 0.1){
-	    var cost = results[electricity[i]+"_cost"];
-	    if(results.hasOwnProperty(electricity[i]+"_marginal_cost")){
-		cost += results[electricity[i]+"_marginal_cost"];
-	    };
-	    document.getElementById(electricity[i] + "_lcoe").innerHTML=Math.abs(cost/(results[electricity[i] + "_capacity"]*results[electricity[i] + "_cf_used"])).toFixed(1);
-	};
-    };
-
-    // all per hour
-    if (results["battery_power_capacity"] > 0.1){
-	let battery_fedin = results["battery_power_capacity"]*results["battery_power_cf_used"];
-	let battery_charged = battery_fedin/0.95**2;
-	document.getElementById("battery_lcos").innerHTML=Math.abs((results["battery_power_cost"]+results["battery_energy_cost"]+battery_charged*results["battery_power_rmv"]*results["average_price"])/battery_fedin).toFixed(1);
-    };
-    if (results["hydrogen_turbine_capacity"] > 0.1){
-	let hydrogen_fedin = results["hydrogen_turbine_capacity"]*results["hydrogen_turbine_cf_used"];
-	let hydrogen_charged = hydrogen_fedin/(results["assumptions"]["hydrogen_turbine_efficiency"]/100)/(results["assumptions"]["hydrogen_electrolyser_efficiency"]/100);
-	document.getElementById("hydrogen_lcos").innerHTML=Math.abs((results["hydrogen_turbine_cost"]+results["hydrogen_energy_cost"]+results["hydrogen_electrolyser_cost"]+hydrogen_charged*results["hydrogen_electrolyser_rmv"]*results["average_price"])/hydrogen_fedin).toFixed(1);
-    };
-
     for(var j=0; j < results.snapshots.length; j++) {
 	results.snapshots[j] = parseDate(results.snapshots[j]);
     };
 
-    draw_power_graph();
+    fill_results_table();
     draw_power_capacity_bar();
     draw_energy_capacity_bar();
     draw_cost_stack();
+
+    for (var k=0; k < balances.length; k++){
+	let balance = balances[k];
+	if(balance in results["carrier_series"]){
+	    console.log("Drawing power time series for", balance);
+	    let series = results["carrier_series"][balance];
+	    draw_series(series, results.snapshots, balance);
+	} else {
+	    console.log("Balance data not available for", balance);
+	};
+    };
 
     document.getElementById("results-overview-download").innerHTML = '<a href="data/results-overview-' + results.assumptions.results_hex + '.csv">Download Comma-Separated-Variable (CSV) file of results overview</a> ' + licenceText;
     document.getElementById("results-series-download").innerHTML = '<a href="data/results-series-' + results.assumptions.results_hex + '.csv">Download Comma-Separated-Variable (CSV) file of results time series</a> ' + licenceText;
@@ -655,14 +669,13 @@ function display_weather(){
 };
 
 
-function draw_power_graph(){
+function draw_series(series, snapshots, balance){
 
-    let snapshots = results["snapshots"];
-    let selection = [...Array(results["snapshots"].length).keys()];
+    let selection = [...Array(snapshots.length).keys()];
 
     // Inspired by https://bl.ocks.org/mbostock/3885211
 
-    var svgGraph = d3.select("#power"),
+    var svgGraph = d3.select("#" + balance + "_power_graph"),
 	margin = {top: 20, right: 20, bottom: 110, left: 50},
 	marginContext = {top: 430, right: 20, bottom: 30, left: 50},
 	width = svgGraph.attr("width") - margin.left - margin.right,
@@ -700,29 +713,29 @@ function draw_power_graph(){
 
     var previous = new Array(selection.length).fill(0);
 
-    for (var j = 0; j < results["positive"].columns.length; j++){
+    for (var j = 0; j < series["positive"].columns.length; j++){
 	var item = [];
 	for (var k = 0; k < selection.length; k++){
-	    item.push([previous[k], previous[k] + results["positive"]["data"][selection[k]][j]]);
-	    previous[k] = previous[k] + results["positive"]["data"][selection[k]][j];
+	    item.push([previous[k], previous[k] + series["positive"]["data"][selection[k]][j]]);
+	    previous[k] = previous[k] + series["positive"]["data"][selection[k]][j];
 	    }
 	data.push(item);
     }
     var previous = new Array(selection.length).fill(0);
 
-    for (var j = 0; j < results["negative"].columns.length; j++){
+    for (var j = 0; j < series["negative"].columns.length; j++){
 	var item = [];
 	for (var k = 0; k < selection.length; k++){
-	    item.push([-previous[k] - results["negative"]["data"][selection[k]][j],-previous[k]]);
-	    previous[k] = previous[k] + results["negative"]["data"][selection[k]][j];
+	    item.push([-previous[k] - series["negative"]["data"][selection[k]][j],-previous[k]]);
+	    previous[k] = previous[k] + series["negative"]["data"][selection[k]][j];
 	    }
 	data.push(item);
     }
 
     var ymin = 0, ymax = 0;
     for (var k = 0; k < selection.length; k++){
-	if(data[results["positive"].columns.length-1][k][1] > ymax){ ymax = data[results["positive"].columns.length-1][k][1];};
-	if(data[results["positive"].columns.length+results["negative"].columns.length-1][k][0] < ymin){ ymin = data[results["positive"].columns.length+results["negative"].columns.length-1][k][0];};
+	if(data[series["positive"].columns.length-1][k][1] > ymax){ ymax = data[series["positive"].columns.length-1][k][1];};
+	if(data[series["positive"].columns.length+series["negative"].columns.length-1][k][0] < ymin){ ymin = data[series["positive"].columns.length+series["negative"].columns.length-1][k][0];};
     };
 
     y.domain([ymin,ymax]);
@@ -762,23 +775,8 @@ function draw_power_graph(){
 
     layer.append("path")
         .attr("class", "area")
-        .style("fill", function(d, i) {if(i < results["positive"].color.length){ return results["positive"].color[i];} else{return results["negative"].color[i-results["positive"].color.length];} })
+        .style("fill", function(d, i) {if(i < series["positive"].color.length){ return series["positive"].color[i];} else{return series["negative"].color[i-series["positive"].color.length];} })
         .attr("d", area);
-
-    // add demand curve
-
-    var lineFunction = d3.line()
-	.x(function(d) { return x(d[0]) })
-	.y(function(d) { return y(d[1]) })
-	.curve(d3.curveLinear);
-
-    var demand = focus.append("g");
-
-    demand.append("path")
-        .attr("d", lineFunction([[snapshots[0],assumptions["load"]],[snapshots[snapshots.length-1],assumptions["load"]]]))
-        .attr("id", "indicator")
-        .attr("stroke", "#000000")
-        .attr("stroke-width", 3);
 
 
     focus.append("g")
@@ -800,7 +798,7 @@ function draw_power_graph(){
         .attr("x",0 - (height / 2))
         .attr("dy", "1em")
         .style("text-anchor", "middle")
-        .text("Power [MW]");
+        .text(series["label"] + " [" + series["units"] + "]");
 
 
     var layerContext = context.selectAll(".layerContext")
@@ -810,7 +808,7 @@ function draw_power_graph(){
 
     layerContext.append("path")
         .attr("class", "area")
-        .style("fill", function(d, i) {if(i < results["positive"].color.length){ return results["positive"].color[i];} else{return results["negative"].color[i-results["positive"].color.length];} })
+        .style("fill", function(d, i) {if(i < series["positive"].color.length){ return series["positive"].color[i];} else{return series["negative"].color[i-series["positive"].color.length];} })
         .attr("d", areaContext);
 
     context.append("g")
@@ -863,7 +861,7 @@ function draw_power_graph(){
 				      .scale(width / (s[1] - s[0]))
 				      .translate(-s[0], 0));
 	handle.attr("transform", function(d, i) { return "translate(" + [ s[i], - heightContext / 4] + ")"; });
-    }
+    };
 
     function zoomed() {
 	if (d3.event.sourceEvent && d3.event.sourceEvent.type === "brush") return; // ignore zoom-by-brush
@@ -874,11 +872,55 @@ function draw_power_graph(){
 	var newRange = x.range().map(t.invertX, t);
 	context.select(".brush").call(brush.move, newRange);
 	handle.attr("transform", function(d, i) { return "translate(" + [ newRange[i], - heightContext / 4] + ")"; });
-    }
+    };
 
+
+    //Legend
+
+    //slice to make copy
+    let labels = series["positive"]["columns"].slice().reverse().concat(series["negative"]["columns"]);
+    let color = series["positive"]["color"].slice().reverse().concat(series["negative"]["color"]);
+
+    //remove duplicate labels
+    console.log(balance, labels);
+    let toRemove = [];
+    for(var i=0; i < labels.length; i++){
+	let label = labels[i];
+	if(i != labels.indexOf(label)) {
+	    console.log(i, label, labels.indexOf(label));
+	    toRemove.push(i);
+	};
+    };
+
+    console.log("need to remove",toRemove);
+
+    for(var i=0; i < toRemove.length; i++){
+	// have to subtract i because array shifts to left each time
+	labels.splice(toRemove[i]-i, 1);
+	color.splice(toRemove[i]-i, 1);
+    };
+
+    let legendSVG = d3.select("#" + balance + "_power_graph_legend");
+
+    let legend = legendSVG.selectAll("g")
+	.data(labels)
+	.enter()
+	.append("g")
+	.attr("transform", function (d, i) {  return "translate(0," + (5 + i * 20) + ")" });
+
+    legend.append("rect")
+	.attr("x",0)
+	.attr("y",0)
+	.attr("width", 10)
+	.attr("height", 10)
+	.style("fill", function (d, i) { return color[i] });
+
+    legend.append("text")
+	.attr("x",20)
+	.attr("y",10)
+	.text(function (d, i) { return d});
 
 };
-
 
 
 
@@ -888,14 +930,11 @@ function draw_cost_stack(){
     let color = [];
     let labels = [];
 
-    for(let i=0; i < assets.length; i++){
-	let cost = results[assets[i]+"_cost"];
-	if(results.hasOwnProperty(assets[i]+"_marginal_cost")){
-	    cost += results[assets[i]+"_marginal_cost"];
-	};
-	data.push(cost/(results["assumptions"]["load"]+results["assumptions"]["hydrogen_load"]));
-	color.push(colors[assets[i]]);
-	labels.push(assets[i].replace("_"," "));
+    for(let i=0; i<results["order"].length; i++){
+	let asset = results["order"][i];
+	data.push(results[asset + " totex"]/(results["assumptions"]["load"]+results["assumptions"]["hydrogen_load"])/8760.);
+	color.push(colors[asset]);
+	labels.push(asset);
     };
 
     draw_stack(data, labels, color, "Breakdown of avg. sys. cost [EUR/MWh]", "#average_cost_graph", " EUR/MWh");
@@ -925,28 +964,33 @@ function draw_power_capacity_bar(){
     let data = [];
     let color = [];
     let labels = [];
+    let units = [];
 
     if(results["assumptions"]["load"] > 0.){
 	data.push(results["assumptions"]["load"]);
 	color.push(colors["load"]);
 	labels.push("elec. demand");
+	units.push("MW");
     };
 
     if(results["assumptions"]["hydrogen_load"] > 0.){
 	data.push(results["assumptions"]["hydrogen_load"]);
 	color.push(colors["hydrogen_load"]);
 	labels.push("H2 demand");
+	units.push("MW");
     };
 
-    for(let i=0; i < assets.length; i++){
-	if(!assets[i].includes("energy") && results[assets[i]+"_capacity"] >= 0.1){
-	    data.push(results[assets[i]+"_capacity"]);
-	    color.push(colors[assets[i]]);
-	    labels.push(assets[i].replace("_"," ").replace("hydrogen","H2"));
+    for(let i=0; i<results["order"].length; i++){
+	let asset = results["order"][i];
+	if(!asset.includes("storage") && (asset + " capacity" in results)){
+	    data.push(results[asset + " capacity"]);
+	    color.push(colors[asset]);
+	    labels.push(asset.replace("hydrogen","H2"));
+	    units.push("MW");
 	};
     };
 
-    draw_bar(data, labels, color, "Power capacity [MW]", "#power_capacity_bar", " MW");
+    draw_bar(data, labels, color, units, "Power capacity [MW]", "#power_capacity_bar");
 };
 
 
@@ -975,28 +1019,33 @@ function draw_energy_capacity_bar(){
     let data = [];
     let color = [];
     let labels = [];
+    let units = [];
 
     if(results["assumptions"]["load"] > 0.){
 	data.push(results["assumptions"]["load"]*24/1000.);
 	color.push(colors["load"]);
 	labels.push("24h elec. demand");
+	units.push("GWh");
     };
 
     if(results["assumptions"]["hydrogen_load"] > 0.){
 	data.push(results["assumptions"]["hydrogen_load"]*24/1000.);
 	color.push(colors["hydrogen_load"]);
 	labels.push("24h H2 demand");
+	units.push("GWh");
     };
 
-    for(let i=0; i < assets.length; i++){
-	if(assets[i].includes("energy") && results[assets[i]+"_capacity"] >= 10){
-	    data.push(results[assets[i]+"_capacity"]/1000.);
-	    color.push(colors[assets[i]]);
-	    labels.push(assets[i].replace("energy","storage").replace("_"," ").replace("hydrogen","H2"));
+    for(let i=0; i<results["order"].length; i++){
+	let asset = results["order"][i];
+	if(asset.includes("storage")){
+	    data.push(results[asset+" capacity"]/1e3);
+	    color.push(colors[asset]);
+	    labels.push(asset.replace("hydrogen","H2"));
+	    units.push("GWh");
 	};
     };
 
-    draw_bar(data, labels, color, "Energy capacity [GWh]", "#energy_capacity_bar", " GWh");
+    draw_bar(data, labels, color, units, "Storage capacity [GWh]", "#energy_capacity_bar");
 };
 
 
@@ -1108,7 +1157,7 @@ function draw_stack(data, labels, color, ylabel, svgName, suffix){
 
 
 
-function draw_bar(data, labels, color, ylabel, svgName, suffix){
+function draw_bar(data, labels, color, units, ylabel, svgName){
 
     let svgGraph = d3.select(svgName),
 	margin = {top: 20, right: 20, bottom: 30, left: 50},
@@ -1130,7 +1179,7 @@ function draw_bar(data, labels, color, ylabel, svgName, suffix){
 	.attr('class', 'd3-tip')
 	.offset([-8, 0])
 	.html(function(d,i) {
-	    return labels[i] + ": " + Math.abs(data[i]).toFixed(1) + suffix;
+	    return labels[i] + ": " + Math.abs(data[i]).toFixed(1) + " " + units[i];
 	});
     svgGraph.call(tip);
 

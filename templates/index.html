@@ -246,14 +246,17 @@
                     </div>
                     <div id="graph">
 		      <br />
-		      <p><b>Dispatch over a year to meet the constant demand (electricity demand is the black line; you can zoom and pan to see the details; negative values correspond to storage consuming electricity):</b></p>
-                      <svg width="1100" height="500" id="power"></svg>
+		      {% for balance in config["balances_to_display"] %}
+		      <p><b>{{balance}} supply and demand time series (you can zoom and pan to see the details)</b></p>
+		      <svg width="890" height="500" id="{{balance}}_power_graph"></svg>
+		      <svg width="250" height="400" id="{{balance}}_power_graph_legend"></svg>
+		      {% endfor %}
                     </div>
                   </div>
                   <div id="results_summary">
 		    <br /><br />
 		    <br /><br />
-		    <table id="tab_results">
+		    <table id="results_table">
                       <tr>
                         <th class="tab_asset" id="tabh_asset">Asset</th>
                         <th class="tab_data" id="tabh_capacity">Capacity</th>
@@ -263,95 +266,12 @@
                         <th class="tab_data" id="tabh_lcoe">LCOE/S [EUR/MWh]</th>
                         <th class="tab_data" id="tabh_rmv">Rel Mkt Value [%]</th>
                       </tr>
-                      <tr>
-                        <td class="tab_asset">Solar</td>
-                        <td class="tab_data"><span id="solar_capacity"></span> MW</td>
-                        <td class="tab_data"><span id="solar_cf_used"></span></td>
-                        <td class="tab_data"><span id="solar_cf_available"></span></td>
-                        <td class="tab_data"><span id="solar_curtailment"></span></td>
-                        <td class="tab_data"><span id="solar_lcoe"></span></td>
-                        <td class="tab_data"><span id="solar_rmv"></span></td>
-                      </tr>
-                      <tr>
-                        <td class="tab_asset">Wind</td>
-                        <td class="tab_data"><span id="wind_capacity"></span> MW</td>
-                        <td class="tab_data"><span id="wind_cf_used"></span></td>
-                        <td class="tab_data"><span id="wind_cf_available"></span></td>
-                        <td class="tab_data"><span id="wind_curtailment"></span></td>
-                        <td class="tab_data"><span id="wind_lcoe"></span></td>
-                        <td class="tab_data"><span id="wind_rmv"></span></td>
-                      </tr>
-                      <tr>
-                        <td class="tab_asset">Battery power</td>
-                        <td class="tab_data"><span id="battery_power_capacity"></span> MW</td>
-                        <td class="tab_data"><span id="battery_power_cf_used"></span></td>
-                        <td class="tab_data"></td>
-                        <td class="tab_data"></td>
-                        <td class="tab_data"><span id="battery_lcos"></span></td>
-                        <td class="tab_data"><span id="battery_power_rmv"></span>/<span id="battery_discharge_rmv"></span></td>
-                      </tr>
-                      <tr>
-                        <td class="tab_asset">Battery energy</td>
-                        <td class="tab_data"><span id="battery_energy_capacity"></span> MWh</td>
-                        <td class="tab_data"><span id="battery_energy_cf_used"></span></td>
-                        <td class="tab_data"></td>
-                        <td class="tab_data"></td>
-                        <td class="tab_data"></td>
-                      </tr>
-                      <tr>
-                        <td class="tab_asset">Hydrogen electrolyser</td>
-                        <td class="tab_data"><span id="hydrogen_electrolyser_capacity"></span> MW</td>
-                        <td class="tab_data"><span id="hydrogen_electrolyser_cf_used"></span></td>
-                        <td class="tab_data"></td>
-                        <td class="tab_data"></td>
-                        <td class="tab_data"></td>
-                        <td class="tab_data"><span id="hydrogen_electrolyser_rmv"></span></td>
-                      </tr>
-                      <tr>
-                        <td class="tab_asset">Hydrogen turbine</td>
-                        <td class="tab_data"><span id="hydrogen_turbine_capacity"></span> MW</td>
-                        <td class="tab_data"><span id="hydrogen_turbine_cf_used"></span></td>
-                        <td class="tab_data"></td>
-                        <td class="tab_data"></td>
-                        <td class="tab_data"><span id="hydrogen_lcos"></span></td>
-			<td class="tab_data"><span id="hydrogen_turbine_rmv"></span></td>
-                      </tr>
-                      <tr>
-                        <td class="tab_asset">Hydrogen energy</td>
-                        <td class="tab_data"><span id="hydrogen_energy_capacity"></span> MWh</td>
-                        <td class="tab_data"><span id="hydrogen_energy_cf_used"></span></td>
-                        <td class="tab_data"></td>
-                        <td class="tab_data"></td>
-                      </tr>
-                      <tr>
-                        <td class="tab_asset">Hydrogen compressor</td>
-                        <td class="tab_data"><span id="hydrogen_compressor_capacity"></span> MW</td>
-                        <td class="tab_data"><span id="hydrogen_compressor_cf_used"></span></td>
-                        <td class="tab_data"></td>
-                        <td class="tab_data"></td>
-                      <tr>
-                        <td class="tab_asset">Dispatchable1</td>
-                        <td class="tab_data"><span id="dispatchable1_capacity"></span> MW</td>
-                        <td class="tab_data"><span id="dispatchable1_cf_used"></span></td>
-                        <td class="tab_data"></td>
-                        <td class="tab_data"></td>
-                        <td class="tab_data"><span id="dispatchable1_lcoe"></span></td>
-                        <td class="tab_data"><span id="dispatchable1_rmv"></span></td>
-                      </tr>
-                      <tr>
-                        <td class="tab_asset">Dispatchable2</td>
-                        <td class="tab_data"><span id="dispatchable2_capacity"></span> MW</td>
-                        <td class="tab_data"><span id="dispatchable2_cf_used"></span></td>
-                        <td class="tab_data"></td>
-                        <td class="tab_data"></td>
-                        <td class="tab_data"><span id="dispatchable2_lcoe"></span></td>
-                        <td class="tab_data"><span id="dispatchable2_rmv"></span></td>
-                      </tr>
                     </table>
 		    <small class="form-text text-muted">Cap Ftr = Capacity Factor, used is after curtailment, avail is available before curtailment, Curtlmt = Curtailment, LCOE/S = Levelised Cost of Electricity/Storage per energy used, Rel Mkt Value = Relative Market Value (market revenue averaged over dispatch divided by average market price)</small>
 		    <br />
 		    <p><span id="results-overview-download"></span></p>
 		    <p><span id="results-series-download"></span></p>
+		    <p><span id="results-netcdf-download"></span></p>
 		    <p><span id="results-link"></span></p>
                   </div>
                 </div>
