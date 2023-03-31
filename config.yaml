@@ -37,6 +37,14 @@ renewable:
         azimuth: 180.
     correction_factor: 1.
 
+#LHV
+mwh_per_t:
+  methanol: 5.54
+
+#LHV at 20 C
+mwh_per_m3:
+  methanol: 4.4
+
 octant_compression:
   complevel: 4
   least_significant_digit: 5
@@ -72,3 +80,9 @@ colors:
   dispatchable2: lime
   load: black
   hydrogen_load: purple
+  dac: "#999966"
+  co2 storage: "#666633"
+  heat pump: red
+  methanol synthesis: "#F08080"
+  methanol storage: black
+  Allam cycle: pink

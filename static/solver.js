@@ -1151,9 +1151,15 @@ function draw_bar(data, labels, color, units, ylabel, svgName){
         .text(ylabel);
 
     // add the x Axis
+    // https://stackoverflow.com/questions/20947488/d3-grouped-bar-chart-how-to-rotate-the-text-of-x-axis-ticks
     svgGraph.append("g")
         .attr("transform", "translate(" + margin.left + "," + (height + margin.top) + ")")
-        .call(d3.axisBottom(x));
+        .call(d3.axisBottom(x))
+	.selectAll("text")
+        .style("text-anchor", "middle")
+        .attr("dx", "0em")
+        .attr("dy", "1em")
+        .attr("transform", "rotate(-10)");
 
 };
 

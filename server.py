@@ -132,16 +132,7 @@ def sanitise_assumptions(assumptions):
 def compute_results_hash(assumptions):
     results_string = ""
     for item in strings+ints+booleans+floats:
-        #remove assumptions for excluded technologies
-        skip = False
-        for tech in ["wind","solar","hydrogen","battery","dispatchable1","dispatchable2"]:
-            if not assumptions[tech] and tech in item and tech != item:
-                skip = True
-                continue
-        if not assumptions["co2_limit"] and item == "co2_emissions":
-            skip = True
-        if not skip:
-            results_string += "&{}={}".format(item,assumptions[item])
+        results_string += "&{}={}".format(item,assumptions[item])
     print(results_string)
     return hashlib.md5(results_string.encode()).hexdigest()
 

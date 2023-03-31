@@ -49,7 +49,12 @@ for name,td_name,full_name in [("wind","onwind","Onshore wind turbine"),
                                ("hydrogen_turbine","CCGT","Hydrogen combined cycle turbine"),
                                ("battery_energy","battery storage","Utility-scale battery energy"),
                                ("battery_power","battery inverter","Utility-scale battery converter power"),
-                               ("hydrogen_compressor","hydrogen storage compressor","Hydrogen storage compressor")]:
+                               ("hydrogen_compressor","hydrogen storage compressor","Hydrogen storage compressor"),
+                               ("co2_storage","CO2 storage tank","CO2 storage tank"),
+                               ("dac","direct air capture","Direct air capture"),
+                               ("heat_pump","industrial heat pump medium temperature","Industrial heat pump up to 125 C"),
+                               ("liquid_carbonaceous_storage","General liquid hydrocarbon storage (product)","Liquid carbonaceous fuel storage tank"),
+                               ("methanolisation","methanolisation","Methanol synthesis")]:
     print(name,full_name)
     df.loc[(name + "_discount",""),:] = ["f",5,"percent",full_name + " discount rate",""]
     for year in years:
@@ -75,6 +80,7 @@ for name,td_name,full_name in [("wind","onwind","Onshore wind turbine"),
 
 for name,td_name,full_name in [("battery_power_efficiency_charging","battery inverter","Battery power charging efficiency"),
                                ("battery_power_efficiency_discharging","battery inverter","Battery power discharging efficiency"),
+                               ("heat_pump_efficiency","industrial heat pump medium temperature","Industrial heat pump COP"),
                                ("hydrogen_electrolyser_efficiency","electrolysis","Hydrogen electrolyser efficiency"),
                                ("hydrogen_turbine_efficiency","CCGT","Hydrogen combined cycle turbine efficiency")]:
 
@@ -113,6 +119,35 @@ df.loc[("hydrogen_compressor_electricity",""),:] = ["f",
                                                     "Hydrogen storage compressor electricity input",
                                                     eff.loc[("H2 storage compressor","all","electricity"),"source"][0]]
 
+df.loc[("methanolisation_efficiency",""),:] = ["f",
+                                               eff.loc[("methanolisation","all","hydrogen (g)"),"to_amount"][0]/eff.loc[("methanolisation","all","hydrogen (g)"),"from_amount"][0],
+                                               "MWh-MeOH-LHV/MWh-H2-LHV",
+                                               "Methanol synthesis efficiency wrt hydrogen",
+                                               eff.loc[("methanolisation","all","hydrogen (g)"),"source"][0]]
+
+df.loc[("methanolisation_co2",""),:] = ["f",
+                                        eff.loc[("methanolisation","all","CO2 (g)"),"from_amount"][0]/eff.loc[("methanolisation","all","CO2 (g)"),"to_amount"][0],
+                                        "tCO2/MWh-MeOH-LHV",
+                                        "Methanol synthesis carbon dioxide input",
+                                        eff.loc[("methanolisation","all","CO2 (g)"),"source"][0]]
+
+df.loc[("methanolisation_electricity",""),:] = ["f",
+                                                eff.loc[("methanolisation","all","electricity"),"from_amount"][0]/eff.loc[("methanolisation","all","electricity"),"to_amount"][0],
+                                                "MWhel/MWh-MeOH-LHV",
+                                                "Methanol synthesis electricity input",
+                                                eff.loc[("methanolisation","all","electricity"),"source"][0]]
+
+df.loc[("dac_electricity",""),:] = ["f",
+                                    td[year].loc[("direct air capture","electricity-input"),"value"],
+                                    td[year].loc[("direct air capture","electricity-input"),"unit"],
+                                    "Direct air capture electricity consumption",
+                                    td[year].loc[("direct air capture","electricity-input"),"source"]]
+
+df.loc[("dac_heat",""),:] = ["f",
+                             td[year].loc[("direct air capture","heat-input"),"value"],
+                             td[year].loc[("direct air capture","heat-input"),"unit"],
+                             "Direct air capture heat consumption",
+                             td[year].loc[("direct air capture","heat-input"),"source"]]
 
 
 print(df)

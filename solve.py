@@ -42,6 +42,7 @@ from shapely.geometry import box, Point, Polygon, MultiPolygon
 with open("config.yaml", "r") as f:
     config = yaml.safe_load(f)
 
+defaults = pd.read_csv("defaults.csv",index_col=[0,1],na_filter=False)
 
 current_version = config["current_version"]
 
@@ -49,6 +50,54 @@ octant_folder = config["octant_folder"]
 
 #based on mean deviation against renewables.ninja capacity factors for European countries for 2011-2013
 solar_correction_factor = 0.926328
+
+
+override_component_attrs = pypsa.descriptors.Dict(
+        {k: v.copy() for k, v in pypsa.components.component_attrs.items()}
+    )
+override_component_attrs["Link"].loc["bus2"] = [
+        "string",
+        np.nan,
+        np.nan,
+        "2nd bus",
+        "Input (optional)",
+    ]
+override_component_attrs["Link"].loc["bus3"] = [
+        "string",
+        np.nan,
+        np.nan,
+        "3rd bus",
+        "Input (optional)",
+    ]
+override_component_attrs["Link"].loc["efficiency2"] = [
+        "static or series",
+        "per unit",
+        1.0,
+        "2nd bus efficiency",
+        "Input (optional)",
+    ]
+override_component_attrs["Link"].loc["efficiency3"] = [
+        "static or series",
+        "per unit",
+        1.0,
+        "3rd bus efficiency",
+        "Input (optional)",
+    ]
+override_component_attrs["Link"].loc["p2"] = [
+        "series",
+        "MW",
+        0.0,
+        "2nd bus output",
+        "Output",
+    ]
+override_component_attrs["Link"].loc["p3"] = [
+        "series",
+        "MW",
+        0.0,
+        "3rd bus output",
+        "Output",
+    ]
+
 
 
 def get_country_multipolygons():
@@ -110,9 +159,6 @@ def annuity(lifetime,rate):
 
 
 assumptions_df = pd.DataFrame(columns=["FOM","fixed","discount rate","lifetime","investment"],
-                              index=["wind","solar","hydrogen_electrolyser","hydrogen_turbine","hydrogen_energy",
-                                     "hydrogen_compressor",
-                                     "battery_power","battery_energy","dispatchable1","dispatchable2"],
                               dtype=float)
 
 threshold = 0.1
@@ -379,6 +425,10 @@ def export_time_series(n):
 
             for end in [col[3:] for col in c.df.columns if col[:3] == "bus"]:
 
+                print(end)
+                print(bus_map)
+                print(c.df["bus" + str(end)].map(bus_map,na_action=False))
+
                 items = c.df.index[c.df["bus" + str(end)].map(bus_map,na_action=False)]
 
                 if len(items) == 0:
@@ -403,19 +453,22 @@ def run_optimisation(assumptions, pu):
 
     Nyears = 1
 
-    for item in assumptions_df.index:
+    techs = [tech[:-5] for tech in assumptions if tech[-5:] == "_cost" and tech[-14:] != "_marginal_cost" and tech != "co2_cost"]
+
+    print("calculating costs for",techs)
+
+
+    for item in techs:
         assumptions_df.at[item,"discount rate"] = assumptions[item + "_discount"]/100.
-        assumptions_df.at[item,"investment"] = assumptions[item + "_cost"]
+        assumptions_df.at[item,"investment"] = assumptions[item + "_cost"]*1e3 if "EUR/kW" in defaults.loc[item + "_cost"]["unit"][0] else assumptions[item + "_cost"]
         assumptions_df.at[item,"FOM"] = assumptions[item + "_fom"]
         assumptions_df.at[item,"lifetime"] = assumptions[item + "_lifetime"]
 
-    #convert costs from per kW to per MW
-    assumptions_df["investment"] *= 1000.
     assumptions_df["fixed"] = [(annuity(v["lifetime"],v["discount rate"])+v["FOM"]/100.)*v["investment"]*Nyears for i,v in assumptions_df.iterrows()]
 
     print('Starting task for {} with assumptions {}'.format(assumptions["location"],assumptions_df))
 
-    network = pypsa.Network()
+    network = pypsa.Network(override_component_attrs=override_component_attrs)
 
     snapshots = pd.date_range("{}-01-01".format(assumptions["year"]),"{}-12-31 23:00".format(assumptions["year"]),
                               freq=str(assumptions["frequency"])+"H")
@@ -467,7 +520,8 @@ def run_optimisation(assumptions, pu):
 
     if assumptions["battery"]:
 
-        network.add("Bus","battery")
+        network.add("Bus","battery",
+                    carrier="battery")
 
         network.add("Store","battery_energy",
                     bus = "battery",
@@ -503,25 +557,56 @@ def run_optimisation(assumptions, pu):
         def extra_functionality(network,snapshots):
             pass
 
+    network.add("Bus",
+                "hydrogen",
+                carrier="hydrogen")
+
+    network.add("Load","hydrogen_load",
+                bus="hydrogen",
+                carrier="hydrogen",
+                p_set=assumptions["hydrogen_load"])
+
+    network.add("Link",
+                "hydrogen_electrolyser",
+                bus0="electricity",
+                bus1="hydrogen",
+                carrier="hydrogen electrolyser",
+                p_nom_extendable=True,
+                efficiency=assumptions["hydrogen_electrolyser_efficiency"]/100.,
+                capital_cost=assumptions_df.at["hydrogen_electrolyser","fixed"])
+
+    network.add("Bus",
+                "compressed hydrogen",
+                carrier="compressed hydrogen")
+
+    network.add("Link",
+                "hydrogen_compressor",
+                carrier="hydrogen storing compressor",
+                bus0="hydrogen",
+                bus1="compressed hydrogen",
+                bus2="electricity",
+                p_nom_extendable=True,
+                efficiency=1,
+                efficiency2=-assumptions["hydrogen_compressor_electricity"],
+                capital_cost=assumptions_df.at["hydrogen_compressor","fixed"])
+
+    network.add("Link",
+                "hydrogen_decompressor",
+                carrier="hydrogen storing decompressor",
+                bus0="compressed hydrogen",
+                bus1="hydrogen",
+                p_nom_extendable=True)
+
+    network.add("Store",
+                "hydrogen_energy",
+                bus="compressed hydrogen",
+                carrier="hydrogen storage",
+                e_nom_extendable=True,
+                e_cyclic=True,
+                capital_cost=assumptions_df.at["hydrogen_energy","fixed"])
+
+
     if assumptions["hydrogen"]:
-
-        network.add("Bus",
-                     "hydrogen",
-                     carrier="hydrogen")
-
-        network.add("Load","hydrogen_load",
-                    bus="hydrogen",
-                    carrier="hydrogen",
-                    p_set=assumptions["hydrogen_load"])
-
-        network.add("Link",
-                    "hydrogen_electrolyser",
-                    bus0="electricity",
-                    bus1="hydrogen",
-                    carrier="hydrogen electrolyser",
-                    p_nom_extendable=True,
-                    efficiency=assumptions["hydrogen_electrolyser_efficiency"]/100.,
-                    capital_cost=assumptions_df.at["hydrogen_electrolyser","fixed"])
 
         network.add("Link",
                      "hydrogen_turbine",
@@ -532,35 +617,81 @@ def run_optimisation(assumptions, pu):
                      efficiency=assumptions["hydrogen_turbine_efficiency"]/100.,
                      capital_cost=assumptions_df.at["hydrogen_turbine","fixed"]*assumptions["hydrogen_turbine_efficiency"]/100.)  #NB: fixed cost is per MWel
 
+    if assumptions["methanol"]:
+
         network.add("Bus",
-                    "compressed hydrogen",
-                    carrier="compressed hydrogen")
+                    "co2",
+                    carrier="co2")
+
+        network.add("Bus",
+                    "heat",
+                    carrier="heat")
 
         network.add("Link",
-                    "hydrogen_compressor",
-                    carrier="hydrogen storing compressor",
-                    bus0="hydrogen",
-                    bus1="compressed hydrogen",
-                    bus2="electricity",
+                    "heat pump",
+                    bus0="electricity",
+                    bus1="heat",
+                    carrier="heat pump",
                     p_nom_extendable=True,
-                    efficiency=1,
-                    efficiency2=-assumptions["hydrogen_compressor_electricity"],
-                    capital_cost=assumptions_df.at["hydrogen_compressor","fixed"])
+                    capital_cost=assumptions_df.at["heat_pump","fixed"]*assumptions["heat_pump_efficiency"]/100.,
+                    efficiency=assumptions["heat_pump_efficiency"]/100.)
 
         network.add("Link",
-                    "hydrogen_decompressor",
-                    carrier="hydrogen storing decompressor",
-                    bus0="compressed hydrogen",
-                    bus1="hydrogen",
-                    p_nom_extendable=True)
+                    "dac",
+                    bus0="electricity",
+                    bus1="co2",
+                    bus2="heat",
+                    carrier="dac",
+                    p_nom_extendable=True,
+                    capital_cost=assumptions_df.at["dac","fixed"]/assumptions["dac_electricity"],
+                    efficiency=1/assumptions["dac_electricity"],
+                    efficiency2=-assumptions["dac_heat"]/assumptions["dac_electricity"])
 
         network.add("Store",
-                    "hydrogen_energy",
-                    bus="compressed hydrogen",
-                    carrier="hydrogen storage",
+                    "co2",
+                    bus="co2",
+                    carrier="co2 storage",
                     e_nom_extendable=True,
                     e_cyclic=True,
-                    capital_cost=assumptions_df.at["hydrogen_energy","fixed"])
+                    capital_cost=assumptions_df.at["co2_storage","fixed"])
+
+        network.add("Bus",
+                     "methanol",
+                     carrier="methanol")
+
+        network.add("Store",
+                    "methanol",
+                    bus="methanol",
+                    carrier="methanol storage",
+                    e_nom_extendable=True,
+                    e_cyclic=True,
+                    capital_cost=assumptions_df.at["liquid_carbonaceous_storage","fixed"]/config["mwh_per_m3"]["methanol"])
+
+        network.add("Link",
+                    "methanol synthesis",
+                    bus0="hydrogen",
+                    bus1="methanol",
+                    bus2="electricity",
+                    bus3="co2",
+                    carrier="methanol synthesis",
+                    p_nom_extendable=True,
+                    p_min_pu=assumptions["methanolisation_min_part_load"]/100,
+                    efficiency=assumptions["methanolisation_efficiency"],
+                    efficiency2=-assumptions["methanolisation_electricity"]*assumptions["methanolisation_efficiency"],
+                    efficiency3=-assumptions["methanolisation_co2"]*assumptions["methanolisation_efficiency"],
+                    capital_cost=assumptions_df.at["methanolisation","fixed"]*assumptions["methanolisation_efficiency"]) #NB: cost is EUR/kW_MeOH
+
+        network.add("Link",
+                    "Allam",
+                    bus0="methanol",
+                    bus1="electricity",
+                    bus2="co2",
+                    carrier="Allam cycle",
+                    p_nom_extendable=True,
+                    efficiency=0.6,
+                    efficiency2=assumptions["methanolisation_co2"]*0.98,
+                    capital_cost=assumptions_df.at["hydrogen_turbine","fixed"]*2*0.6)
+
 
     if assumptions["co2_limit"]:
         network.add("GlobalConstraint","co2_limit",
@@ -655,7 +786,7 @@ def run_optimisation(assumptions, pu):
             continue
         rmv = (c.pnl.p[items].multiply(network.buses_t.marginal_price["electricity"], axis=0).sum()/c.pnl.p[items].sum()).groupby(c.df.loc[items,'carrier']).mean()/results_overview["average_price"]
         results_overview = pd.concat((results_overview,
-                                      rmv.rename(lambda x: x+ " rmv").dropna()))
+                                      rmv.rename(lambda x: x+ " rmv").replace([np.inf, -np.inf], np.nan).dropna()))
 
     for c in network.iterate_components(network.branch_components):
         for end in [col[3:] for col in c.df.columns if col[:3] == "bus"]:
@@ -664,7 +795,7 @@ def run_optimisation(assumptions, pu):
                 continue
             rmv = (c.pnl["p"+end][items].multiply(network.buses_t.marginal_price["electricity"], axis=0).sum()/c.pnl["p"+end][items].sum()).groupby(c.df.loc[items,'carrier']).mean()/results_overview["average_price"]
             results_overview = pd.concat((results_overview,
-                                          rmv.rename(lambda x: x+ " rmv").dropna()))
+                                          rmv.rename(lambda x: x+ " rmv").replace([np.inf, -np.inf], np.nan).dropna()))
 
     #LCOS
     if "battery_power" in network.links.index:
