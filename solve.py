@@ -602,7 +602,8 @@ def run_optimisation(assumptions, pu):
 
     results_overview = pd.Series(dtype=float)
     results_overview["average_price"] = network.buses_t.marginal_price.mean()["electricity"]
-    results_overview["average_hydrogen_price"] = network.buses_t.marginal_price.mean()["hydrogen"]
+    if assumptions["hydrogen"]:
+        results_overview["average_hydrogen_price"] = network.buses_t.marginal_price.mean()["hydrogen"]
 
     results_series = export_time_series(network)
 
@@ -612,9 +613,6 @@ def run_optimisation(assumptions, pu):
     results_series.drop(to_drop,
                         axis=1,
                         inplace=True)
-
-    results_overview["average_cost"] = sum([results_overview[s] for s in results_overview.index if s[-5:] == "_cost"])/assumptions["load"]
-
 
     stats = network.statistics(aggregate_time="sum").groupby(level=1).sum()
 
@@ -628,17 +626,59 @@ def run_optimisation(assumptions, pu):
         results_overview = pd.concat((results_overview,
                                       stats[full_name].rename(lambda x: x+ f" {name}")))
 
+    results_overview["average_cost"] = sum([results_overview[s] for s in results_overview.index if s[-6:] == " totex"])/(assumptions["load"]+assumptions["hydrogen_load"])/8760.
+
+    #report capacity from p1 not p0
+    if "hydrogen turbine capacity" in results_overview:
+        results_overview.loc["hydrogen turbine capacity"] *= network.links.at["hydrogen_turbine","efficiency"]
+
+
     results_overview = pd.concat((results_overview,
                                   (stats["Curtailment"]/(stats["Supply"]+stats["Curtailment"])).rename(lambda x: x+ " curtailment")))
 
     results_overview = pd.concat((results_overview,
                                   (stats["Total Expenditure"]/(stats["Supply"])).rename(lambda x: x+ " LCOE")))
 
+
     stats_mean = network.statistics(aggregate_time="mean").groupby(level=1).sum().loc[selection]
     results_overview = pd.concat((results_overview,
                                   stats_mean["Capacity Factor"].rename(lambda x: x+ " cf used")))
     results_overview = pd.concat((results_overview,
                                   ((stats_mean["Supply"]+stats_mean["Curtailment"])/stats_mean["Optimal Capacity"]).rename(lambda x: x+ " cf available")))
+
+    #RMV
+    bus_map = (network.buses.carrier == "electricity")
+    bus_map.at[""] = False
+    for c in network.iterate_components(network.one_port_components):
+        items = c.df.index[c.df.bus.map(bus_map).fillna(False)]
+        if len(items) == 0:
+            continue
+        rmv = (c.pnl.p[items].multiply(network.buses_t.marginal_price["electricity"], axis=0).sum()/c.pnl.p[items].sum()).groupby(c.df.loc[items,'carrier']).mean()/results_overview["average_price"]
+        results_overview = pd.concat((results_overview,
+                                      rmv.rename(lambda x: x+ " rmv").dropna()))
+
+    for c in network.iterate_components(network.branch_components):
+        for end in [col[3:] for col in c.df.columns if col[:3] == "bus"]:
+            items = c.df.index[c.df["bus" + str(end)].map(bus_map,na_action=False)]
+            if len(items) == 0:
+                continue
+            rmv = (c.pnl["p"+end][items].multiply(network.buses_t.marginal_price["electricity"], axis=0).sum()/c.pnl["p"+end][items].sum()).groupby(c.df.loc[items,'carrier']).mean()/results_overview["average_price"]
+            results_overview = pd.concat((results_overview,
+                                          rmv.rename(lambda x: x+ " rmv").dropna()))
+
+    #LCOS
+    if "battery_power" in network.links.index:
+        battery_fedin = -network.links_t.p1.multiply(network.snapshot_weightings["generators"],axis=0).sum()["battery_discharge"]
+        battery_costs = sum([results_overview[f"battery {name} totex"] for name in ["inverter","storage"]])
+        battery_charging_costs = network.links_t.p0.multiply(network.snapshot_weightings["generators"],axis=0).sum()["battery_power"]*results_overview["battery inverter rmv"]*results_overview["average_price"]
+        results_overview["battery inverter LCOE"] = (battery_costs + battery_charging_costs)/battery_fedin
+
+    if "hydrogen_turbine" in network.links.index:
+        hydrogen_fedin = -network.links_t.p1.multiply(network.snapshot_weightings["generators"],axis=0).sum()["hydrogen_turbine"]
+        hydrogen_costs = sum([results_overview[f"hydrogen {name} totex"] for name in ["electrolyser","turbine","storage","storing compressor"]])
+        hydrogen_charging_costs = network.links_t.p0.multiply(network.snapshot_weightings["generators"],axis=0).sum()["hydrogen_electrolyser"]*results_overview["hydrogen electrolyser rmv"]*results_overview["average_price"]
+        results_overview["hydrogen turbine LCOE"] = (hydrogen_costs + hydrogen_charging_costs)/hydrogen_fedin
+
 
     fn = 'networks/{}.nc'.format(assumptions['results_hex'])
     network.export_to_netcdf(fn)

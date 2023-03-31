@@ -25,19 +25,6 @@ let balances = config["balances_to_display"];
 
 let colors = config["colors"];
 
-
-let assets = ["solar","wind","battery_power",
-              "battery_energy","hydrogen_electrolyser",
-	      "hydrogen_turbine","hydrogen_energy", "hydrogen_compressor",
-	      "dispatchable1","dispatchable2"];
-
-let vre = ["solar","wind"];
-
-let electricity = ["solar","wind","dispatchable1","dispatchable2"];
-
-let storage = ["battery","hydrogen"];
-
-
 let assumptions = {};
 
 for (let key in defaults){
@@ -594,14 +581,18 @@ function fill_results_table(){
 	let curtailment = "";
 	if (["wind","solar"].includes(asset)) curtailment = (100*results[asset + " curtailment"]).toFixed(1);
 	let lcoe = "";
-	if (["wind","solar"].includes(asset)) lcoe = results[asset + " LCOE"].toFixed(1);
+	if (["wind","solar","dispatchable1","dispatchable2","battery inverter","hydrogen turbine"].includes(asset)) lcoe = results[asset + " LCOE"].toFixed(1);
+	let rmv = "";
+	if (asset + " rmv" in results) rmv = (100*results[asset + " rmv"]).toFixed(1);
+	if (asset == "battery inverter") rmv = (100*results[asset + " rmv"]).toFixed(1) + "/" + (100*results["battery discharger rmv"]).toFixed(1);
 
 	let content = [asset,
 		       cap,
 		       cfUsed,
 		       cfAvailable,
 		       curtailment,
-		       lcoe];
+		       lcoe,
+		       rmv];
 
 	for(let j=0; j<content.length;j++){
 	    let cell = row.insertCell(j);
@@ -941,24 +932,6 @@ function draw_cost_stack(){
 };
 
 
-function draw_power_capacity_stack(){
-
-    let data = [];
-    let color = [];
-    let labels = [];
-
-    for(let i=0; i < assets.length; i++){
-	if(!assets[i].includes("energy")){
-	    data.push(results[assets[i]+"_capacity"]);
-	    color.push(colors[assets[i]]);
-	    labels.push(assets[i].replace("_"," "));
-	};
-    };
-
-    draw_stack(data, labels, color, "Power capacity [MW]", "#power_capacity_graph", " MW");
-};
-
-
 function draw_power_capacity_bar(){
 
     let data = [];
@@ -995,25 +968,6 @@ function draw_power_capacity_bar(){
 
 
 
-function draw_energy_capacity_stack(){
-
-    let data = [];
-    let color = [];
-    let labels = [];
-
-    for(let i=0; i < assets.length; i++){
-	if(assets[i].includes("energy")){
-	    data.push(results[assets[i]+"_capacity"]/1000.);
-	    color.push(colors[assets[i]]);
-	    labels.push(assets[i].replace("_"," "));
-	};
-    };
-
-    draw_stack(data, labels, color, "Energy storage capacity [GWh]", "#energy_capacity_graph", " GWh");
-};
-
-
-
 function draw_energy_capacity_bar(){
 
     let data = [];
@@ -1046,25 +1000,6 @@ function draw_energy_capacity_bar(){
     };
 
     draw_bar(data, labels, color, units, "Storage capacity [GWh]", "#energy_capacity_bar");
-};
-
-
-
-function draw_energy_stack(){
-
-    let data = [];
-    let color = [];
-    let labels = [];
-
-    for(let i=0; i < assets.length; i++){
-	if(!assets[i].includes("energy")){
-	    data.push(results[assets[i]+"_used"]);
-	    color.push(colors[assets[i]]);
-	    labels.push(assets[i].replace("_"," "));
-	};
-    };
-
-    draw_stack(data, labels, color, "Average power dispatch [MW]", "#energy_graph", " MW");
 };
 
 
@@ -1229,6 +1164,8 @@ function draw_weather_graph(){
 
     let snapshots = results["snapshots"];
 
+    let vre = ["solar","wind"];
+
     var svgGraph = d3.select("#weather"),
 	margin = {top: 20, right: 20, bottom: 110, left: 50},
 	marginContext = {top: 430, right: 20, bottom: 30, left: 50},
@@ -1390,42 +1327,6 @@ function draw_weather_graph(){
 	handle.attr("transform", function(d, i) { return "translate(" + [ newRange[i], - heightContext / 4] + ")"; });
     }
 };
-
-
-
-//Legend
-let legendSVG = d3.select("#legend")
-    .append("svg")
-    .attr("width",180)
-    .attr("height",assets.length*20+40);
-
-let legend = legendSVG.selectAll("g")
-    .data(assets)
-    .enter()
-    .append("g")
-    .attr("transform", function (d, i) {  return "translate(0," + (5 + i * 20) + ")" });
-
-legend.append("rect")
-    .attr("x",0)
-    .attr("y",0)
-    .attr("width", 10)
-    .attr("height", 10)
-    .style("fill", function (d, i) { return colors[d] });
-
-legend.append("text")
-    .attr("x",20)
-    .attr("y",10)
-    .text(function (d) { return d.replace("_"," ")});
-
-
-var lineFunction = d3.line()
-    .x(function(d) { return d[0] })
-    .y(function(d) { return d[1] })
-    .curve(d3.curveLinear);
-
-legendSVG.append("path").attr("d",lineFunction([[0,20*assets.length+10],[15,20*assets.length+10]])).attr("stroke", "#000000").attr("stroke-width",3);
-
-legendSVG.append("text").attr("x",20).attr("y",20*assets.length+15).text("electricity demand");
 
 
 
