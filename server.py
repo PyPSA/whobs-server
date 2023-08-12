@@ -162,8 +162,7 @@ def find_results(results_hash):
         assumptions = json.load(f)
     results_overview = pd.read_csv(overview_csv,
                                    index_col=0,
-                                   header=None,
-                                   squeeze=True)
+                                   header=None).squeeze()
     carrier_series = pd.read_csv(series_csv,
                                  index_col=0,
                                  header=[0,1],

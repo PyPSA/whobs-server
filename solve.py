@@ -427,9 +427,9 @@ def export_time_series(n):
 
                 print(end)
                 print(bus_map)
-                print(c.df["bus" + str(end)].map(bus_map,na_action=False))
+                print(c.df["bus" + str(end)].map(bus_map,na_action=None))
 
-                items = c.df.index[c.df["bus" + str(end)].map(bus_map,na_action=False)]
+                items = c.df.index[c.df["bus" + str(end)].map(bus_map,na_action=None)]
 
                 if len(items) == 0:
                     continue
@@ -544,18 +544,6 @@ def run_optimisation(assumptions, pu):
                     carrier="battery discharger",
                     p_nom_extendable = True,
                     efficiency = assumptions["battery_power_efficiency_discharging"]/100.)
-
-        def extra_functionality(network,snapshots):
-
-            link_p_nom = get_var(network, "Link", "p_nom")
-
-            lhs = linexpr((1,link_p_nom["battery_power"]),
-                          (-network.links.loc["battery_discharge", "efficiency"],
-                           link_p_nom["battery_discharge"]))
-            define_constraints(network, lhs, "=", 0, 'Link', 'charger_ratio')
-    else:
-        def extra_functionality(network,snapshots):
-            pass
 
     network.add("Bus",
                 "hydrogen",
@@ -710,12 +698,16 @@ def run_optimisation(assumptions, pu):
                       #"PreDual": 0,
                       #"GURO_PAR_BARDENSETHRESH": 200}
 
-    formulation = "kirchhoff"
-    status, termination_condition = network.lopf(pyomo=False,
-                                                 solver_name=solver_name,
-                                                 solver_options=solver_options,
-                                                 formulation=formulation,
-                                                 extra_functionality=extra_functionality)
+    network.optimize.create_model()
+
+    if assumptions["battery"]:
+        network.model.add_constraints(network.model["Link-p_nom"].loc["battery_power"]
+                                      -network.links.loc["battery_discharge", "efficiency"]*
+                                      network.model["Link-p_nom"].loc["battery_discharge"] == 0,
+                                      name='charger_ratio')
+
+    status, termination_condition = network.optimize.solve_model(solver_name=solver_name,
+                                                                 solver_options=solver_options)
 
     print(status,termination_condition)
 
@@ -729,7 +721,6 @@ def run_optimisation(assumptions, pu):
         pass
     else:
         return None, None, "Job failed to optimise correctly"
-
 
     results_overview = pd.Series(dtype=float)
     results_overview["average_price"] = network.buses_t.marginal_price.mean()["electricity"]
@@ -745,7 +736,7 @@ def run_optimisation(assumptions, pu):
                         axis=1,
                         inplace=True)
 
-    stats = network.statistics(aggregate_time="sum").groupby(level=1).sum()
+    stats = network.statistics().groupby(level=1).sum()
 
     stats["Total Expenditure"] = stats[["Capital Expenditure","Operational Expenditure"]].sum(axis=1)
 
@@ -770,12 +761,11 @@ def run_optimisation(assumptions, pu):
     results_overview = pd.concat((results_overview,
                                   (stats["Total Expenditure"]/(stats["Supply"])).rename(lambda x: x+ " LCOE")))
 
+    results_overview = pd.concat((results_overview,
+                                  stats["Capacity Factor"].rename(lambda x: x+ " cf used")))
 
-    stats_mean = network.statistics(aggregate_time="mean").groupby(level=1).sum().loc[selection]
     results_overview = pd.concat((results_overview,
-                                  stats_mean["Capacity Factor"].rename(lambda x: x+ " cf used")))
-    results_overview = pd.concat((results_overview,
-                                  ((stats_mean["Supply"]+stats_mean["Curtailment"])/stats_mean["Optimal Capacity"]).rename(lambda x: x+ " cf available")))
+                                  ((stats["Supply"]+stats["Curtailment"])/stats["Optimal Capacity"]/network.snapshot_weightings["generators"].sum()).rename(lambda x: x+ " cf available")))
 
     #RMV
     bus_map = (network.buses.carrier == "electricity")
@@ -790,7 +780,7 @@ def run_optimisation(assumptions, pu):
 
     for c in network.iterate_components(network.branch_components):
         for end in [col[3:] for col in c.df.columns if col[:3] == "bus"]:
-            items = c.df.index[c.df["bus" + str(end)].map(bus_map,na_action=False)]
+            items = c.df.index[c.df["bus" + str(end)].map(bus_map,na_action=None)]
             if len(items) == 0:
                 continue
             rmv = (c.pnl["p"+end][items].multiply(network.buses_t.marginal_price["electricity"], axis=0).sum()/c.pnl["p"+end][items].sum()).groupby(c.df.loc[items,'carrier']).mean()/results_overview["average_price"]
@@ -798,13 +788,13 @@ def run_optimisation(assumptions, pu):
                                           rmv.rename(lambda x: x+ " rmv").replace([np.inf, -np.inf], np.nan).dropna()))
 
     #LCOS
-    if "battery_power" in network.links.index:
+    if "battery_power" in network.links.index and "battery inverter" in selection:
         battery_fedin = -network.links_t.p1.multiply(network.snapshot_weightings["generators"],axis=0).sum()["battery_discharge"]
         battery_costs = sum([results_overview[f"battery {name} totex"] for name in ["inverter","storage"]])
         battery_charging_costs = network.links_t.p0.multiply(network.snapshot_weightings["generators"],axis=0).sum()["battery_power"]*results_overview["battery inverter rmv"]*results_overview["average_price"]
         results_overview["battery inverter LCOE"] = (battery_costs + battery_charging_costs)/battery_fedin
 
-    if "hydrogen_turbine" in network.links.index:
+    if "hydrogen_turbine" in network.links.index and "hydrogen_turbine" in selection:
         hydrogen_fedin = -network.links_t.p1.multiply(network.snapshot_weightings["generators"],axis=0).sum()["hydrogen_turbine"]
         hydrogen_costs = sum([results_overview[f"hydrogen {name} totex"] for name in ["electrolyser","turbine","storage","storing compressor"]])
         hydrogen_charging_costs = network.links_t.p0.multiply(network.snapshot_weightings["generators"],axis=0).sum()["hydrogen_electrolyser"]*results_overview["hydrogen electrolyser rmv"]*results_overview["average_price"]
