@@ -16,8 +16,11 @@
 
 
 
-from flask import Flask, request, jsonify, render_template, Markup
+from flask import Flask, request, jsonify, render_template, Response
 
+from markupsafe import Markup
+
+from solve import export_time_series, generate_overview
 
 from redis import Redis
 
@@ -31,6 +34,7 @@ import json, os, hashlib, yaml
 
 import pandas as pd
 
+import pypsa
 
 conn = Redis.from_url('redis://')
 
@@ -399,6 +403,33 @@ def jobid_api(jobid):
 
     return jsonify(result)
 
+
+@app.route('/csvs/overview-<resultshex>.csv')
+def overview_api(resultshex):
+    fn = f'networks/{resultshex}.nc'
+    try:
+        n = pypsa.Network(fn)
+    except:
+        return Response(f"network {resultshex} not found")
+
+    csv = generate_overview(n).to_csv()
+    response = Response(csv, content_type='text/csv')
+    response.headers['Content-Disposition'] = f'attachment; filename=overview-{resultshex}.csv'
+    return response
+
+
+@app.route('/csvs/series-<resultshex>.csv')
+def series_api(resultshex):
+    fn = f'networks/{resultshex}.nc'
+    try:
+        n = pypsa.Network(fn)
+    except:
+        return Response(f"network {resultshex} not found")
+
+    csv = export_time_series(n).to_csv()
+    response = Response(csv, content_type='text/csv')
+    response.headers['Content-Disposition'] = f'attachment; filename=series-{resultshex}.csv'
+    return response
 
 if __name__ == '__main__':
     app.run(port='5002')

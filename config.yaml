@@ -80,6 +80,7 @@ colors:
   dispatchable2: lime
   load: black
   hydrogen_load: purple
+  hydrogen load: purple
   dac: "#999966"
   co2 storage: "#666633"
   heat pump: red

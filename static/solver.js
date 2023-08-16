@@ -547,6 +547,7 @@ function clear_results(){
 
     document.getElementById("results-overview-download").innerHTML = '';
     document.getElementById("results-series-download").innerHTML = '';
+    document.getElementById("results-netcdf-download").innerHTML = '';
     document.getElementById("results-link").innerHTML = '';
 
 };
@@ -641,8 +642,9 @@ function display_results(){
 	};
     };
 
-    document.getElementById("results-overview-download").innerHTML = '<a href="data/results-overview-' + results.assumptions.results_hex + '.csv">Download Comma-Separated-Variable (CSV) file of results overview</a> ' + licenceText;
-    document.getElementById("results-series-download").innerHTML = '<a href="data/results-series-' + results.assumptions.results_hex + '.csv">Download Comma-Separated-Variable (CSV) file of results time series</a> ' + licenceText;
+    document.getElementById("results-overview-download").innerHTML = '<a href="csvs/overview-' + results.assumptions.results_hex + '.csv">Download Comma-Separated-Variable (CSV) file of results overview</a> ' + licenceText;
+    document.getElementById("results-series-download").innerHTML = '<a href="csvs/series-' + results.assumptions.results_hex + '.csv">Download Comma-Separated-Variable (CSV) file of results time series</a> ' + licenceText;
+    document.getElementById("results-netcdf-download").innerHTML = '<a href="networks/' + results.assumptions.results_hex + '.nc">Download PyPSA NetCDF file</a> ' + licenceText;
     document.getElementById("results-link").innerHTML = '<a href="https://model.energy/?results=' + results.assumptions.results_hex + '#solve">Link to these results</a>';
 };
 
