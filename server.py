@@ -151,26 +151,22 @@ def compute_weather_hash(assumptions):
 def find_results(results_hash):
 
     assumptions_json = f'data/results-assumptions-{results_hash}.json'
-    series_csv = f'data/results-series-{results_hash}.csv'
-    overview_csv = f'data/results-overview-{results_hash}.csv'
+    network_fn = f'networks/{results_hash}.nc'
 
     if not os.path.isfile(assumptions_json):
         return "Assumptions file is missing", {}
-    if not os.path.isfile(series_csv):
-        return "Series results file is missing", {}
-    if not os.path.isfile(overview_csv):
-        return "Overview results file is missing", {}
+    if not os.path.isfile(network_fn):
+        return "Network file is missing", {}
 
-    print("Using preexisting results files:", assumptions_json, series_csv, overview_csv)
+    print("Using preexisting results files:", assumptions_json, network_fn)
     with(open(assumptions_json, 'r')) as f:
         assumptions = json.load(f)
-    results_overview = pd.read_csv(overview_csv,
-                                   index_col=0,
-                                   header=None).squeeze()
-    carrier_series = pd.read_csv(series_csv,
-                                 index_col=0,
-                                 header=[0,1],
-                                 parse_dates=True)
+
+    n = pypsa.Network(network_fn)
+
+    results_overview = generate_overview(n)
+
+    carrier_series = export_time_series(n).round(1)
 
     #determine nice ordering of components
     current_order = results_overview.index[results_overview.index.str[-6:] == " totex"].str[:-6]
@@ -412,7 +408,7 @@ def overview_api(resultshex):
     except:
         return Response(f"network {resultshex} not found")
 
-    csv = generate_overview(n).to_csv()
+    csv = generate_overview(n).to_csv(header=False)
     response = Response(csv, content_type='text/csv')
     response.headers['Content-Disposition'] = f'attachment; filename=overview-{resultshex}.csv'
     return response
@@ -426,7 +422,7 @@ def series_api(resultshex):
     except:
         return Response(f"network {resultshex} not found")
 
-    csv = export_time_series(n).to_csv()
+    csv = export_time_series(n).round(1).to_csv()
     response = Response(csv, content_type='text/csv')
     response.headers['Content-Disposition'] = f'attachment; filename=series-{resultshex}.csv'
     return response

@@ -517,7 +517,7 @@ def generate_overview(network):
 
 def run_optimisation(assumptions, pu):
     """Needs cleaned-up assumptions and pu.
-    return results_overview, results_series, error_msg"""
+    return error_msg"""
 
 
     Nyears = 1
@@ -778,27 +778,26 @@ def run_optimisation(assumptions, pu):
     status, termination_condition = network.optimize.solve_model(solver_name=solver_name,
                                                                  solver_options=solver_options)
 
+    network.status = status
+    network.termination_condition = termination_condition
+
     print(status,termination_condition)
 
     if termination_condition in ["infeasible","infeasible or unbounded"]:
-        return None, None, "Problem was infeasible"
+        return "Problem was infeasible"
     elif termination_condition in ["numeric"]:
-        return None, None, "Numerical trouble encountered, problem could be infeasible"
+        return "Numerical trouble encountered, problem could be infeasible"
     elif status == "ok" and termination_condition == "optimal":
         pass
     elif status == "warning" and termination_condition == "suboptimal":
         pass
     else:
-        return None, None, "Job failed to optimise correctly"
-
-    results_overview = generate_overview(network)
-
-    results_series = export_time_series(network)
+        return "Job failed to optimise correctly"
 
     fn = 'networks/{}.nc'.format(assumptions['results_hex'])
     network.export_to_netcdf(fn)
 
-    return results_overview, results_series, None
+    return None
 
 
 def solve(assumptions):
@@ -848,34 +847,19 @@ def solve(assumptions):
     if assumptions["version"] != current_version:
         return error(f'Outdated version {assumptions["version"]} can no longer be calculated; please use version {current_version} instead', jobid)
 
-    series_csv = 'data/results-series-{}.csv'.format(assumptions['results_hex'])
-    overview_csv = 'data/results-overview-{}.csv'.format(assumptions['results_hex'])
+    print(f"Calculating results from scratch, saving as {assumptions['results_hex']}.nc")
 
-    print("Calculating results from scratch, saving as:", series_csv, overview_csv)
     job.meta['status'] = "Solving optimisation problem"
     job.save_meta()
-    results_overview, results_series, error_msg = run_optimisation(assumptions, pu)
+
+    error_msg = run_optimisation(assumptions, pu)
+
     if error_msg is not None:
         return error(error_msg, jobid)
-    results_series = results_series.round(1)
-
-    results_series.to_csv(series_csv)
-    results_overview.to_csv(overview_csv,header=False)
     with open('data/results-assumptions-{}.json'.format(assumptions['results_hex']), 'w') as fp:
         json.dump(assumptions,fp)
 
     job.meta['status'] = "Processing and sending results"
     job.save_meta()
-
-    with open('results-solve/results-{}.json'.format(jobid), 'w') as fp:
-        json.dump({"jobid" : jobid,
-                   "status" : "Finished",
-                   "job_type" : assumptions["job_type"],
-                   "average_cost" : results_overview["average_cost"],
-                   "results_hex" : assumptions['results_hex']
-                   },fp)
-
-    #with open('results-{}.json'.format(job.id), 'w') as fp:
-    #    json.dump(results,fp)
 
     return {"job_type" : "solve", "results_hex" : assumptions['results_hex']}
