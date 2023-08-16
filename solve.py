@@ -159,11 +159,6 @@ assumptions_df = pd.DataFrame(columns=["FOM","fixed","discount rate","lifetime",
 threshold = 0.1
 
 def error(message, jobid):
-    with open('results-solve/results-{}.json'.format(jobid), 'w') as fp:
-        json.dump({"jobid" : jobid,
-                   "status" : "Error",
-                   "error" : message
-                   },fp)
     print("Error: {}".format(message))
     return {"error" : message}
 
@@ -832,12 +827,6 @@ def solve(assumptions):
 
     if assumptions["job_type"] == "weather":
         print("Returning weather for {}".format(assumptions["location"]))
-
-        with open('results-solve/results-{}.json'.format(jobid), 'w') as fp:
-            json.dump({"jobid" : jobid,
-                       "job_type" : assumptions["job_type"],
-                       "weather_hex" : assumptions['weather_hex']
-                   },fp)
 
         return {"job_type" : "weather", "weather_hex" : assumptions['weather_hex']}
 
