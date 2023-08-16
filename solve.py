@@ -795,7 +795,9 @@ def run_optimisation(assumptions, pu):
         return "Job failed to optimise correctly"
 
     fn = 'networks/{}.nc'.format(assumptions['results_hex'])
-    network.export_to_netcdf(fn)
+    network.export_to_netcdf(fn,
+                             float32=True,
+                             compression={'zlib': True, "complevel": 4, "least_significant_digit": 5})
 
     return None
 
