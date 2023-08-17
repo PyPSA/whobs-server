@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: : 2022 Tom Brown
+# SPDX-FileCopyrightText: : 2023 Tom Brown
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -8,7 +8,7 @@ channels:
 dependencies:
   - pip
   - pypsa>=0.18
-  - atlite=0.0.2
+  - atlite
   - yaml
   - numpy
   - pandas
@@ -20,7 +20,6 @@ dependencies:
   - pyomo
   - matplotlib
   - flask
-  - redis
   - redis-py
   - rq
   - ipython
