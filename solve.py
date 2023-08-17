@@ -613,6 +613,10 @@ def run_optimisation(assumptions, pu):
                 "hydrogen",
                 carrier="hydrogen")
 
+    network.add("Bus",
+                "water",
+                carrier="water")
+
     network.add("Load","hydrogen_load",
                 bus="hydrogen",
                 carrier="hydrogen load",
@@ -622,10 +626,21 @@ def run_optimisation(assumptions, pu):
                 "hydrogen_electrolyser",
                 bus0="electricity",
                 bus1="hydrogen",
+                bus2="water",
                 carrier="hydrogen electrolyser",
                 p_nom_extendable=True,
                 efficiency=assumptions["hydrogen_electrolyser_efficiency"]/100.,
+                efficiency2=-assumptions["hydrogen_electrolyser_water"]*assumptions["hydrogen_electrolyser_efficiency"]/100.,
                 capital_cost=assumptions_df.at["hydrogen_electrolyser","fixed"])
+
+    network.add("Link",
+                "desalination",
+                carrier="seawater desalination",
+                bus0="electricity",
+                bus1="water",
+                p_nom_extendable=True,
+                efficiency=1/assumptions["desalination_electricity"],
+                capital_cost=assumptions_df.at["desalination","fixed"]/assumptions["desalination_electricity"])
 
     network.add("Bus",
                 "compressed hydrogen",
