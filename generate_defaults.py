@@ -45,11 +45,9 @@ for name,td_name,full_name in [("wind","onwind","Onshore wind turbine"),
                                ("solar","solar-utility","Utility-scale solar PV"),
                                ("hydrogen_electrolyser","electrolysis","Hydrogen electrolyser"),
                                ("desalination","seawater desalination","Seawater desalination"),
-                               ("hydrogen_energy","hydrogen storage underground","Hydrogen underground salt cavern storage"),
                                ("hydrogen_turbine","CCGT","Hydrogen combined cycle turbine"),
                                ("battery_energy","battery storage","Utility-scale battery energy"),
                                ("battery_power","battery inverter","Utility-scale battery converter power"),
-                               ("hydrogen_compressor","hydrogen storage compressor","Hydrogen storage compressor"),
                                ("co2_storage","CO2 storage tank","CO2 storage tank"),
                                ("dac","direct air capture","Direct air capture"),
                                ("heat_pump","industrial heat pump medium temperature","Industrial heat pump up to 125 C"),
@@ -112,31 +110,6 @@ df.loc[("desalination_electricity",""),:] = ["f",
                                              "Seawater desalination electricity input",
                                              eff.loc[("seawater desalination","all","electricity"),"source"][0]]
 
-
-df.loc[("hydrogen_compressor_electricity",""),:] = ["f",
-                                                    eff.loc[("H2 storage compressor","all","electricity"),"from_amount"][0]/eff.loc[("H2 storage compressor","all","electricity"),"to_amount"][0],
-                                                    "MWhel/MWh-H2-LHV",
-                                                    "Hydrogen storage compressor electricity input",
-                                                    eff.loc[("H2 storage compressor","all","electricity"),"source"][0]]
-
-df.loc[("methanolisation_efficiency",""),:] = ["f",
-                                               eff.loc[("methanolisation","all","hydrogen (g)"),"to_amount"][0]/eff.loc[("methanolisation","all","hydrogen (g)"),"from_amount"][0],
-                                               "MWh-MeOH-LHV/MWh-H2-LHV",
-                                               "Methanol synthesis efficiency wrt hydrogen",
-                                               eff.loc[("methanolisation","all","hydrogen (g)"),"source"][0]]
-
-df.loc[("methanolisation_co2",""),:] = ["f",
-                                        eff.loc[("methanolisation","all","CO2 (g)"),"from_amount"][0]/eff.loc[("methanolisation","all","CO2 (g)"),"to_amount"][0],
-                                        "tCO2/MWh-MeOH-LHV",
-                                        "Methanol synthesis carbon dioxide input",
-                                        eff.loc[("methanolisation","all","CO2 (g)"),"source"][0]]
-
-df.loc[("methanolisation_electricity",""),:] = ["f",
-                                                eff.loc[("methanolisation","all","electricity"),"from_amount"][0]/eff.loc[("methanolisation","all","electricity"),"to_amount"][0],
-                                                "MWhel/MWh-MeOH-LHV",
-                                                "Methanol synthesis electricity input",
-                                                eff.loc[("methanolisation","all","electricity"),"source"][0]]
-
 df.loc[("dac_electricity",""),:] = ["f",
                                     td[year].loc[("direct air capture","electricity-input"),"value"],
                                     td[year].loc[("direct air capture","electricity-input"),"unit"],
@@ -160,6 +133,6 @@ inflation_factor = (1 + config["inflation"]/100)**(config["cost_year"] - config[
 
 print("inflation factor",inflation_factor)
 
-df.loc[cost_df,"value"] = (inflation_factor*df.loc[cost_df,"value"].astype(float)).round(1)
+df.loc[cost_df,"value"] = (inflation_factor*df.loc[cost_df,"value"].astype(float)).round(3)
 
 df.to_csv("defaults.csv")
