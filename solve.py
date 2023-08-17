@@ -755,10 +755,9 @@ def run_optimisation(assumptions, pu):
                     bus2="co2",
                     carrier="Allam cycle",
                     p_nom_extendable=True,
-                    efficiency=0.6,
-                    efficiency2=assumptions["methanolisation_co2"]*0.98,
-                    capital_cost=assumptions_df.at["hydrogen_turbine","fixed"]*2*0.6)
-
+                    efficiency=assumptions["allam_cycle_efficiency"]/100.,
+                    efficiency2=(assumptions["allam_cycle_co2_capture_efficiency"]/100.)*assumptions["methanolisation_co2"],
+                    capital_cost=assumptions_df.at["allam_cycle","fixed"]*(assumptions["allam_cycle_efficiency"]/100.))
 
     if assumptions["co2_limit"]:
         network.add("GlobalConstraint","co2_limit",
