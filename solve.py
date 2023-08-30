@@ -423,6 +423,8 @@ def export_time_series(n):
 
                 if len(items) == 0:
                     continue
+                if c.pnl["p"+end].empty:
+                    continue
 
                 s = (-1)*c.pnl["p"+end][items].groupby(c.df.loc[items,'carrier'],axis=1).sum()
                 carrier_df = pd.concat([carrier_df,s],axis=1)
@@ -488,6 +490,8 @@ def generate_overview(network):
         for end in [col[3:] for col in c.df.columns if col[:3] == "bus"]:
             items = c.df.index[c.df["bus" + str(end)].map(bus_map,na_action=None)]
             if len(items) == 0:
+                continue
+            if c.pnl["p"+end].empty:
                 continue
             rmv = (c.pnl["p"+end][items].multiply(network.buses_t.marginal_price["electricity"], axis=0).sum()/c.pnl["p"+end][items].sum()).groupby(c.df.loc[items,'carrier']).mean()/results_overview["average_price"]
             results_overview = pd.concat((results_overview,

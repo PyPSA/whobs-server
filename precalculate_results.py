@@ -20,7 +20,7 @@ techs = ["solar","onwind"]
 
 cf_exponents = [2.]
 
-assumption_years = [2030]
+assumption_years = [2020,2050]
 
 
 with open("config.yaml", "r") as f:
