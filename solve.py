@@ -407,6 +407,8 @@ def export_time_series(n):
 
             if len(items) == 0:
                 continue
+            if c.pnl.p.empty:
+                continue
 
             s = c.pnl.p[items].multiply(c.df.loc[items,'sign'],axis=1).groupby(c.df.loc[items,'carrier'],axis=1).sum()
             carrier_df = pd.concat([carrier_df,s],axis=1)
