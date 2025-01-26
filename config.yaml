@@ -11,15 +11,15 @@ tech_years: [2020,2030,2040,2050]
 
 tech_years_default: 2030
 
-cost_year_assumptions: 2015
-cost_year: 2020
+cost_year_assumptions: 2020 #year used in original tech_data assumptions
+cost_year: 2020 #year used in website
 inflation: 2
 
 
 
-float_upper_limit: 1.e+7
+float_upper_limit: 2.e+7
 
-tech_data_commit: "3a23cfc5808df00a2c039fd0e7ce8755a090d4df"
+tech_data_commit: "4270332f70089166abd24b73b058f370bb126cb8"
 trace_commit: "55e71c86d36869079b46377ce7ef16a46afa1d99"
 
 
